@@ -30,4 +30,27 @@ class HealthReport extends HiveObject {
     required this.lowRiskDiseases,
     required this.abnormalValues,
   });
+
+  factory HealthReport.fromJson(Map<String, dynamic> json) {
+    return HealthReport(
+      reportId: json['reportId'] as String,
+      date: DateTime.parse(json['date'] as String),
+      highRiskDiseases: List<dynamic>.from(json['highRiskDiseases'] ?? []),
+      moderateRiskDiseases:
+          List<dynamic>.from(json['moderateRiskDiseases'] ?? []),
+      lowRiskDiseases: List<dynamic>.from(json['lowRiskDiseases'] ?? []),
+      abnormalValues: List<String>.from(json['abnormalValues'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'reportId': reportId,
+      'date': date.toIso8601String(),
+      'highRiskDiseases': highRiskDiseases,
+      'moderateRiskDiseases': moderateRiskDiseases,
+      'lowRiskDiseases': lowRiskDiseases,
+      'abnormalValues': abnormalValues,
+    };
+  }
 }

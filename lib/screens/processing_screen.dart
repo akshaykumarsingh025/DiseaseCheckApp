@@ -39,13 +39,16 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
       String disease = result['disease'];
       String level = result['riskLevel'];
       List<String> findings = List<String>.from(result['findings'] ?? []);
+      int score = result['riskScore'] ?? 0;
+
+      String label = '$disease — Risk: $score%';
 
       if (level == 'high' || level == 'critical') {
-        high.add(disease);
+        high.add(label);
       } else if (level == 'moderate') {
-        moderate.add(disease);
+        moderate.add(label);
       } else {
-        low.add(disease);
+        low.add(label);
       }
       abnormalities.addAll(findings);
     }

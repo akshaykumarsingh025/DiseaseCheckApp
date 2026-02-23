@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/profile_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/theme_provider.dart';
+import '../services/storage_service.dart';
 import '../utils/bmi_calculator.dart';
 import '../widgets/disclaimer_banner.dart';
 
@@ -11,14 +14,28 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider);
+    final themeState = ref.watch(themeProvider);
+    final isDark = themeState.valueOrNull ?? false;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Health Dashboard'),
         actions: [
           IconButton(
+            icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
+            tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+            onPressed: () => ref.read(themeProvider.notifier).toggle(),
+          ),
+          IconButton(
             icon: const Icon(Icons.person),
             onPressed: () => context.push('/profile-setup'),
+          ),
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await StorageService.clearAllLocalData();
+              ref.read(authServiceProvider).signOut();
+            },
           ),
         ],
       ),
@@ -27,7 +44,7 @@ class DashboardScreen extends ConsumerWidget {
           children: [
             const DisclaimerBanner(),
             Expanded(
-              child: Padding(
+              child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -42,7 +59,8 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 8),
                       if (profile.height != null && profile.weight != null) ...[
-                        _buildBmiCard(profile.weight!, profile.height!),
+                        _buildBmiCard(
+                            context, profile.weight!, profile.height!),
                       ],
                       const SizedBox(height: 24),
                     ],
@@ -53,6 +71,15 @@ class DashboardScreen extends ConsumerWidget {
                       Icons.add_chart,
                       Colors.blueAccent,
                       () => context.push('/data-category'),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDashboardCard(
+                      context,
+                      'Health Trends',
+                      'Track your vitals over time',
+                      Icons.show_chart,
+                      Colors.teal,
+                      () => context.push('/trends'),
                     ),
                     const SizedBox(height: 16),
                     _buildDashboardCard(
@@ -73,16 +100,20 @@ class DashboardScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildBmiCard(double weight, double height) {
+  Widget _buildBmiCard(BuildContext context, double weight, double height) {
     double bmi = BmiCalculator.calculateBmi(weight, height);
     String category = BmiCalculator.getBmiCategory(bmi);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Card(
-      color: Colors.blue.shade50,
+      color:
+          isDark ? Colors.blue.shade900.withOpacity(0.3) : Colors.blue.shade50,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.blue.shade200),
+        side: BorderSide(
+          color: isDark ? Colors.blue.shade700 : Colors.blue.shade200,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -92,18 +123,26 @@ class DashboardScreen extends ConsumerWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Current BMI',
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                Text(category, style: TextStyle(color: Colors.grey.shade700)),
+                Text('Current BMI',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: isDark ? Colors.white : Colors.black87,
+                    )),
+                Text(category,
+                    style: TextStyle(
+                      color:
+                          isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+                    )),
               ],
             ),
             Text(
               bmi.toStringAsFixed(1),
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                  color: Colors.blue),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 24,
+                color: isDark ? Colors.blue.shade300 : Colors.blue,
+              ),
             ),
           ],
         ),
@@ -138,7 +177,11 @@ class DashboardScreen extends ConsumerWidget {
                             fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 4),
                     Text(subtitle,
-                        style: TextStyle(color: Colors.grey.shade600)),
+                        style: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.dark
+                              ? Colors.grey.shade400
+                              : Colors.grey.shade600,
+                        )),
                   ],
                 ),
               ),

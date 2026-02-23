@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DisclaimerScreen extends StatelessWidget {
   const DisclaimerScreen({super.key});
@@ -14,7 +15,8 @@ class DisclaimerScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(Icons.warning_amber_rounded, size: 64, color: Colors.orange),
+              const Icon(Icons.warning_amber_rounded,
+                  size: 64, color: Colors.orange),
               const SizedBox(height: 24),
               const Text(
                 'WARNING',
@@ -37,10 +39,17 @@ class DisclaimerScreen extends StatelessWidget {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.all(16),
                 ),
-                onPressed: () {
-                  context.go('/profile-setup');
+                onPressed: () async {
+                  // Save the disclaimer acceptance flag permanently
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setBool('disclaimer_accepted', true);
+
+                  if (context.mounted) {
+                    context.go('/login');
+                  }
                 },
-                child: const Text('I Understand & Accept', style: TextStyle(fontSize: 18)),
+                child: const Text('I Understand & Accept',
+                    style: TextStyle(fontSize: 18)),
               ),
             ],
           ),

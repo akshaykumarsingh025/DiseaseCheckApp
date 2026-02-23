@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:printing/printing.dart';
 import '../models/report.dart';
+import '../services/pdf_report_service.dart';
+import '../services/storage_service.dart';
 import '../widgets/disclaimer_banner.dart';
 
 class ReportScreen extends StatelessWidget {
@@ -24,6 +27,18 @@ class ReportScreen extends StatelessWidget {
           icon: const Icon(Icons.home),
           onPressed: () => context.go('/dashboard'),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            tooltip: 'Download / Print PDF',
+            onPressed: () => _downloadPdf(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.share),
+            tooltip: 'Share PDF',
+            onPressed: () => _sharePdf(context),
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -46,10 +61,62 @@ class ReportScreen extends StatelessWidget {
                     report!.lowRiskDiseases.cast<String>()),
               const SizedBox(height: 8),
               if (report!.abnormalValues.isNotEmpty)
-                _buildAbnormalitiesSection(report!.abnormalValues),
+                _buildAbnormalitiesSection(context, report!.abnormalValues),
+              if (report!.highRiskDiseases.isEmpty &&
+                  report!.moderateRiskDiseases.isEmpty &&
+                  report!.lowRiskDiseases.isEmpty &&
+                  report!.abnormalValues.isEmpty)
+                _buildEmptyState(),
               const SizedBox(height: 32),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _downloadPdf(BuildContext context) async {
+    final profile = StorageService.getProfile();
+    final pdfBytes = await PdfReportService.generateReport(
+      report: report!,
+      profile: profile,
+    );
+    await Printing.layoutPdf(onLayout: (_) => pdfBytes);
+  }
+
+  Future<void> _sharePdf(BuildContext context) async {
+    final profile = StorageService.getProfile();
+    final pdfBytes = await PdfReportService.generateReport(
+      report: report!,
+      profile: profile,
+    );
+    await Printing.sharePdf(
+      bytes: pdfBytes,
+      filename: 'health_report_${report!.reportId.substring(0, 8)}.pdf',
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          children: [
+            Icon(Icons.check_circle, size: 64, color: Colors.green.shade400),
+            const SizedBox(height: 16),
+            const Text(
+              'All values appear within normal range!',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No significant risks were detected from your input data.',
+              style: TextStyle(color: Colors.grey.shade600),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -89,30 +156,54 @@ class ReportScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAbnormalitiesSection(List<String> findings) {
+  Widget _buildAbnormalitiesSection(
+      BuildContext context, List<String> findings) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
-      color: Colors.blueGrey.shade50,
+      color: isDark
+          ? Colors.blueGrey.shade900.withOpacity(0.5)
+          : Colors.blueGrey.shade50,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: isDark ? Colors.blueGrey.shade700 : Colors.transparent,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('Clinical Findings',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const Divider(),
+            Text('Clinical Findings',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDark
+                      ? Colors.blueGrey.shade100
+                      : Colors.blueGrey.shade900,
+                )),
+            Divider(color: isDark ? Colors.blueGrey.shade700 : null),
             ...findings.map((e) => Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4.0),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(Icons.circle, size: 8, color: Colors.blueGrey),
+                      Icon(Icons.circle,
+                          size: 8,
+                          color: isDark
+                              ? Colors.blueGrey.shade300
+                              : Colors.blueGrey),
                       const SizedBox(width: 12),
                       Expanded(
-                          child: Text(e, style: const TextStyle(fontSize: 14))),
+                          child: Text(e,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: isDark
+                                    ? Colors.grey.shade300
+                                    : Colors.black87,
+                              ))),
                     ],
                   ),
                 )),

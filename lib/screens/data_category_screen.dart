@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../utils/test_definitions.dart';
 
 class DataCategoryScreen extends StatefulWidget {
   const DataCategoryScreen({super.key});
@@ -9,14 +10,7 @@ class DataCategoryScreen extends StatefulWidget {
 }
 
 class _DataCategoryScreenState extends State<DataCategoryScreen> {
-  final List<String> categories = [
-    'Vitals',
-    'Blood Sugar / Diabetes Panel',
-    'Lipid Panel (Cholesterol)',
-    'Complete Blood Count (CBC)',
-    'Liver Function Tests (LFT)',
-    'Kidney Function Tests (KFT)',
-  ];
+  final List<String> categories = medicalTestCategories.keys.toList();
   final Set<String> _selected = {};
 
   @override

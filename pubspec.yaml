@@ -53,6 +53,10 @@ dependencies:
   share_plus: ^9.0.0          # Share reports
   permission_handler: ^11.3.1 # Request permissions
   uuid: ^4.4.0                # Unique IDs for reports
+  firebase_core: ^3.4.0
+  firebase_auth: ^5.2.0
+  cloud_firestore: ^5.4.0
+  shared_preferences: ^2.3.0
 
 dev_dependencies:
   flutter_test:

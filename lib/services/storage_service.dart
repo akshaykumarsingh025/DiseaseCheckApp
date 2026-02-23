@@ -1,4 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_profile.dart';
 import '../models/report.dart';
 import '../models/health_data.dart';
@@ -7,6 +9,9 @@ class StorageService {
   static const String profileBoxName = 'user_profile';
   static const String historyBoxName = 'reports_history';
   static const String healthDataBoxName = 'health_data';
+
+  static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  static final FirebaseAuth _auth = FirebaseAuth.instance;
 
   static Future<void> init() async {
     // Register adapters
@@ -30,7 +35,19 @@ class StorageService {
       Hive.box<HealthData>(healthDataBoxName);
 
   static Future<void> saveProfile(UserProfile profile) async {
+    // Save locally
     await profileBox.put('current_user', profile);
+
+    // Sync to Firestore
+    final user = _auth.currentUser;
+    if (user != null) {
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('profile')
+          .doc('current')
+          .set(profile.toJson());
+    }
   }
 
   static UserProfile? getProfile() {
@@ -38,7 +55,19 @@ class StorageService {
   }
 
   static Future<void> saveReport(HealthReport report) async {
+    // Save locally
     await historyBox.put(report.reportId, report);
+
+    // Sync to Firestore
+    final user = _auth.currentUser;
+    if (user != null) {
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('reports')
+          .doc(report.reportId)
+          .set(report.toJson());
+    }
   }
 
   static List<HealthReport> getAllReports() {
@@ -46,11 +75,85 @@ class StorageService {
   }
 
   static Future<void> saveHealthData(HealthData data) async {
+    // Save locally
     await healthDataBox.add(data);
+
+    // Sync to Firestore
+    final user = _auth.currentUser;
+    if (user != null) {
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('health_data')
+          .add(data.toJson());
+    }
   }
 
   static List<HealthData> getAllHealthData() {
     return healthDataBox.values.toList()
       ..sort((a, b) => b.date.compareTo(a.date));
+  }
+
+  // ═══════════════════════════════════════════════════
+  // CLOUD FETCH — restore data from Firestore on login
+  // ═══════════════════════════════════════════════════
+
+  static Future<void> fetchAllFromCloud(String uid) async {
+    await fetchProfileFromCloud(uid);
+    await fetchReportsFromCloud(uid);
+    await fetchHealthDataFromCloud(uid);
+  }
+
+  static Future<void> fetchProfileFromCloud(String uid) async {
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('profile')
+          .doc('current')
+          .get();
+      if (doc.exists && doc.data() != null) {
+        final profile = UserProfile.fromJson(doc.data()!);
+        await profileBox.put('current_user', profile);
+      }
+    } catch (_) {}
+  }
+
+  static Future<void> fetchReportsFromCloud(String uid) async {
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('reports')
+          .get();
+      for (var doc in snapshot.docs) {
+        final report = HealthReport.fromJson(doc.data());
+        await historyBox.put(report.reportId, report);
+      }
+    } catch (_) {}
+  }
+
+  static Future<void> fetchHealthDataFromCloud(String uid) async {
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(uid)
+          .collection('health_data')
+          .get();
+      for (var doc in snapshot.docs) {
+        final data = HealthData.fromJson(doc.data());
+        await healthDataBox.add(data);
+      }
+    } catch (_) {}
+  }
+
+  // ═══════════════════════════════════════════════════
+  // CLEAR — wipe local data on logout
+  // ═══════════════════════════════════════════════════
+
+  static Future<void> clearAllLocalData() async {
+    await profileBox.clear();
+    await historyBox.clear();
+    await healthDataBox.clear();
   }
 }

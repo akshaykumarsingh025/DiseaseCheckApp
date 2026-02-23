@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "888391941492",
+    "project_id": "diseasecheck-57cc2",
+    "storage_bucket": "diseasecheck-57cc2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:888391941492:android:c78dde61097070bb238021",
+        "android_client_info": {
+          "package_name": "com.healthcheck.disease_check_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCtKb9BdUagDxfJomdunKqQXMtemQLUd9o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -4,9 +4,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../models/health_data.dart';
 import '../providers/health_data_provider.dart';
+import '../utils/test_definitions.dart';
 
 class DataEntryScreen extends ConsumerStatefulWidget {
-  const DataEntryScreen({super.key});
+  final List<String> selectedCategories;
+
+  const DataEntryScreen({
+    super.key,
+    required this.selectedCategories,
+  });
 
   @override
   ConsumerState<DataEntryScreen> createState() => _DataEntryScreenState();
@@ -26,75 +32,10 @@ class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('Vitals',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              FormBuilderTextField(
-                name: 'systolic',
-                decoration:
-                    const InputDecoration(labelText: 'Systolic BP (mmHg)'),
-                keyboardType: TextInputType.number,
-              ),
-              FormBuilderTextField(
-                name: 'diastolic',
-                decoration:
-                    const InputDecoration(labelText: 'Diastolic BP (mmHg)'),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 16),
-              const Text('Blood Sugar',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              FormBuilderTextField(
-                name: 'fasting_glucose',
-                decoration: const InputDecoration(
-                    labelText: 'Fasting Blood Sugar (mg/dL)'),
-                keyboardType: TextInputType.number,
-              ),
-              FormBuilderTextField(
-                name: 'hba1c',
-                decoration: const InputDecoration(labelText: 'HbA1c (%)'),
-                keyboardType: TextInputType.number,
-              ),
+              ..._buildDynamicFields(),
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState?.saveAndValidate() ?? false) {
-                    final formData = _formKey.currentState!.value;
-                    List<HealthData> entries = [];
-                    final now = DateTime.now();
-
-                    formData.forEach((key, value) {
-                      if (value != null && value.toString().isNotEmpty) {
-                        double? numericValue =
-                            double.tryParse(value.toString());
-                        if (numericValue != null) {
-                          entries.add(HealthData(
-                            category: _getCategoryForKey(key),
-                            testName: key,
-                            value: numericValue,
-                            unit: _getUnitForKey(key),
-                            date: now,
-                          ));
-                        }
-                      }
-                    });
-
-                    if (entries.isNotEmpty) {
-                      for (var entry in entries) {
-                        await ref
-                            .read(healthDataProvider.notifier)
-                            .addHealthData(entry);
-                      }
-                      if (context.mounted) {
-                        context.go('/processing');
-                      }
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                            content: Text('Please enter at least one value.')),
-                      );
-                    }
-                  }
-                },
+                onPressed: _submitForm,
                 child: const Text('Analyze Health Risk'),
               ),
             ],
@@ -104,16 +45,94 @@ class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
     );
   }
 
-  String _getCategoryForKey(String key) {
-    if (['systolic', 'diastolic'].contains(key)) return 'vitals';
-    if (['fasting_glucose', 'hba1c'].contains(key)) return 'blood_sugar';
-    return 'general';
+  List<Widget> _buildDynamicFields() {
+    List<Widget> widgets = [];
+
+    if (widget.selectedCategories.isEmpty) {
+      return [const Text('No categories selected.')];
+    }
+
+    for (var category in widget.selectedCategories) {
+      final tests = medicalTestCategories[category];
+      if (tests == null || tests.isEmpty) continue;
+
+      widgets.add(
+        Padding(
+          padding: const EdgeInsets.only(top: 24, bottom: 8),
+          child: Text(
+            category,
+            style: const TextStyle(
+                fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue),
+          ),
+        ),
+      );
+
+      for (var test in tests) {
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: FormBuilderTextField(
+              name: test.key,
+              decoration: InputDecoration(
+                labelText: test.label,
+                suffixText: test.unit.isNotEmpty ? test.unit : null,
+                border: const OutlineInputBorder(),
+              ),
+              keyboardType: test.keyboardType,
+            ),
+          ),
+        );
+      }
+    }
+
+    return widgets;
   }
 
-  String _getUnitForKey(String key) {
-    if (['systolic', 'diastolic'].contains(key)) return 'mmHg';
-    if (key == 'fasting_glucose') return 'mg/dL';
-    if (key == 'hba1c') return '%';
-    return '';
+  Future<void> _submitForm() async {
+    if (_formKey.currentState?.saveAndValidate() ?? false) {
+      final formData = _formKey.currentState!.value;
+      List<HealthData> entries = [];
+      final now = DateTime.now();
+
+      formData.forEach((key, value) {
+        if (value != null && value.toString().isNotEmpty) {
+          double? numericValue = double.tryParse(value.toString());
+          if (numericValue != null) {
+            // Look up the definition for this key to get its real Category and Unit
+            final def = getTestDefinition(key);
+            String actualCategory = 'General';
+
+            // Find which category this test belongs to in the master dictionary
+            for (var entry in medicalTestCategories.entries) {
+              if (entry.value.any((t) => t.key == key)) {
+                actualCategory = entry.key;
+                break;
+              }
+            }
+
+            entries.add(HealthData(
+              category: actualCategory,
+              testName: def?.label ?? key,
+              value: numericValue,
+              unit: def?.unit ?? '',
+              date: now,
+            ));
+          }
+        }
+      });
+
+      if (entries.isNotEmpty) {
+        for (var entry in entries) {
+          await ref.read(healthDataProvider.notifier).addHealthData(entry);
+        }
+        if (context.mounted) {
+          context.go('/processing');
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please enter at least one value.')),
+        );
+      }
+    }
   }
 }
