@@ -1,0 +1,87 @@
+{
+    "blood_sugar": {
+        "fasting_glucose": {
+            "unit": "mg/dL",
+            "normal_min": 70,
+            "normal_max": 99
+        },
+        "post_prandial": {
+            "unit": "mg/dL",
+            "normal_min": 0,
+            "normal_max": 139
+        },
+        "hba1c": {
+            "unit": "%",
+            "normal_min": 0,
+            "normal_max": 5.6
+        },
+        "random_glucose": {
+            "unit": "mg/dL",
+            "normal_min": 0,
+            "normal_max": 139
+        }
+    },
+    "lipid_panel": {
+        "total_cholesterol": {
+            "unit": "mg/dL",
+            "normal_min": 0,
+            "normal_max": 199
+        },
+        "ldl": {
+            "unit": "mg/dL",
+            "normal_min": 0,
+            "normal_max": 99
+        },
+        "hdl": {
+            "unit": "mg/dL",
+            "normal_min": 60,
+            "normal_max": 150
+        },
+        "triglycerides": {
+            "unit": "mg/dL",
+            "normal_min": 0,
+            "normal_max": 149
+        }
+    },
+    "vitals": {
+        "systolic_bp": {
+            "unit": "mmHg",
+            "normal_min": 90,
+            "normal_max": 119
+        },
+        "diastolic_bp": {
+            "unit": "mmHg",
+            "normal_min": 60,
+            "normal_max": 79
+        },
+        "heart_rate": {
+            "unit": "bpm",
+            "normal_min": 60,
+            "normal_max": 100
+        }
+    },
+    "kidney_function": {
+        "egfr": {
+            "unit": "mL/min/1.73m²",
+            "normal_min": 90,
+            "normal_max": 150
+        },
+        "creatinine": {
+            "unit": "mg/dL",
+            "normal_min": 0.6,
+            "normal_max": 1.2
+        }
+    },
+    "liver_function": {
+        "alt": {
+            "unit": "U/L",
+            "normal_min": 7,
+            "normal_max": 56
+        },
+        "ast": {
+            "unit": "U/L",
+            "normal_min": 10,
+            "normal_max": 40
+        }
+    }
+}

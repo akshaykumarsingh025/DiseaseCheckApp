@@ -1,0 +1,16 @@
+[
+  {
+    "id": "1",
+    "name": "Hypertension (High BP)",
+    "category": "Cardiovascular",
+    "icdCode": "I10",
+    "detectionMethod": "Rule: AHA/WHO guidelines"
+  },
+  {
+    "id": "10",
+    "name": "Type 2 Diabetes",
+    "category": "Diabetes",
+    "icdCode": "E11",
+    "detectionMethod": "Rule: ADA criteria + ML"
+  }
+]

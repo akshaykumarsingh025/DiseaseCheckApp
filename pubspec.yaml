@@ -1,0 +1,73 @@
+name: disease_check_app
+description: AI-powered health diagnosis app using verified medical data
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+
+  # Navigation
+  go_router: ^14.2.0
+
+  # ML / TensorFlow Lite
+  tflite_flutter: ^0.12.1
+
+  # Local Database
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # HTTP Client (for WHO/NIH/openFDA APIs)
+  dio: ^5.4.3+1
+
+  # Forms & Input
+  flutter_form_builder: ^10.3.0
+  form_builder_validators: ^11.0.0
+
+  # Charts & Visualization
+  fl_chart: ^0.69.0
+
+  # PDF Report Generation
+  pdf: ^3.11.0
+  printing: ^5.13.1
+
+  # UI Components
+  google_fonts: ^6.2.1
+  flutter_svg: ^2.0.10+1
+  lucide_icons: ^0.257.0
+  multi_select_flutter: ^4.1.3
+
+  # JSON Serialization
+  json_annotation: ^4.9.0
+
+  # Utility
+  intl: any              # Date/number formatting
+  path_provider: ^2.1.3       # App documents directory
+  share_plus: ^9.0.0          # Share reports
+  permission_handler: ^11.3.1 # Request permissions
+  uuid: ^4.4.0                # Unique IDs for reports
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  build_runner: ^2.4.9
+  json_serializable: ^6.8.0
+  hive_generator: ^2.0.1
+  riverpod_generator: ^2.4.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/ml_models/
+    - assets/icons/
+    - assets/images/
+    - lib/data/

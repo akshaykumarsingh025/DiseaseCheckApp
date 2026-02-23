@@ -1,0 +1,18 @@
+{
+    "hypertension": {
+        "source": "AHA/ACC Blood Pressure Guidelines",
+        "url": "https://www.heart.org/en/health-topics/high-blood-pressure"
+    },
+    "diabetes": {
+        "source": "ADA Standards of Care",
+        "url": "https://diabetesjournals.org/care/issue/47/Supplement_1"
+    },
+    "ckd": {
+        "source": "KDIGO CKD Guidelines",
+        "url": "https://kdigo.org/guidelines/ckd-evaluation-and-management/"
+    },
+    "lipid": {
+        "source": "NCEP ATP III Guidelines",
+        "url": "https://www.nhlbi.nih.gov/health-topics/metabolic-syndrome"
+    }
+}
