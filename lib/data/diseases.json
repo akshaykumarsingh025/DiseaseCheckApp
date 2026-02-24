@@ -60,6 +60,33 @@
     "name": "Thyroid Dysfunction in Pregnancy",
     "category": "Pregnancy",
     "icd10": "O99.28",
-    "detectionMethod": "Detected via trimester-specific TSH reference ranges per ACOG PB #148 (e.g., TSH > 2.5 mIU/L in first trimester)."
+  },
+  {
+    "id": "IMG01",
+    "name": "Fatty Liver (Steatosis)",
+    "category": "Imaging & Scans",
+    "icd10": "K76.0",
+    "detectionMethod": "Detected via OCR parsing of Abdominal Ultrasound reports (keywords: fatty infiltration, steatosis, echotexture)."
+  },
+  {
+    "id": "IMG02",
+    "name": "Gallstones (Cholelithiasis)",
+    "category": "Imaging & Scans",
+    "icd10": "K80.20",
+    "detectionMethod": "Detected via OCR parsing of Abdominal Ultrasound reports (keywords: calculi, shadowing, stones)."
+  },
+  {
+    "id": "IMG03",
+    "name": "Kidney Stones (Nephrolithiasis)",
+    "category": "Imaging & Scans",
+    "icd10": "N20.0",
+    "detectionMethod": "Detected via OCR parsing of Renal Ultrasound or CT scans (keywords: calculus, nephrolithiasis, echogenic focus)."
+  },
+  {
+    "id": "IMG04",
+    "name": "Pneumonia / Lung Consolidation",
+    "category": "Imaging & Scans",
+    "icd10": "J18.9",
+    "detectionMethod": "Detected via OCR parsing of Chest X-Ray reports (keywords: consolidation, infiltrate, opacity, effusion)."
   }
 ]

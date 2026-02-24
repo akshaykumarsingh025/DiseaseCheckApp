@@ -633,7 +633,58 @@ class RuleEngine {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 11. URINE ANALYSIS
+  // 11. MEDICAL IMAGING (OCR)
+  // ═══════════════════════════════════════════════════════════════
+  static Map<String, dynamic> checkFattyLiver(double? flag) {
+    double riskScore = 0;
+    List<String> findings = [];
+    if (flag != null && flag == 1.0) {
+      riskScore = 60;
+      findings.add(
+          'OCR detected keywords indicative of Fatty Liver / Steatosis (e.g., hepatomegaly, fatty infiltration).');
+    }
+    return _buildResult('Fatty Liver (Steatosis)', 'K76.0', riskScore, findings,
+        'Imaging OCR Match');
+  }
+
+  static Map<String, dynamic> checkGallstones(double? flag) {
+    double riskScore = 0;
+    List<String> findings = [];
+    if (flag != null && flag == 1.0) {
+      riskScore = 70;
+      findings.add(
+          'OCR detected keywords indicative of Gallstones / Cholelithiasis (e.g., calculi, shadowing).');
+    }
+    return _buildResult('Gallstones (Cholelithiasis)', 'K80.20', riskScore,
+        findings, 'Imaging OCR Match');
+  }
+
+  static Map<String, dynamic> checkKidneyStones(double? flag) {
+    double riskScore = 0;
+    List<String> findings = [];
+    if (flag != null && flag == 1.0) {
+      riskScore = 75;
+      findings.add(
+          'OCR detected keywords indicative of Kidney Stones / Nephrolithiasis (e.g., renal calculus, echogenic focus).');
+    }
+    return _buildResult('Kidney Stones (Nephrolithiasis)', 'N20.0', riskScore,
+        findings, 'Imaging OCR Match');
+  }
+
+  static Map<String, dynamic> checkPneumonia(double? flag) {
+    double riskScore = 0;
+    List<String> findings = [];
+    if (flag != null && flag == 1.0) {
+      riskScore = 85;
+      findings.add(
+          'OCR detected keywords indicative of Pneumonia / Lung Consolidation (e.g., consolidation, infiltrate).');
+    }
+    return _buildResult('Pneumonia / Lung Consolidation', 'J18.9', riskScore,
+        findings, 'Imaging OCR Match');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 12. URINE ANALYSIS
   // ═══════════════════════════════════════════════════════════════
   static Map<String, dynamic> checkUrineAnalysis({
     double? urineWbc,
@@ -957,6 +1008,17 @@ class RuleEngine {
       reports.add(checkUrineAnalysis(
           urineWbc: urWbc, microalbumin: microAlb, urinePh: urPh));
     }
+
+    // --- IMAGING / OCR FLAGS ---
+    double? fattyLiverFlag = v('Fatty Liver Found (0=No, 1=Yes)');
+    double? gallstoneFlag = v('Gallstones Found (0=No, 1=Yes)');
+    double? kidneyStoneFlag = v('Kidney Stones Found (0=No, 1=Yes)');
+    double? pneumoniaFlag = v('Lung Consolidation/Pneumonia (0=No, 1=Yes)');
+
+    if (fattyLiverFlag == 1.0) reports.add(checkFattyLiver(fattyLiverFlag));
+    if (gallstoneFlag == 1.0) reports.add(checkGallstones(gallstoneFlag));
+    if (kidneyStoneFlag == 1.0) reports.add(checkKidneyStones(kidneyStoneFlag));
+    if (pneumoniaFlag == 1.0) reports.add(checkPneumonia(pneumoniaFlag));
 
     return reports;
   }

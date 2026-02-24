@@ -179,6 +179,28 @@ const Map<String, List<LabTestDefinition>> medicalTestCategories = {
         label: 'Transferrin Saturation',
         unit: '%'),
   ],
+  'Imaging Findings (OCR)': [
+    LabTestDefinition(
+        key: 'fatty_liver_flag',
+        label: 'Fatty Liver Found (0=No, 1=Yes)',
+        unit: 'Flag',
+        keyboardType: TextInputType.number),
+    LabTestDefinition(
+        key: 'gallstone_flag',
+        label: 'Gallstones Found (0=No, 1=Yes)',
+        unit: 'Flag',
+        keyboardType: TextInputType.number),
+    LabTestDefinition(
+        key: 'kidney_stone_flag',
+        label: 'Kidney Stones Found (0=No, 1=Yes)',
+        unit: 'Flag',
+        keyboardType: TextInputType.number),
+    LabTestDefinition(
+        key: 'pneumonia_flag',
+        label: 'Lung Consolidation/Pneumonia (0=No, 1=Yes)',
+        unit: 'Flag',
+        keyboardType: TextInputType.number),
+  ],
   'Cardiac Markers': [
     LabTestDefinition(key: 'troponin_i', label: 'Troponin I', unit: 'ng/mL'),
     LabTestDefinition(key: 'troponin_t', label: 'Troponin T', unit: 'ng/mL'),

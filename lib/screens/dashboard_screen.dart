@@ -78,10 +78,19 @@ class DashboardScreen extends ConsumerWidget {
                     _buildDashboardCard(
                       context,
                       'Enter New Data',
-                      'Input lab reports and vitals',
-                      Icons.add_chart,
+                      'Input lab reports and vitals manually',
+                      Icons.edit_document,
                       Colors.blueAccent,
                       () => context.push('/data-category'),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildDashboardCard(
+                      context,
+                      'Scan Medical Report',
+                      'Auto-extract data from your X-Ray or Ultrasound via Camera',
+                      Icons.document_scanner,
+                      Colors.deepPurpleAccent,
+                      () => context.push('/ocr-scanner'),
                     ),
                     const SizedBox(height: 16),
                     _buildDashboardCard(

@@ -19,6 +19,7 @@ import 'screens/report_screen.dart';
 import 'screens/report_history_screen.dart';
 import 'screens/trends_screen.dart';
 import 'screens/womens_health_screen.dart';
+import 'screens/ocr_scanner_screen.dart';
 import 'models/report.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -105,6 +106,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/womens-health',
         builder: (context, state) => const WomensHealthScreen(),
+      ),
+      GoRoute(
+        path: '/ocr-scanner',
+        builder: (context, state) => const OcrScannerScreen(),
       ),
     ],
   );
