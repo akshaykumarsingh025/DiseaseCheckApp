@@ -159,9 +159,9 @@ class TrendsScreen extends ConsumerWidget {
                     leftTitles: AxisTitles(
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 50,
+                        reservedSize: 55,
                         getTitlesWidget: (value, meta) => Text(
-                            value.toStringAsFixed(1),
+                            _formatAxisValue(value),
                             style: const TextStyle(fontSize: 10)),
                       ),
                     ),
@@ -217,7 +217,7 @@ class TrendsScreen extends ConsumerWidget {
                       getTooltipItems: (touchedSpots) {
                         return touchedSpots.map((spot) {
                           return LineTooltipItem(
-                            '${spot.y.toStringAsFixed(1)} $unit',
+                            '${_formatAxisValue(spot.y)} $unit',
                             const TextStyle(
                                 color: Colors.white,
                                 fontWeight: FontWeight.bold),
@@ -233,5 +233,20 @@ class TrendsScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  static String _formatAxisValue(double value) {
+    final abs = value.abs();
+    final sign = value < 0 ? '-' : '';
+    if (abs >= 1000000) {
+      return '$sign${(abs / 1000000).toStringAsFixed(1)}M';
+    } else if (abs >= 1000) {
+      final k = abs / 1000;
+      return '$sign${k >= 10 ? k.toStringAsFixed(0) : k.toStringAsFixed(1)}k';
+    } else if (abs >= 100) {
+      return value.toStringAsFixed(0);
+    } else {
+      return value.toStringAsFixed(1);
+    }
   }
 }

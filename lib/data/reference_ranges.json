@@ -83,5 +83,59 @@
             "normal_min": 10,
             "normal_max": 40
         }
+    },
+    "hormonal_panel": {
+        "amh": {
+            "unit": "ng/mL",
+            "normal_min": 1.0,
+            "normal_max": 4.0
+        },
+        "fsh": {
+            "unit": "mIU/mL",
+            "normal_min": 1.5,
+            "normal_max": 10.0
+        },
+        "lh": {
+            "unit": "mIU/mL",
+            "normal_min": 1.9,
+            "normal_max": 12.5
+        },
+        "estradiol": {
+            "unit": "pg/mL",
+            "normal_min": 30.0,
+            "normal_max": 400.0
+        },
+        "progesterone": {
+            "unit": "ng/mL",
+            "normal_min": 0.1,
+            "normal_max": 25.0
+        },
+        "prolactin": {
+            "unit": "ng/mL",
+            "normal_min": 2.0,
+            "normal_max": 29.0
+        },
+        "testosterone": {
+            "unit": "ng/dL",
+            "normal_min": 15.0,
+            "normal_max": 70.0
+        },
+        "dheas": {
+            "unit": "µg/dL",
+            "normal_min": 35.0,
+            "normal_max": 350.0
+        }
+    },
+    "screening": {
+        "pap_smear": {
+            "unit": "Score",
+            "normal_min": 0,
+            "normal_max": 0
+        },
+        "hpv_status": {
+            "unit": "Status",
+            "normal_min": 0,
+            "normal_max": 0
+        }
     }
 }

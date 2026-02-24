@@ -22,6 +22,19 @@ class UserProfile extends HiveObject {
   @HiveField(5)
   String? phone;
 
+  // --- Women's Health Fields ---
+  @HiveField(6)
+  int? menstrualCycleLength;
+
+  @HiveField(7)
+  String? cycleRegularity;
+
+  @HiveField(8)
+  int? periodPainScore;
+
+  @HiveField(9)
+  String? reproductiveHistory;
+
   UserProfile({
     required this.name,
     required this.age,
@@ -29,6 +42,10 @@ class UserProfile extends HiveObject {
     this.height,
     this.weight,
     this.phone,
+    this.menstrualCycleLength,
+    this.cycleRegularity,
+    this.periodPainScore,
+    this.reproductiveHistory,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -39,6 +56,10 @@ class UserProfile extends HiveObject {
       height: (json['height'] as num?)?.toDouble(),
       weight: (json['weight'] as num?)?.toDouble(),
       phone: json['phone'] as String?,
+      menstrualCycleLength: json['menstrualCycleLength'] as int?,
+      cycleRegularity: json['cycleRegularity'] as String?,
+      periodPainScore: json['periodPainScore'] as int?,
+      reproductiveHistory: json['reproductiveHistory'] as String?,
     );
   }
 
@@ -50,6 +71,10 @@ class UserProfile extends HiveObject {
       'height': height,
       'weight': weight,
       'phone': phone,
+      'menstrualCycleLength': menstrualCycleLength,
+      'cycleRegularity': cycleRegularity,
+      'periodPainScore': periodPainScore,
+      'reproductiveHistory': reproductiveHistory,
     };
   }
 }

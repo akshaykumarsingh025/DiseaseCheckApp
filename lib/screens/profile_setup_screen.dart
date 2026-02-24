@@ -15,11 +15,18 @@ class ProfileSetupScreen extends ConsumerStatefulWidget {
 
 class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
+  String? _selectedGender;
+  bool _initialized = false;
 
   @override
   Widget build(BuildContext context) {
     // Pre-fill from existing profile if available
-    final existing = ref.read(profileProvider);
+    final existing = ref.watch(profileProvider);
+
+    if (!_initialized && existing != null) {
+      _selectedGender = existing.gender;
+      _initialized = true;
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -96,6 +103,12 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     DropdownMenuItem(value: 'Other', child: Text('Other')),
                   ],
                   validator: FormBuilderValidators.required(),
+                  onChanged: (val) {
+                    setState(() {
+                      _selectedGender = val;
+                      _initialized = true;
+                    });
+                  },
                 ),
                 const SizedBox(height: 16),
                 FormBuilderTextField(
@@ -125,6 +138,84 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     FormBuilderValidators.numeric(),
                   ]),
                 ),
+                if (_selectedGender == 'Female') ...[
+                  const SizedBox(height: 32),
+                  const Text(
+                      'Women\'s Health & Reproductive History (Optional)',
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.pink)),
+                  const SizedBox(height: 16),
+                  FormBuilderTextField(
+                    name: 'menstrualCycleLength',
+                    initialValue: existing?.menstrualCycleLength?.toString(),
+                    decoration: const InputDecoration(
+                      labelText: 'Average Menstrual Cycle Length (Days)',
+                      prefixIcon: Icon(Icons.calendar_month),
+                      border: OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.number,
+                    validator: FormBuilderValidators.numeric(),
+                  ),
+                  const SizedBox(height: 16),
+                  FormBuilderDropdown<String>(
+                    name: 'cycleRegularity',
+                    initialValue: existing?.cycleRegularity,
+                    decoration: const InputDecoration(
+                      labelText: 'Cycle Regularity',
+                      prefixIcon: Icon(Icons.sync),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'Regular',
+                          child: Text('Regular (predictable)')),
+                      DropdownMenuItem(
+                          value: 'Irregular',
+                          child: Text('Irregular (unpredictable)')),
+                      DropdownMenuItem(
+                          value: 'Absent', child: Text('Absent (no periods)')),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  FormBuilderSlider(
+                    name: 'periodPainScore',
+                    initialValue: existing?.periodPainScore?.toDouble() ?? 0.0,
+                    min: 0.0,
+                    max: 10.0,
+                    divisions: 10,
+                    decoration: const InputDecoration(
+                      labelText: 'Average Period Pain (0 = None, 10 = Severe)',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.all(8),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  FormBuilderDropdown<String>(
+                    name: 'reproductiveHistory',
+                    initialValue: existing?.reproductiveHistory,
+                    decoration: const InputDecoration(
+                      labelText: 'Reproductive History',
+                      prefixIcon: Icon(Icons.pregnant_woman),
+                      border: OutlineInputBorder(),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                          value: 'Nulliparous (Never given birth)',
+                          child: Text('Nulliparous (Never given birth)')),
+                      DropdownMenuItem(
+                          value: 'Parous (Given birth)',
+                          child: Text('Parous (Given birth)')),
+                      DropdownMenuItem(
+                          value: 'Currently Pregnant',
+                          child: Text('Currently Pregnant')),
+                      DropdownMenuItem(
+                          value: 'Post-menopausal',
+                          child: Text('Post-menopausal')),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: 32),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
@@ -145,6 +236,16 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                         weight: data['weight'] != null
                             ? double.tryParse(data['weight'].toString())
                             : null,
+                        menstrualCycleLength:
+                            data['menstrualCycleLength'] != null
+                                ? int.tryParse(
+                                    data['menstrualCycleLength'].toString())
+                                : null,
+                        cycleRegularity: data['cycleRegularity'],
+                        periodPainScore: data['periodPainScore'] != null
+                            ? (data['periodPainScore'] as double).toInt()
+                            : null,
+                        reproductiveHistory: data['reproductiveHistory'],
                       );
 
                       await ref

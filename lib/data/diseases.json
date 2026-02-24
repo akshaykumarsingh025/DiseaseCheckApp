@@ -12,5 +12,54 @@
     "category": "Diabetes",
     "icdCode": "E11",
     "detectionMethod": "Rule: ADA criteria + ML"
+  },
+  {
+    "id": "D068",
+    "name": "Polycystic Ovary Syndrome (PCOS)",
+    "category": "Women's Health",
+    "icd10": "E28.2",
+    "detectionMethod": "Detected by clinical hyperandrogenism, menustral irregularities, elevated AMH, and/or inverted FSH/LH ratio according to ACOG guidelines."
+  },
+  {
+    "id": "D069",
+    "name": "Diminished Ovarian Reserve (DOR)",
+    "category": "Women's Health",
+    "icd10": "N97.9",
+    "detectionMethod": "Detected via low AMH levels (<1.0 ng/mL) and/or elevated FSH levels (>10 mIU/mL) based on ACOG Committee Opinion #618."
+  },
+  {
+    "id": "D070",
+    "name": "Pre-eclampsia Risk / Gestational Hypertension",
+    "category": "Pregnancy",
+    "icd10": "O14.9",
+    "detectionMethod": "Risk identified through elevated blood pressure (>140/90) and proteinuria during pregnancy (ACOG PB #222)."
+  },
+  {
+    "id": "D071",
+    "name": "Cervical Dysplasia / Cancer Risk",
+    "category": "Women's Health",
+    "icd10": "Z12.4",
+    "detectionMethod": "Detected via abnormal Pap smear results ( ASCUS, LSIL, HSIL) and high-risk HPV testing per ACOG PB #168."
+  },
+  {
+    "id": "D072",
+    "name": "Premature Ovarian Insufficiency / Menopause",
+    "category": "Women's Health",
+    "icd10": "N95.1",
+    "detectionMethod": "Identified by elevated FSH (>30 IU/L) and low Estradiol (<30 pg/mL) per RCOG/NICE guidelines."
+  },
+  {
+    "id": "D073",
+    "name": "Suboptimal Pregnancy Readiness",
+    "category": "Pregnancy",
+    "icd10": "Z31.8",
+    "detectionMethod": "Composite score reflecting metabolic, thyroid, and hematologic factors that may impact conception and early pregnancy (ACOG framework)."
+  },
+  {
+    "id": "D074",
+    "name": "Thyroid Dysfunction in Pregnancy",
+    "category": "Pregnancy",
+    "icd10": "O99.28",
+    "detectionMethod": "Detected via trimester-specific TSH reference ranges per ACOG PB #148 (e.g., TSH > 2.5 mIU/L in first trimester)."
   }
 ]

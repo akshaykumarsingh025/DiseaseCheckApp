@@ -18,6 +18,7 @@ import 'screens/processing_screen.dart';
 import 'screens/report_screen.dart';
 import 'screens/report_history_screen.dart';
 import 'screens/trends_screen.dart';
+import 'screens/womens_health_screen.dart';
 import 'models/report.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -100,6 +101,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/trends',
         builder: (context, state) => const TrendsScreen(),
+      ),
+      GoRoute(
+        path: '/womens-health',
+        builder: (context, state) => const WomensHealthScreen(),
       ),
     ],
   );

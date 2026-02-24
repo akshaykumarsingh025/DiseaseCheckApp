@@ -467,28 +467,169 @@ class RuleEngine {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // 10. PREGNANCY & WOMEN'S HEALTH (ACOG)
+  // 10. WOMEN'S HEALTH & PREGNANCY (ACOG / RCOG)
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> checkPregnancyRisk({
-    double? betaHcg,
-    double? pregnancyPeriod,
-    double? bpSystolic,
-    double? urineProtein,
+
+  static Map<String, dynamic> checkPCOS({
+    double? testosterone,
+    double? dheas,
+    double? amh,
+    double? fastingInsulin,
+    double? homaIr,
+    double? lh,
+    double? fsh,
   }) {
     double riskScore = 0;
     List<String> findings = [];
 
-    if (bpSystolic != null &&
-        bpSystolic >= 140 &&
-        pregnancyPeriod != null &&
-        pregnancyPeriod >= 20) {
-      riskScore += 40;
+    if ((testosterone != null && testosterone >= 70) ||
+        (dheas != null && dheas >= 350)) {
+      riskScore += 35;
       findings.add(
-          'Systolic BP $bpSystolic mmHg at ${pregnancyPeriod}wk (Pre-eclampsia risk: ≥140 after 20wk)');
+          'Hyperandrogenism (Testosterone ${testosterone ?? '--'} ng/dL, DHEAS ${dheas ?? '--'} ug/dL)');
     }
 
-    return _buildResult('Pregnancy Complication Risk', 'O14.9', riskScore,
-        findings, 'ACOG Guidelines');
+    if (amh != null && amh >= 4.7) {
+      riskScore += 35;
+      findings.add('Elevated AMH $amh ng/mL (ACOG ultrasound alternative)');
+    }
+
+    if (lh != null && fsh != null && fsh > 0) {
+      double ratio = lh / fsh;
+      if (ratio >= 2.0) {
+        riskScore += 20;
+        findings.add('LH/FSH Ratio $ratio (High: >= 2.0)');
+      }
+    }
+
+    if (fastingInsulin != null && fastingInsulin >= 25) {
+      riskScore += 10;
+      findings.add('Fasting Insulin $fastingInsulin uIU/mL (High: >= 25)');
+    }
+    if (homaIr != null && homaIr >= 2.5) {
+      riskScore += 15;
+      findings.add('HOMA-IR $homaIr (Insulin Resistance: >= 2.5)');
+    }
+
+    return _buildResult(
+        'PCOS Risk Profile', 'E28.2', riskScore, findings, 'ACOG PB #194');
+  }
+
+  static Map<String, dynamic> checkOvarianReserve({
+    double? amh,
+    double? fsh,
+  }) {
+    double riskScore = 0;
+    List<String> findings = [];
+
+    if (amh != null) {
+      if (amh < 0.5) {
+        riskScore += 60;
+        findings.add('AMH $amh ng/mL (Severely Diminished: < 0.5)');
+      } else if (amh < 1.0) {
+        riskScore += 40;
+        findings.add('AMH $amh ng/mL (Diminished: < 1.0)');
+      } else {
+        findings.add('AMH $amh ng/mL (Normal/Robust: >= 1.0)');
+      }
+    }
+    if (fsh != null && fsh > 10.0) {
+      riskScore += 30;
+      findings.add('FSH $fsh mIU/mL (Elevated: > 10.0)');
+    }
+
+    return _buildResult(
+        'Ovarian Reserve', 'N97.9', riskScore, findings, 'ACOG CO #618');
+  }
+
+  static Map<String, dynamic> checkMenopauseRisk({
+    double? fsh,
+    double? estradiol,
+  }) {
+    double riskScore = 0;
+    List<String> findings = [];
+
+    if (fsh != null && fsh > 30.0) {
+      riskScore += 60;
+      findings.add('FSH $fsh IU/L (Menopausal Range: > 30)');
+      if (estradiol != null && estradiol < 30) {
+        riskScore += 30;
+        findings.add(
+            'Estradiol $estradiol pg/mL (Low: < 30 - Confirms postmenopause)');
+      }
+    } else if (fsh != null && fsh >= 10.0 && fsh <= 30.0) {
+      riskScore += 40;
+      findings.add('FSH $fsh IU/L (Perimenopausal Range: 10-30)');
+      if (estradiol != null && estradiol < 50) {
+        riskScore += 20;
+        findings.add('Estradiol $estradiol pg/mL (Declining: < 50)');
+      }
+    }
+
+    return _buildResult('Menopause / POI Transition', 'N95.1', riskScore,
+        findings, 'RCOG/BMS Guidelines');
+  }
+
+  static Map<String, dynamic> checkPregnancyReadiness({
+    double? amh,
+    double? tsh,
+    double? fbg,
+    double? hb,
+  }) {
+    double riskScore = 0; // Higher is worse here
+    List<String> findings = [];
+
+    if (amh != null && amh < 1.0) {
+      riskScore += 30;
+      findings.add('AMH $amh ng/mL (Suboptimal for conception: < 1.0)');
+    }
+    if (tsh != null && (tsh < 0.1 || tsh > 2.5)) {
+      riskScore += 30;
+      findings.add('TSH $tsh mIU/L (Outside pregnancy target: 0.1-2.5)');
+    }
+    if (fbg != null && fbg >= 100) {
+      riskScore += 20;
+      findings.add('Fasting Glucose $fbg mg/dL (Elevated: >= 100)');
+    }
+    if (hb != null && hb < 11.0) {
+      riskScore += 20;
+      findings.add('Hemoglobin $hb g/dL (Below pregnancy threshold: < 11.0)');
+    }
+
+    return _buildResult('Pregnancy Readiness Flaws', 'Z31.8', riskScore,
+        findings, 'ACOG Composite');
+  }
+
+  static Map<String, dynamic> checkCervicalCancerRisk({
+    double? papSmear,
+    double? hpvStatus,
+  }) {
+    double riskScore = 0;
+    List<String> findings = [];
+
+    if (papSmear != null) {
+      if (papSmear == 3) {
+        riskScore += 60;
+        findings
+            .add('Pap Smear: HSIL (High-grade lesion, colposcopy required)');
+      } else if (papSmear == 2) {
+        riskScore += 40;
+        findings.add('Pap Smear: LSIL (Low-grade lesion)');
+      } else if (papSmear == 1) {
+        riskScore += 20;
+        findings.add('Pap Smear: ASCUS (Atypical cells, needs HPV triage)');
+      }
+    }
+
+    if (hpvStatus != null && hpvStatus == 1) {
+      riskScore += 40;
+      findings.add('HPV Status: Positive (High-risk strains detected)');
+    } else if (hpvStatus == 0) {
+      findings.add('HPV Status: Negative');
+    }
+
+    return _buildResult('Cervical Health / Dysplasia', 'Z12.4', riskScore,
+        findings, 'ACOG PB #168');
   }
 
   // ═══════════════════════════════════════════════════════════════
@@ -751,12 +892,61 @@ class RuleEngine {
           homocysteine: hcy));
     }
 
-    // --- PREGNANCY ---
-    double? bhcg = v('Beta-hCG');
-    double? pregWeeks = v('Pregnancy Period');
-    if (bhcg != null || pregWeeks != null) {
-      reports.add(checkPregnancyRisk(
-          betaHcg: bhcg, pregnancyPeriod: pregWeeks, bpSystolic: systolic));
+    // --- WOMEN'S HEALTH & PREGNANCY ---
+    double? testosterone = v('Total Testosterone');
+    double? dheas = v('DHEAS');
+    double? amh = v('AMH (Anti-Müllerian Hormone)');
+    double? lh = v('LH');
+    double? fsh = v('FSH');
+    double? estradiol = v('Estradiol (E2)');
+    double? papSmear =
+        v('Pap Smear Result (0=Normal, 1=ASCUS, 2=LSIL, 3=HSIL)');
+    double? hpvStatus = v('High-Risk HPV (0=Negative, 1=Positive)');
+    double? homaIr = v('HOMA-IR');
+
+    // Only trigger women's health checks if actual hormonal panel data
+    // was entered (not just from overlapping Thyroid/BloodSugar panels)
+    bool hasWomensHormonalData = testosterone != null ||
+        dheas != null ||
+        amh != null ||
+        lh != null ||
+        fsh != null ||
+        estradiol != null;
+
+    if (hasWomensHormonalData) {
+      // PCOS
+      if (testosterone != null || dheas != null || amh != null || lh != null) {
+        reports.add(checkPCOS(
+            testosterone: testosterone,
+            dheas: dheas,
+            amh: amh,
+            fastingInsulin: fi,
+            homaIr: homaIr,
+            lh: lh,
+            fsh: fsh));
+      }
+
+      // Ovarian Reserve
+      if (amh != null || fsh != null) {
+        reports.add(checkOvarianReserve(amh: amh, fsh: fsh));
+      }
+
+      // Menopause
+      if (fsh != null || estradiol != null) {
+        reports.add(checkMenopauseRisk(fsh: fsh, estradiol: estradiol));
+      }
+
+      // Pregnancy Readiness
+      if (amh != null || tsh != null || fbs != null || hb != null) {
+        reports
+            .add(checkPregnancyReadiness(amh: amh, tsh: tsh, fbg: fbs, hb: hb));
+      }
+    }
+
+    // Cervical Risk (independent of hormonal panel)
+    if (papSmear != null || hpvStatus != null) {
+      reports.add(
+          checkCervicalCancerRisk(papSmear: papSmear, hpvStatus: hpvStatus));
     }
 
     // --- URINE ANALYSIS ---

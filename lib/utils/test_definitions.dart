@@ -128,12 +128,46 @@ const Map<String, List<LabTestDefinition>> medicalTestCategories = {
   'Stool Analysis': [
     LabTestDefinition(key: 'stool_ph', label: 'pH', unit: ''),
   ],
-  'Pregnancy & Women\'s Health': [
+  'Pregnancy': [
     LabTestDefinition(key: 'beta_hcg', label: 'Beta-hCG', unit: 'mIU/mL'),
     LabTestDefinition(
         key: 'pregnancy_period',
         label: 'Pregnancy Period',
         unit: 'Weeks',
+        keyboardType: TextInputType.number),
+  ],
+  'Hormonal Panel': [
+    LabTestDefinition(
+        key: 'amh', label: 'AMH (Anti-Müllerian Hormone)', unit: 'ng/mL'),
+    LabTestDefinition(key: 'fsh', label: 'FSH', unit: 'mIU/mL'),
+    LabTestDefinition(key: 'lh', label: 'LH', unit: 'mIU/mL'),
+    LabTestDefinition(key: 'estradiol', label: 'Estradiol (E2)', unit: 'pg/mL'),
+    LabTestDefinition(
+        key: 'progesterone', label: 'Progesterone', unit: 'ng/mL'),
+    LabTestDefinition(key: 'prolactin', label: 'Prolactin', unit: 'ng/mL'),
+    LabTestDefinition(
+        key: 'testosterone', label: 'Total Testosterone', unit: 'ng/dL'),
+    LabTestDefinition(key: 'dheas', label: 'DHEAS', unit: 'µg/dL'),
+  ],
+  'Metabolic Panel (Women\'s Health)': [
+    LabTestDefinition(
+        key: 'fasting_insulin', label: 'Fasting Insulin', unit: 'µIU/mL'),
+    LabTestDefinition(
+        key: 'homa_ir',
+        label: 'HOMA-IR',
+        unit: 'Index',
+        keyboardType: TextInputType.numberWithOptions(decimal: true)),
+  ],
+  'Cervical Screening': [
+    LabTestDefinition(
+        key: 'pap_smear',
+        label: 'Pap Smear Result (0=Normal, 1=ASCUS, 2=LSIL, 3=HSIL)',
+        unit: 'Score',
+        keyboardType: TextInputType.number),
+    LabTestDefinition(
+        key: 'hpv_status',
+        label: 'High-Risk HPV (0=Negative, 1=Positive)',
+        unit: 'Score',
         keyboardType: TextInputType.number),
   ],
   'Iron Panel': [

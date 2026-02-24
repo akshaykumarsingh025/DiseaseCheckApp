@@ -63,6 +63,17 @@ class DashboardScreen extends ConsumerWidget {
                             context, profile.weight!, profile.height!),
                       ],
                       const SizedBox(height: 24),
+                      if (profile.gender == 'Female') ...[
+                        _buildDashboardCard(
+                          context,
+                          'Women\'s Health Hub',
+                          'PCOS, Pregnancy, Menopause & More',
+                          Icons.female,
+                          Colors.pinkAccent,
+                          () => context.push('/womens-health'),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
                     ],
                     _buildDashboardCard(
                       context,

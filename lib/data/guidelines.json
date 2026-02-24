@@ -14,5 +14,29 @@
     "lipid": {
         "source": "NCEP ATP III Guidelines",
         "url": "https://www.nhlbi.nih.gov/health-topics/metabolic-syndrome"
+    },
+    "womens_health_pcos": {
+        "source": "ACOG Practice Bulletin #194",
+        "url": "https://www.acog.org/clinical/clinical-guidance/practice-bulletin/articles/2018/06/polycystic-ovary-syndrome"
+    },
+    "womens_health_reserve": {
+        "source": "ACOG Committee Opinion #618",
+        "url": "https://www.acog.org/clinical/clinical-guidance/committee-opinion/articles/2015/04/ovarian-reserve-testing"
+    },
+    "womens_health_preeclampsia": {
+        "source": "ACOG Practice Bulletin #222",
+        "url": "https://www.acog.org/clinical/clinical-guidance/practice-bulletin/articles/2020/06/gestational-hypertension-and-preeclampsia"
+    },
+    "womens_health_cervical": {
+        "source": "ACOG Practice Bulletin #168",
+        "url": "https://www.acog.org/clinical/clinical-guidance/practice-bulletin/articles/2016/10/cervical-cancer-screening-and-prevention"
+    },
+    "womens_health_menopause": {
+        "source": "RCOG / NICE Menopause Guidelines",
+        "url": "https://www.nice.org.uk/guidance/ng23"
+    },
+    "womens_health_thyroid": {
+        "source": "ACOG Practice Bulletin #148",
+        "url": "https://www.acog.org/clinical/clinical-guidance/practice-bulletin/articles/2015/04/thyroid-disease-in-pregnancy"
     }
 }
