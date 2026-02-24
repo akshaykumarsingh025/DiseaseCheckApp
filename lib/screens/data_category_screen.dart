@@ -3,7 +3,9 @@ import 'package:go_router/go_router.dart';
 import '../utils/test_definitions.dart';
 
 class DataCategoryScreen extends StatefulWidget {
-  const DataCategoryScreen({super.key});
+  final Map<String, dynamic>? initialValues;
+
+  const DataCategoryScreen({super.key, this.initialValues});
 
   @override
   State<DataCategoryScreen> createState() => _DataCategoryScreenState();
@@ -12,6 +14,14 @@ class DataCategoryScreen extends StatefulWidget {
 class _DataCategoryScreenState extends State<DataCategoryScreen> {
   final List<String> categories = medicalTestCategories.keys.toList();
   final Set<String> _selected = {};
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialValues != null && widget.initialValues!.isNotEmpty) {
+      _selected.add('Imaging Findings (OCR)');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,8 +60,11 @@ class _DataCategoryScreenState extends State<DataCategoryScreen> {
               onPressed: _selected.isEmpty
                   ? null
                   : () {
-                      // Pass selected categories to data entry
-                      context.push('/data-entry', extra: _selected.toList());
+                      // Pass selected categories and initial values to data entry
+                      context.push('/data-entry', extra: {
+                        'categories': _selected.toList(),
+                        'initialValues': widget.initialValues,
+                      });
                     },
               child: const Text('Proceed to Entry'),
             ),

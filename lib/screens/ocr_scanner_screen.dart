@@ -6,8 +6,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 
 import '../engine/ocr_parser.dart';
-import '../models/health_data.dart';
-import '../providers/health_data_provider.dart';
 
 class OcrScannerScreen extends ConsumerStatefulWidget {
   const OcrScannerScreen({super.key});
@@ -17,7 +15,7 @@ class OcrScannerScreen extends ConsumerStatefulWidget {
 }
 
 class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
-  File? _image;
+  List<File> _images = [];
   String _extractedText = '';
   bool _isProcessing = false;
   final ImagePicker _picker = ImagePicker();
@@ -34,11 +32,11 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
     try {
       final pickedFile = await _picker.pickImage(source: source);
       if (pickedFile != null) {
+        final newImage = File(pickedFile.path);
         setState(() {
-          _image = File(pickedFile.path);
-          _extractedText = '';
+          _images.add(newImage);
         });
-        _processImage(_image!);
+        _processImage(newImage);
       }
     } catch (e) {
       _showError('Error picking image: $e');
@@ -53,7 +51,10 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
           await _textRecognizer.processImage(inputImage);
 
       setState(() {
-        _extractedText = recognizedText.text;
+        if (_extractedText.isNotEmpty) {
+          _extractedText += '\n\n--- PAGE ${_images.length} ---\n';
+        }
+        _extractedText += recognizedText.text;
         _isProcessing = false;
       });
 
@@ -95,10 +96,20 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
                       ? Colors.grey.shade900
                       : Colors.grey.shade100,
                 ),
-                child: _image != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: Image.file(_image!, fit: BoxFit.contain),
+                child: _images.isNotEmpty
+                    ? ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: _images.length,
+                        itemBuilder: (context, index) {
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(10),
+                              child: Image.file(_images[index],
+                                  fit: BoxFit.contain),
+                            ),
+                          );
+                        },
                       )
                     : Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -177,44 +188,22 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
                       const SizedBox(height: 8),
                       ElevatedButton.icon(
                         onPressed: () {
-                          // 1. Analyze the text
+                          // 1. Analyze the combined text
                           final flags = OcrParser.analyze(_extractedText);
 
-                          // 2. Map results to HealthData objects
-                          final now = DateTime.now();
-                          final parsedData = flags.entries.map((entry) {
-                            String testName = '';
-                            if (entry.key == 'fatty_liver_flag')
-                              testName = 'Fatty Liver Found (0=No, 1=Yes)';
-                            if (entry.key == 'gallstone_flag')
-                              testName = 'Gallstones Found (0=No, 1=Yes)';
-                            if (entry.key == 'kidney_stone_flag')
-                              testName = 'Kidney Stones Found (0=No, 1=Yes)';
-                            if (entry.key == 'pneumonia_flag')
-                              testName =
-                                  'Lung Consolidation/Pneumonia (0=No, 1=Yes)';
+                          // 2. Map results to initialValues map matching test definitions
+                          final initialValues = <String, dynamic>{};
+                          // We want to pass the flags exactly as they will be displayed in DataEntryScreen.
+                          flags.forEach((key, value) {
+                            initialValues[key] = value;
+                          });
 
-                            return HealthData(
-                              category: 'Imaging Findings (OCR)',
-                              testName: testName,
-                              value: entry.value,
-                              unit: 'Flag',
-                              date: now,
-                            );
-                          }).toList();
-
-                          // 3. Save to global provider
-                          for (var data in parsedData) {
-                            ref
-                                .read(healthDataProvider.notifier)
-                                .addHealthData(data);
-                          }
-
-                          // 4. Navigate to Processing Screen to run the Rule Engine
-                          context.push('/processing');
+                          // 3. Navigate to Data Category Screen so user can add manual data
+                          // and edit the OCR findings before saving
+                          context.push('/data-category', extra: initialValues);
                         },
-                        icon: const Icon(Icons.auto_awesome),
-                        label: const Text('Analyze Medical Report'),
+                        icon: const Icon(Icons.arrow_forward),
+                        label: const Text('Review & Add Manual Data'),
                       )
                     ],
                   ),

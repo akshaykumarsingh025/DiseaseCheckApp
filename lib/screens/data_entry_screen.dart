@@ -8,10 +8,12 @@ import '../utils/test_definitions.dart';
 
 class DataEntryScreen extends ConsumerStatefulWidget {
   final List<String> selectedCategories;
+  final Map<String, dynamic>? initialValues;
 
   const DataEntryScreen({
     super.key,
     required this.selectedCategories,
+    this.initialValues,
   });
 
   @override
@@ -73,6 +75,7 @@ class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
             padding: const EdgeInsets.only(bottom: 12),
             child: FormBuilderTextField(
               name: test.key,
+              initialValue: widget.initialValues?[test.key]?.toString(),
               decoration: InputDecoration(
                 labelText: test.label,
                 suffixText: test.unit.isNotEmpty ? test.unit : null,

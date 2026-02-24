@@ -75,13 +75,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/data-category',
-        builder: (context, state) => const DataCategoryScreen(),
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return DataCategoryScreen(initialValues: extra);
+        },
       ),
       GoRoute(
         path: '/data-entry',
         builder: (context, state) {
-          final categories = state.extra as List<String>? ?? [];
-          return DataEntryScreen(selectedCategories: categories);
+          final args = state.extra as Map<String, dynamic>? ?? {};
+          final categories =
+              (args['categories'] as List<dynamic>?)?.cast<String>() ?? [];
+          final initialValues = args['initialValues'] as Map<String, dynamic>?;
+          return DataEntryScreen(
+            selectedCategories: categories,
+            initialValues: initialValues,
+          );
         },
       ),
       GoRoute(
