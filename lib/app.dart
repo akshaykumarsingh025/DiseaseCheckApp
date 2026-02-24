@@ -20,6 +20,8 @@ import 'screens/report_history_screen.dart';
 import 'screens/trends_screen.dart';
 import 'screens/womens_health_screen.dart';
 import 'screens/ocr_scanner_screen.dart';
+import 'screens/ocr_review_screen.dart';
+import 'screens/ocr_action_screen.dart';
 import 'models/report.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -119,6 +121,20 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/ocr-scanner',
         builder: (context, state) => const OcrScannerScreen(),
+      ),
+      GoRoute(
+        path: '/ocr-review',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>? ?? {};
+          final initialValues = extra['values'] as Map<String, dynamic>? ?? {};
+          final rawText = extra['rawText'] as String? ?? '';
+          return OcrReviewScreen(
+              initialValues: initialValues, rawText: rawText);
+        },
+      ),
+      GoRoute(
+        path: '/ocr-action',
+        builder: (context, state) => const OcrActionScreen(),
       ),
     ],
   );

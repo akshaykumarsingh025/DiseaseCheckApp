@@ -1,0 +1,247 @@
+Complete Blood Count
+Hemoglobin 12 g/dL 12.0 - 15.0 Spectrophotometry
+(Cyanide-free)
+RBC 3.60 10^6/cu.mm 3.8 - 4.8 Impedance
+HCT 36.3 % 36 - 46 Calculated
+MCV 101.0 fL 83 - 101 Calculated
+MCH 33.3 pg 27 - 32 Calculated
+MCHC 32.9 g/dL 31.5 - 34.5 Calculated
+RDW-CV 12.8 % 11.5-14 Calculated
+Total Leucocyte Count 9.16 10^3/µL 4 - 10 Impedance
+Differential Leucocyte Count
+Neutrophils 77.2 % 40-80 DHSS/Microscopy
+Lymphocytes 13.9 % 20-40 DHSS/Microscopy
+Monocytes 7.8 % 2-10 DHSS/Microscopy
+Eosinophils 1 % 1-6 DHSS/Microscopy
+Basophils 0.1 % 0-2 Impedance/Microscopy
+Absolute Leucocyte Count
+Absolute Neutrophil Count 7.07 10^3/µL 2 - 7 Calculated
+Absolute Lymphocyte Count 1.27 10^3/µL 1-3 Calculated
+Absolute Monocyte Count 0.71 10^3/µL 0.2 - 1 Calculated
+Absolute Eosinophil Count 0.09 10^3/µL 0.02 - 0.5 Calculated
+Absolute Basophil Count 0.01 10^3/µL 0.02-0.1 Calculated
+Platelet Count 199 10^3/µL 150-410 Impedance/Microscopy
+MPV 10.4 fL 6.5 - 12 Calculated
+PDW 24.1 fL 9-17 Calculated
+Comment:
+As per the recommendation of International council for Standardization in Hematology, the differential leucocyte counts are
+additionally being reported as absolute numbers of each cell in per unit volume of blood.
+DHSS : Double Hydrodynamic Sequential System Flowcytometry
+Calculated parameters are either derived from Impedence measure, RBC pulse measurement, RBC/platelet histograms or
+formula derived.
+PO No :PO10001401088-697
+Customer Name : Ms.SONAM RANI Collected Via : 1 MG INTEGRATION - GURUGRAM
+Age/Gender : 27/Female    Referred By : Dr.
+Lab Visit ID : 1MG838129 Collection Date : 21/Feb/2026 12:02PM
+Barcode ID/Order ID : D29760126 / 15931120 Report Date : 21/Feb/2026 08:03PM
+Sample Type : Whole Blood-EDTA Report Status : Final Report
+HAEMATOLOGY
+COMPLETE HAEMOGRAM
+Test Name Result Unit Bio. Ref. Interval Method
+This test has been performed at
+TATA 1MG OKHLA
+Address: 2nd Floor, B-225, Okhla Phase I,
+Okhla Industrial Estate, New Delhi, Delhi
+110020
+Page 1 of 5Erythrocyte Sedimentation Rate
+Erythrocyte Sedimentation Rate 92 mm/hr 0-12 Capillary Photometry
+Comment:
+ESR provides an index of progress of the disease and is widely used  as an indicator of inflammation, infection, trauma, or
+malignant diseases. Changes are more significant than a single abnormal test
+It is specifically indicated  to monitor the course or response to the  treatment of diseases like rheumatoid arthritis,
+tuberculosis bacterial endocarditis ,acute rheumatic fever ,Hodgkins disease,temporal arthritis , and systemic lupus
+erythematosis; and to diagnose and monitor giant cell arteritis and polymyalgia rheumatica.
+An elevated ESR may also be associated with many other conditions, including autoimmune disease, anemia,
+infection,malignancy,pregnancy, multiple myeloma, menstruation, and hypothyroidism.
+Although a normal ESR cannot be taken to exclude the presence of organic disease, its rate is dependent on various
+physiologic and pathologic factors.
+The most important component influencing ESR is the composition of plasma. High level of C-Reactive Protein, fibrinogen,
+haptoglobin, alpha-1antitrypsin, ceruloplasmin and immunoglobulins causes the elevation of Erythrocyte Sedimentation
+Rate.
+Drugs that may cause increase ESR levels include: dextran, methyldopa, oral contraceptives, penicillamine, procainamide,
+theophylline, and Vitamin A. Drugs that may cause decrease levels include: aspirin, cortisone, and quinine
+PO No :PO10001401088-697
+Customer Name : Ms.SONAM RANI Collected Via : 1 MG INTEGRATION - GURUGRAM
+Age/Gender : 27/Female    Referred By : Dr.
+Lab Visit ID : 1MG838129 Collection Date : 21/Feb/2026 12:02PM
+Barcode ID/Order ID : D29760126 / 15931120 Report Date : 21/Feb/2026 06:40PM
+Sample Type : WHOLE BLOOD-EDTA Report Status : Final Report
+HAEMATOLOGY
+COMPLETE HAEMOGRAM
+Test Name Result Unit Bio. Ref. Interval Method
+This test has been performed at
+TATA 1MG OKHLA
+Address: 2nd Floor, B-225, Okhla Phase I,
+Okhla Industrial Estate, New Delhi, Delhi
+110020
+Page 2 of 5LIVER FUNCTION TEST
+Liver Function Test
+Bilirubin-Total 0.31 mg/dL 0.3 – 1.2 Vanadate oxidation
+Bilirubin-Direct 0.10 mg/dL 0.0-0.3 Vanadate oxidation
+Bilirubin-Indirect 0.21 mg/dL 0.2-0.8 Calculated
+Protein, Total 6.60 g/dL 5.7–8.2 Biuret
+Albumin 3.95 g/dL 3.2-4.8 BCG Dye Binding
+Globulin 2.6 g/dl 2.3 - 4.1 Calculated
+A/G Ratio 1.49 Ratio 0.8 - 1.9 Calculated
+SGOT (Aspartate Aminotransferase) 17 U/L <34 Modified IFCC
+SGPT (Alanine Transaminase) 14 U/L 10-49 Modified IFCC
+SGOT/SGPT 1.21 Ratio Calculated
+Alkaline Phosphatase 174 U/L 46-116 IFCC Standardization
+Gamma Glutamyltransferase (GGT) 8 U/L <38 Modified IFCC
+Comment:
+Raised ALT and AST indicate hepatocellular damage (e.g. viral or drugs etc). ALT is more liver-specific while AST is also
+found in heart, skeletal muscle, and kidney. Mild elevation (less than twice normal) often resolves on its own. Fatty liver
+disease (especially with metabolic syndrome) is a common cause in asymptomatic cases. Certain drugs (paracetamol,
+statins), herbal supplements, energy drinks, and antibiotics may also affect liver function.
+SGOT/SGPT Ratio: Typically <1 in healthy individuals (vary between 0.7-1.4; higher in women than men). High SGPT (ratio
+<1) seen in acute or chronic hepatitis, autoimmune disorders, medications, toxins while ratio >1 indicates alcoholic
+hepatitis, cirrhosis, metastasis or non-hepatic issues (hemolytic diseases, CVS disorders).
+Elevated Alkaline Phosphatase and GGT: Suggest cholestatic diseases (e.g. bile duct obstruction, primary biliary
+cirrhosis etc.) and can also be due to bone disease, pregnancy, chronic renal failure, malignancy, and congestive heart
+failure.
+High Bilirubin: Indicates jaundice due to increased RBC breakdown, liver damage (e.g., infections, toxins), or cholestasis
+(e.g., gallstones, tumors).
+High Protein Levels: Seen in dehydration (e.g., severe vomiting, diarrhea) or increased production (e.g., inflammation,
+hematopoietic neoplasms). Low protein and albumin: Result from impaired synthesis (liver disease), decreased intake,
+tissue damage, malabsorption, or increased renal excretion.
+PO No :PO10001401088-697
+Customer Name : Ms.SONAM RANI Collected Via : 1 MG INTEGRATION - GURUGRAM
+Age/Gender : 27/Female    Referred By : Dr.
+Lab Visit ID : 1MG838129 Collection Date : 21/Feb/2026 12:02PM
+Barcode ID/Order ID : D29760124 / 15931120 Report Date : 21/Feb/2026 06:13PM
+Sample Type : Serum Report Status : Final Report
+BIOCHEMISTRY
+Test Name Result Unit Bio. Ref. Interval Method
+This test has been performed at
+TATA 1MG OKHLA
+Address: 2nd Floor, B-225, Okhla Phase I,
+Okhla Industrial Estate, New Delhi, Delhi
+110020
+Page 3 of 5Kidney Function Test.
+Blood Urea Nitrogen 6 mg/dL 9.0 - 23.0 Urease with GLDH
+Urea 12.84 mg/dL 19.26 - 49.22 Calculated
+Creatinine 0.44 mg/dL 0.55-1.02 Alkaline picrate-kinetic
+Uric Acid 4.4 mg/dL 2.7-6.1 Uricase/Peroxidase
+Sodium 136 mEq/L 136-145 Indirect ISE
+Potassium 3.86 mEq/L 3.5-5.1 Indirect ISE
+Chloride 100.0 mmol/L 98-107 Indirect ISE
+BUN/Creatinine Ratio 13.6 Ratio 12:1 - 20:1 Calculated
+Comment:
+BUN is directly related to protein intake and nitrogen metabolism and inversely related to the rate of excretion of urea.Blood
+urea nitrogen (BUN) levels reflect the balance between the production and excretion of urea. Increased levels are seen in renal
+failure (acute or chronic), urinary tract obstruction, dehydration, shock, burns, CHF, GI bleeding, nephrotoxic drugs. Decreased
+levels are seen in hepatic failure, nephrotic syndrome, cachexia (low-protein and high-carbohydrate diets).
+Urea  is a non-proteinous nitrogen compound formed in the liver from ammonia as an end product of protein metabolism. Urea
+diffuses freely into extracellular and intracellular fluid and is ultimately excreted by the kidneys. Increased levels are found in
+acute renal failure, chronic glomerulonephritis, congestive heart failure, decreased renal perfusion, diabetes, excessive protein
+ingestion, gastrointestinal (GI) bleeding, hyperalimentation, hypovolemia, ketoacidosis, muscle wasting from starvation,
+neoplasms, pyelonephritis, shock, urinary tract obstruction, nephrotoxic drugs. Decreased levels are seen in inadequate dietary
+protein, low-protein/high-carbohydrate diet, malabsorption syndromes, pregnancy, severe liver disease, certain drugs.
+Creatinine  is catabolic product of creatinine phosphate, which is excreted by filtration through the glomerulus and by tubular
+secretion. Creatinine clearance is an acceptable clinical measure of glomerular filtration rate (GFR). Increased levels are seen in
+acute/chronic renal failure, urinary tract obstruction, hypothyroidism, nephrotoxic drugs, shock, dehydration, congestive heart
+failure, diabetes. Decreased levels are found in muscular dystrophy.
+BUN/Creatinine ratio  (normally 12:1–20:1) is decreased in acute tubular necrosis, advanced liver disease, low protein intake,
+and following hemodialysis. BUN/Creatinine ratio is increased in dehydration, GI bleeding, and increased catabolism.
+Uric acid  levels show diurnal variation. The level is usually higher in the morning and lower in the evening. Increased levels are
+seen in starvation, strenuous exercise, malnutrition, or lead poisoning, gout, renal disorders, increased breakdown of body cells
+in some cancers (including leukemia, lymphoma, and multiple myeloma) or cancer treatments, hemolytic anemia, sickle cell
+anemia, or heart failure, pre-eclampsia, liver disease (cirrhosis), obesity, psoriasis, hypothyroidism, low blood levels of
+parathyroid hormone (PTH), certain drugs, foods that are very high in purines - such as organ meats, red meats, some seafood
+and beer. Decreased levels are seen in liver disease, Wilson's disease, Syndrome of inappropriate antidiuretic hormone (SIADH),
+certain drugs.
+ 
+*** End Of Report ***
+Disclaimer : 
+1. The reported results based on laboratory investigation, are only for the purposes of diagnosis and should be clinically correlated and interpreted
+by the referring physician/ medical practitioner.  For any queries relating to the reported results, you may write to our customer support team
+on care@1mg.com
+2. It is presumed that the tests performed are, on the specimen / sample being to the patient named or identified and the verifications of
+particulars have been confirmed by the patient or his / her representative at the point of generation of said specimen.
+PO No :PO10001401088-697
+Customer Name : Ms.SONAM RANI Collected Via : 1 MG INTEGRATION - GURUGRAM
+Age/Gender : 27/Female    Referred By : Dr.
+Lab Visit ID : 1MG838129 Collection Date : 21/Feb/2026 12:02PM
+Barcode ID/Order ID : D29760124 / 15931120 Report Date : 21/Feb/2026 06:13PM
+Sample Type : Serum Report Status : Final Report
+BIOCHEMISTRY
+Test Name Result Unit Bio. Ref. Interval Method
+This test has been performed at
+TATA 1MG OKHLA
+Address: 2nd Floor, B-225, Okhla Phase I,
+Okhla Industrial Estate, New Delhi, Delhi
+110020
+Page 4 of 53. The reported results are restricted to the given specimen only. Results may vary from lab to lab and from time to time for the same parameter
+for the same patient (within subject biological variation).
+4. The patient's details along with their results in certain cases like notifiable diseases and as per local regulatory requirements will be
+communicated to the assigned regulatory bodies.
+5. The patient samples can be used as part of internal quality control, test verification, data analysis purposes within the testing scope of the
+laboratory.
+6. This report is not valid for medico legal purposes. It is performed to facilitate medical diagnosis only.
+7. Pregnant women should seek guidance from a qualified obstetrician as test parameters may vary during pregnancy
+PO No :PO10001401088-697
+Customer Name : Ms.SONAM RANI Collected Via : 1 MG INTEGRATION - GURUGRAM
+Age/Gender : 27/Female    Referred By : Dr.
+Lab Visit ID : 1MG838129 Collection Date : 21/Feb/2026 12:02PM
+Barcode ID/Order ID : D29760124 / 15931120 Report Date : 21/Feb/2026 06:13PM
+Sample Type : Serum Report Status : Final Report
+BIOCHEMISTRY
+Test Name Result Unit Bio. Ref. Interval Method
+This test has been performed at
+TATA 1MG OKHLA
+Address: 2nd Floor, B-225, Okhla Phase I,
+Okhla Industrial Estate, New Delhi, Delhi
+110020
+Page 5 of 5Following a 3-step review process:
+Accurate Testing, Assured Quality: Diagnostics PrecisionEnsuring accuracy IN every single report
+Watch how
+we take care ofyour sample
+Stringent quality control
+Measures meeting 
+international norms of safety guidelines
+Verified test procedures
+Highly standardized test procedures following CLSI
+*
+guidelinesExternal assessments
+Thorough third-party assessment by authorized expertsExperienced lab staff
+30+ medical professionals 
+with a collective 
+experience of 2 00+ yearsCutting-edge technology
+Robust healthcare systems 
+equipped with calibrated & well-maintained machinery
+SCHEDULE NOW>Claim FREE doctor consultation
+Consult top doctors from
+the comfort of your home
+Trained phlebotomists
+Ensuring smooth sample 
+collection experience & pre-analytical precisionExperienced lab experts
+and technicians conduct
+comprehensive reviewsEach report undergoes
+rigorous medical scrutiny & is 
+signed off by a doctorAdvanced systems &
+cutting-edge technology analyze 
+results with precision
+*Clinical & Laboratory Standards Institute T&C Apply
+Get Second Opinion
+Book Lab TestsOrder Medicines
+Explore Financial 
+Support & more
+Order Medicines
+Explore Financial 
+Support 
+ & more
+EXPLORE NOW >
+1800-102-1618Need Help?Reach out to our care team at care@1mg.comor chat with us
+CONNECT NOW >Have concerns regarding the report?
+1800-123-6277To know more, call
+*T&C Apply
+/gid00007/gid00019/gid00006/gid00006/gid00007/gid00019/gid00006/gid00006/gid00005/gid00016/gid00004/gid00021/gid00016/gid00019
+/gid00004/gid00016/gid00015/gid00020/gid00022/gid00013/gid00021/gid00002/gid00021/gid00010/gid00016/gid00015
+/gid00024/gid00016/gid00019/gid00021/gid00009/gid00132/gid00136/gid00131/gid00131/uni20B9/gid00005/gid00016/gid00004/gid00021/gid00016/gid00019
+/gid00004/gid00016/gid00015/gid00020/gid00022/gid00013/gid00021/gid00002/gid00021/gid00010/gid00016/gid00015
+/gid00024/gid00016/gid00019/gid00021/gid00009/gid00132/gid00136/gid00131/gid00131/uni20B9
+/gid00024/gid00010/gid00015/gid00001/gid00016/gid00023/gid00006/gid00019/gid00001/gid00021/gid00009/gid00006/gid00001/gid00020/gid00004/gid00002/gid00013/gid00006
+₹2,790/weekTreatment starting at
+₹3,280Science backed Weight Loss Solutions
+Guided by Doctors
+Book Free Doctor Consult

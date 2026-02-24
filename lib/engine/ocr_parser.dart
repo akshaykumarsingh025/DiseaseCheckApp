@@ -1,9 +1,12 @@
+import '../utils/test_definitions.dart';
+
 class OcrParser {
-  /// Analyzes raw OCR text from a medical report and returns a map of flags.
-  /// 1 indicates the condition was found, 0 indicates it was not found or is normal.
-  static Map<String, double> analyze(String text) {
+  /// Analyzes raw OCR text from a medical report and returns a map of flags and extracted values.
+  /// 1.0 indicates a condition was found, 0.0 indicates it was not found or is normal.
+  /// For structured lab tests, it returns the extracted numeric value.
+  static Map<String, dynamic> analyze(String text) {
     final lowerText = text.toLowerCase();
-    Map<String, double> results = {};
+    Map<String, dynamic> results = {};
 
     // 1. Fatty Liver (Steatosis)
     // Keywords: fatty liver, fatty infiltration, steatosis, increased echogenicity of the liver, hepatomegaly with fatty changes
@@ -13,8 +16,6 @@ class OcrParser {
         lowerText.contains('increased echogenicity of the liver') ||
         lowerText.contains('diffuse echogenic liver')) {
       results['fatty_liver_flag'] = 1.0;
-    } else {
-      results['fatty_liver_flag'] = 0.0;
     }
 
     // 2. Gallstones (Cholelithiasis)
@@ -26,8 +27,6 @@ class OcrParser {
         (lowerText.contains('gallbladder') &&
             lowerText.contains('shadowing'))) {
       results['gallstone_flag'] = 1.0;
-    } else {
-      results['gallstone_flag'] = 0.0;
     }
 
     // 3. Kidney Stones (Nephrolithiasis)
@@ -38,8 +37,6 @@ class OcrParser {
         lowerText.contains('renal calculi') ||
         (lowerText.contains('kidney') && lowerText.contains('calculus'))) {
       results['kidney_stone_flag'] = 1.0;
-    } else {
-      results['kidney_stone_flag'] = 0.0;
     }
 
     // 4. Pneumonia / Lung Consolidation
@@ -50,8 +47,44 @@ class OcrParser {
         lowerText.contains('patchy opacity') ||
         lowerText.contains('patchy opacities')) {
       results['pneumonia_flag'] = 1.0;
-    } else {
-      results['pneumonia_flag'] = 0.0;
+    }
+
+    // 5. Dynamic extraction for all other standard lab tests
+    // Look for the test label followed by a number (e.g., "Hemoglobin: 14.5")
+    for (var category in medicalTestCategories.values) {
+      for (var testDef in category) {
+        // Skip flag-based tests as we handled them above
+        if (testDef.unit == 'Flag' || testDef.unit == 'Score') continue;
+
+        // Simplify label to prevent Regex breakage (e.g., "AMH (Anti-Müllerian)" -> "AMH")
+        String simplifiedLabel =
+            testDef.label.replaceAll(RegExp(r'\(.*?\)'), '').trim();
+        if (simplifiedLabel.isEmpty) simplifiedLabel = testDef.label;
+
+        List<String> searchTerms = [simplifiedLabel, ...testDef.ocrAliases];
+
+        for (var term in searchTerms) {
+          // E.g., match "AMH: 1.0" or "Hemoglobin = 14.5"
+          final regex = RegExp(
+            r'(?:\b|[^a-zA-Z0-9])' +
+                RegExp.escape(term) +
+                r'[^\d]{0,15}?(\d+(\.\d+)?)',
+            caseSensitive: false,
+          );
+
+          final match = regex.firstMatch(text);
+          if (match != null && match.groupCount >= 1) {
+            final numberStr = match.group(1);
+            if (numberStr != null) {
+              final val = double.tryParse(numberStr);
+              if (val != null) {
+                results[testDef.key] = val;
+                break; // Stop checking aliases once we find a match
+              }
+            }
+          }
+        }
+      }
     }
 
     return results;

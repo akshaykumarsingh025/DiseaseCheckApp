@@ -15,7 +15,7 @@ class OcrScannerScreen extends ConsumerStatefulWidget {
 }
 
 class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
-  List<File> _images = [];
+  File? _image;
   String _extractedText = '';
   bool _isProcessing = false;
   final ImagePicker _picker = ImagePicker();
@@ -32,15 +32,67 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
     try {
       final pickedFile = await _picker.pickImage(source: source);
       if (pickedFile != null) {
-        final newImage = File(pickedFile.path);
         setState(() {
-          _images.add(newImage);
+          _image = File(pickedFile.path);
         });
-        _processImage(newImage);
+        _processImage(_image!);
       }
     } catch (e) {
       _showError('Error picking image: $e');
     }
+  }
+
+  // Reorders ML Kit blocks geometrically to fix column-reading issues
+  String _reconstructRows(RecognizedText recognizedText) {
+    if (recognizedText.blocks.isEmpty) return recognizedText.text;
+
+    List<Map<String, dynamic>> allLines = [];
+    for (var block in recognizedText.blocks) {
+      for (var line in block.lines) {
+        final rect = line.boundingBox;
+        allLines.add({
+          'text': line.text,
+          'y': rect.top + (rect.height / 2),
+          'x': rect.left,
+          'height': rect.height
+        });
+      }
+    }
+
+    // Sort vertically
+    allLines.sort((a, b) => (a['y'] as double).compareTo(b['y'] as double));
+
+    List<List<Map<String, dynamic>>> rows = [];
+    if (allLines.isNotEmpty) {
+      List<Map<String, dynamic>> currentRow = [allLines.first];
+      double currentY = allLines.first['y'];
+      double currentHeight = allLines.first['height'];
+
+      for (int i = 1; i < allLines.length; i++) {
+        final line = allLines[i];
+
+        // Group lines that are vertically close (e.g. within half a line height)
+        if ((line['y'] - currentY).abs() < (currentHeight * 0.5)) {
+          currentRow.add(line);
+        } else {
+          rows.add(currentRow);
+          currentRow = [line];
+          currentY = line['y'];
+          currentHeight = line['height'];
+        }
+      }
+      rows.add(currentRow);
+    }
+
+    StringBuffer sb = StringBuffer();
+    for (var row in rows) {
+      // Sort items in this row left to right
+      row.sort((a, b) => (a['x'] as double).compareTo(b['x'] as double));
+      String rowText = row.map((e) => e['text']).join('   ');
+      sb.writeln(rowText);
+    }
+
+    return sb.toString();
   }
 
   Future<void> _processImage(File imageFile) async {
@@ -51,11 +103,27 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
           await _textRecognizer.processImage(inputImage);
 
       setState(() {
-        if (_extractedText.isNotEmpty) {
-          _extractedText += '\n\n--- PAGE ${_images.length} ---\n';
-        }
-        _extractedText += recognizedText.text;
         _isProcessing = false;
+      });
+
+      if (!mounted) return;
+
+      // Reconstruct aligned text to counter ML Kit's column-reading bias
+      String alignedText = _reconstructRows(recognizedText);
+
+      // 1. Analyze the text
+      final flags = OcrParser.analyze(alignedText);
+
+      // 2. Map results to initialValues map matching test definitions
+      final initialValues = <String, dynamic>{};
+      flags.forEach((key, value) {
+        initialValues[key] = value;
+      });
+
+      // 3. Navigate to Review Screen with both parsed values and raw text
+      context.push('/ocr-review', extra: {
+        'values': initialValues,
+        'rawText': alignedText,
       });
 
       // Temporary logging to console for debugging pure text extraction
@@ -96,20 +164,10 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
                       ? Colors.grey.shade900
                       : Colors.grey.shade100,
                 ),
-                child: _images.isNotEmpty
-                    ? ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _images.length,
-                        itemBuilder: (context, index) {
-                          return Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.file(_images[index],
-                                  fit: BoxFit.contain),
-                            ),
-                          );
-                        },
+                child: _image != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.file(_image!, fit: BoxFit.contain),
                       )
                     : Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -126,7 +184,8 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -137,78 +196,22 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.deepPurpleAccent,
                       foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
                     ),
                   ),
                   ElevatedButton.icon(
                     onPressed: () => _pickImage(ImageSource.gallery),
                     icon: const Icon(Icons.photo_library),
                     label: const Text('Gallery'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12),
+                    ),
                   ),
                 ],
               ),
             ),
-
-            // Extracted Text Preview area (for debugging and review)
-            if (_extractedText.isNotEmpty)
-              Expanded(
-                flex: 1,
-                child: Container(
-                  margin: const EdgeInsets.all(16),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.black26
-                        : Colors.white,
-                    border: Border.all(color: Colors.indigo.withOpacity(0.3)),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'Extracted Text (Raw)',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: SingleChildScrollView(
-                          child: Text(
-                            _extractedText,
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontFamily: 'monospace',
-                              color: Theme.of(context).brightness ==
-                                      Brightness.dark
-                                  ? Colors.greenAccent
-                                  : Colors.black87,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton.icon(
-                        onPressed: () {
-                          // 1. Analyze the combined text
-                          final flags = OcrParser.analyze(_extractedText);
-
-                          // 2. Map results to initialValues map matching test definitions
-                          final initialValues = <String, dynamic>{};
-                          // We want to pass the flags exactly as they will be displayed in DataEntryScreen.
-                          flags.forEach((key, value) {
-                            initialValues[key] = value;
-                          });
-
-                          // 3. Navigate to Data Category Screen so user can add manual data
-                          // and edit the OCR findings before saving
-                          context.push('/data-category', extra: initialValues);
-                        },
-                        icon: const Icon(Icons.arrow_forward),
-                        label: const Text('Review & Add Manual Data'),
-                      )
-                    ],
-                  ),
-                ),
-              ),
             const SizedBox(height: 16),
           ],
         ),

@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 
-/// A definition for a single lab test input field
 class LabTestDefinition {
   final String key;
   final String label;
   final String unit;
   final TextInputType keyboardType;
+  final List<String> ocrAliases;
 
   const LabTestDefinition({
     required this.key,
     required this.label,
     required this.unit,
     this.keyboardType = const TextInputType.numberWithOptions(decimal: true),
+    this.ocrAliases = const [],
   });
 }
 
@@ -69,16 +70,60 @@ const Map<String, List<LabTestDefinition>> medicalTestCategories = {
   ],
   'Complete Blood Count (CBC)': [
     LabTestDefinition(key: 'hemoglobin', label: 'Hemoglobin', unit: 'g/dL'),
-    LabTestDefinition(key: 'hematocrit', label: 'Hematocrit (PCV)', unit: '%'),
-    LabTestDefinition(key: 'rbc_count', label: 'RBC Count', unit: 'million/µL'),
-    LabTestDefinition(key: 'wbc_count', label: 'WBC Count', unit: 'cells/µL'),
+    LabTestDefinition(
+        key: 'hematocrit',
+        label: 'Hematocrit (PCV)',
+        unit: '%',
+        ocrAliases: ['HCT', 'PCV']),
+    LabTestDefinition(
+        key: 'rbc_count',
+        label: 'RBC Count',
+        unit: 'million/µL',
+        ocrAliases: ['RBC']),
+    LabTestDefinition(
+        key: 'wbc_count',
+        label: 'WBC Count',
+        unit: 'cells/µL',
+        ocrAliases: ['WBC', 'Total Leucocyte Count']),
     LabTestDefinition(
         key: 'platelet_count', label: 'Platelet Count', unit: '/µL'),
     LabTestDefinition(key: 'mcv', label: 'MCV', unit: 'fL'),
     LabTestDefinition(key: 'mch', label: 'MCH', unit: 'pg'),
     LabTestDefinition(key: 'mchc', label: 'MCHC', unit: 'g/dL'),
-    LabTestDefinition(key: 'rdw', label: 'RDW', unit: '%'),
-    LabTestDefinition(key: 'esr', label: 'ESR', unit: 'mm/hr'),
+    LabTestDefinition(
+        key: 'rdw', label: 'RDW', unit: '%', ocrAliases: ['RDW-CV', 'RDW-SD']),
+    LabTestDefinition(
+        key: 'neutrophils',
+        label: 'Neutrophils',
+        unit: '%',
+        ocrAliases: ['Absolute Neutrophil Count']),
+    LabTestDefinition(
+        key: 'lymphocytes',
+        label: 'Lymphocytes',
+        unit: '%',
+        ocrAliases: ['Absolute Lymphocyte Count']),
+    LabTestDefinition(
+        key: 'monocytes',
+        label: 'Monocytes',
+        unit: '%',
+        ocrAliases: ['Absolute Monocyte Count']),
+    LabTestDefinition(
+        key: 'eosinophils',
+        label: 'Eosinophils',
+        unit: '%',
+        ocrAliases: ['Absolute Eosinophil Count']),
+    LabTestDefinition(
+        key: 'basophils',
+        label: 'Basophils',
+        unit: '%',
+        ocrAliases: ['Absolute Basophil Count']),
+    LabTestDefinition(key: 'mpv', label: 'MPV', unit: 'fL'),
+    LabTestDefinition(key: 'pdw', label: 'PDW', unit: 'fL'),
+    LabTestDefinition(
+        key: 'esr',
+        label: 'ESR',
+        unit: 'mm/hr',
+        ocrAliases: ['Erythrocyte Sedimentation Rate']),
   ],
   'Liver Function Tests (LFT)': [
     LabTestDefinition(key: 'alt', label: 'ALT (SGPT)', unit: 'U/L'),
