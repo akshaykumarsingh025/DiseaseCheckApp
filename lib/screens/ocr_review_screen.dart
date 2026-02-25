@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 
 import '../models/health_data.dart';
 import '../providers/health_data_provider.dart';
+import '../providers/session_provider.dart';
 import '../utils/test_definitions.dart';
 
 class OcrReviewScreen extends ConsumerStatefulWidget {
@@ -20,11 +21,13 @@ class OcrReviewScreen extends ConsumerStatefulWidget {
 
 class _OcrReviewScreenState extends ConsumerState<OcrReviewScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
+  bool _combineWithHistory = true;
 
   void _saveDataAndNext() {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
       final formValues = _formKey.currentState!.value;
       final now = DateTime.now();
+      List<HealthData> ocrEntries = [];
 
       formValues.forEach((key, value) {
         if (value == null) return;
@@ -43,9 +46,23 @@ class _OcrReviewScreenState extends ConsumerState<OcrReviewScreen> {
             unit: testDef.unit,
             date: now,
           );
+
+          ocrEntries.add(data);
           ref.read(healthDataProvider.notifier).addHealthData(data);
         }
       });
+
+      // 2. Prepare the Temporary Session Provider for THIS specific report
+      final session = ref.read(currentSessionProvider.notifier);
+      session.clearSession();
+
+      if (_combineWithHistory) {
+        // Add all historical data PLUS the newly added data
+        session.addMultipleData(ref.read(healthDataProvider));
+      } else {
+        // ONLY add the new data we just entered
+        session.addMultipleData(ocrEntries);
+      }
 
       // Navigate to action choices
       context.push('/ocr-action');
@@ -153,7 +170,35 @@ class _OcrReviewScreenState extends ConsumerState<OcrReviewScreen> {
                       child: FormBuilder(
                         key: _formKey,
                         child: ListView(
-                          children: formFields,
+                          children: [
+                            ...formFields,
+                            const SizedBox(height: 16),
+                            Card(
+                              elevation: 0,
+                              color: Theme.of(context)
+                                  .primaryColor
+                                  .withValues(alpha: 0.05),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: BorderSide(
+                                  color: Theme.of(context)
+                                      .primaryColor
+                                      .withValues(alpha: 0.2),
+                                ),
+                              ),
+                              child: SwitchListTile(
+                                title: const Text('Combine with Past Data',
+                                    style:
+                                        TextStyle(fontWeight: FontWeight.bold)),
+                                subtitle: const Text(
+                                    'Include all your previous lab History in this new Report for a complete assessment.',
+                                    style: TextStyle(fontSize: 12)),
+                                value: _combineWithHistory,
+                                onChanged: (val) =>
+                                    setState(() => _combineWithHistory = val),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),

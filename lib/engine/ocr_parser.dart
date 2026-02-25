@@ -49,7 +49,25 @@ class OcrParser {
       results['pneumonia_flag'] = 1.0;
     }
 
-    // 5. Dynamic extraction for all other standard lab tests
+    // 5. Polycystic Ovaries / PCOS Morphology (Pelvic Ultrasound)
+    if (lowerText.contains('polycystic morphology') ||
+        lowerText.contains('polycystic ovaries') ||
+        lowerText.contains('multiple follicles') ||
+        lowerText.contains('pcom') ||
+        lowerText.contains('string of pearls')) {
+      results['pcos_imaging_flag'] = 1.0;
+    }
+
+    // 6. Enlarged Prostate / BPH (Pelvic/Transrectal Ultrasound)
+    if (lowerText.contains('enlarged prostate') ||
+        lowerText.contains('prostatomegaly') ||
+        lowerText.contains('bph') ||
+        lowerText.contains('benign prostatic hyperplasia') ||
+        lowerText.contains('significant post void residual')) {
+      results['prostate_enlarged_flag'] = 1.0;
+    }
+
+    // 7. Dynamic extraction for all other standard lab tests
     // Look for the test label followed by a number (e.g., "Hemoglobin: 14.5")
     for (var category in medicalTestCategories.values) {
       for (var testDef in category) {

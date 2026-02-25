@@ -36,7 +36,6 @@ dependencies:
 
   # PDF Report Generation
   pdf: ^3.11.0
-  printing: ^5.13.1
 
   # UI Components
   google_fonts: ^6.2.1

@@ -683,6 +683,30 @@ class RuleEngine {
         findings, 'Imaging OCR Match');
   }
 
+  static Map<String, dynamic> checkPcosImaging(double? flag) {
+    double riskScore = 0;
+    List<String> findings = [];
+    if (flag != null && flag == 1.0) {
+      riskScore = 80;
+      findings.add(
+          'OCR detected keywords indicative of Polycystic Ovarian Morphology (PCOM) / PCOS.');
+    }
+    return _buildResult('Polycystic Ovary Syndrome (Imaging)', 'E28.2',
+        riskScore, findings, 'Imaging OCR Match');
+  }
+
+  static Map<String, dynamic> checkEnlargedProstate(double? flag) {
+    double riskScore = 0;
+    List<String> findings = [];
+    if (flag != null && flag == 1.0) {
+      riskScore = 80;
+      findings.add(
+          'OCR detected keywords indicative of Benign Prostatic Hyperplasia (BPH) / Enlarged Prostate.');
+    }
+    return _buildResult('Enlarged Prostate (BPH)', 'N40', riskScore, findings,
+        'Imaging OCR Match');
+  }
+
   // ═══════════════════════════════════════════════════════════════
   // 12. URINE ANALYSIS
   // ═══════════════════════════════════════════════════════════════
@@ -1009,16 +1033,32 @@ class RuleEngine {
           urineWbc: urWbc, microalbumin: microAlb, urinePh: urPh));
     }
 
-    // --- IMAGING / OCR FLAGS ---
+    // --- IMAGING OCR FLAGS ---
     double? fattyLiverFlag = v('Fatty Liver Found (0=No, 1=Yes)');
+    if (fattyLiverFlag != null && fattyLiverFlag == 1.0) {
+      reports.add(checkFattyLiver(fattyLiverFlag));
+    }
     double? gallstoneFlag = v('Gallstones Found (0=No, 1=Yes)');
+    if (gallstoneFlag != null && gallstoneFlag == 1.0) {
+      reports.add(checkGallstones(gallstoneFlag));
+    }
     double? kidneyStoneFlag = v('Kidney Stones Found (0=No, 1=Yes)');
+    if (kidneyStoneFlag != null && kidneyStoneFlag == 1.0) {
+      reports.add(checkKidneyStones(kidneyStoneFlag));
+    }
     double? pneumoniaFlag = v('Lung Consolidation/Pneumonia (0=No, 1=Yes)');
-
-    if (fattyLiverFlag == 1.0) reports.add(checkFattyLiver(fattyLiverFlag));
-    if (gallstoneFlag == 1.0) reports.add(checkGallstones(gallstoneFlag));
-    if (kidneyStoneFlag == 1.0) reports.add(checkKidneyStones(kidneyStoneFlag));
-    if (pneumoniaFlag == 1.0) reports.add(checkPneumonia(pneumoniaFlag));
+    if (pneumoniaFlag != null && pneumoniaFlag == 1.0) {
+      reports.add(checkPneumonia(pneumoniaFlag));
+    }
+    double? pcosImagingFlag =
+        v('Polycystic Ovaries / PCOS Morphology (0=No, 1=Yes)');
+    if (pcosImagingFlag != null && pcosImagingFlag == 1.0) {
+      reports.add(checkPcosImaging(pcosImagingFlag));
+    }
+    double? prostateFlag = v('Enlarged Prostate / BPH Flag (0=No, 1=Yes)');
+    if (prostateFlag != null && prostateFlag == 1.0) {
+      reports.add(checkEnlargedProstate(prostateFlag));
+    }
 
     return reports;
   }

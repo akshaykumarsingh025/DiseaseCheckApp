@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../models/health_data.dart';
 import '../providers/health_data_provider.dart';
+import '../providers/session_provider.dart';
 import '../utils/test_definitions.dart';
 
 class DataEntryScreen extends ConsumerStatefulWidget {
@@ -22,6 +23,7 @@ class DataEntryScreen extends ConsumerStatefulWidget {
 
 class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
+  bool _combineWithHistory = true;
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +37,27 @@ class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               ..._buildDynamicFields(),
+              const SizedBox(height: 24),
+              Card(
+                elevation: 0,
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.05),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  side: BorderSide(
+                    color:
+                        Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: SwitchListTile(
+                  title: const Text('Combine with Past Data',
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: const Text(
+                      'Include all your previous lab History in this new Report for a complete assessment.',
+                      style: TextStyle(fontSize: 12)),
+                  value: _combineWithHistory,
+                  onChanged: (val) => setState(() => _combineWithHistory = val),
+                ),
+              ),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: _submitForm,
@@ -125,9 +148,23 @@ class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
       });
 
       if (entries.isNotEmpty) {
+        // 1. Always save to physical storage / global history (for Trends & Women's Hub)
         for (var entry in entries) {
           await ref.read(healthDataProvider.notifier).addHealthData(entry);
         }
+
+        // 2. Prepare the Temporary Session Provider for THIS specific report
+        final session = ref.read(currentSessionProvider.notifier);
+        session.clearSession();
+
+        if (_combineWithHistory) {
+          // Add all historical data PLUS the newly added data
+          session.addMultipleData(ref.read(healthDataProvider));
+        } else {
+          // ONLY add the new data we just entered
+          session.addMultipleData(entries);
+        }
+
         if (context.mounted) {
           context.go('/processing');
         }

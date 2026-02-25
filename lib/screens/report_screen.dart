@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:printing/printing.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 import '../models/report.dart';
 import '../services/pdf_report_service.dart';
 import '../services/storage_service.dart';
@@ -76,12 +78,8 @@ class ReportScreen extends StatelessWidget {
   }
 
   Future<void> _downloadPdf(BuildContext context) async {
-    final profile = StorageService.getProfile();
-    final pdfBytes = await PdfReportService.generateReport(
-      report: report!,
-      profile: profile,
-    );
-    await Printing.layoutPdf(onLayout: (_) => pdfBytes);
+    await _sharePdf(
+        context); // Alias download to share since we removed printing
   }
 
   Future<void> _sharePdf(BuildContext context) async {
@@ -90,9 +88,15 @@ class ReportScreen extends StatelessWidget {
       report: report!,
       profile: profile,
     );
-    await Printing.sharePdf(
-      bytes: pdfBytes,
-      filename: 'health_report_${report!.reportId.substring(0, 8)}.pdf',
+
+    final tempDir = await getTemporaryDirectory();
+    final file = File(
+        '${tempDir.path}/health_report_${report!.reportId.substring(0, 8)}.pdf');
+    await file.writeAsBytes(pdfBytes);
+
+    await Share.shareXFiles(
+      [XFile(file.path)],
+      text: 'My Health Assessment Report',
     );
   }
 

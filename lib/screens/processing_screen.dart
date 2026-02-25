@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
-import '../providers/health_data_provider.dart';
+import '../providers/session_provider.dart';
 import '../providers/report_provider.dart';
 import '../engine/rule_engine.dart';
 import '../models/report.dart';
@@ -25,7 +25,8 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
     // Artificial delay for UX
     await Future.delayed(const Duration(seconds: 2));
 
-    final healthDataList = ref.read(healthDataProvider);
+    final session = ref.read(currentSessionProvider.notifier);
+    final healthDataList = ref.read(currentSessionProvider);
 
     // Process health data through the Rule Engine
     final analysisResults = RuleEngine.evaluateHealthData(healthDataList);
@@ -65,6 +66,9 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
     );
 
     await ref.read(reportProvider.notifier).addReport(newReport);
+
+    // Clear the session so the next report starts fresh unless combined
+    session.clearSession();
 
     if (mounted) {
       // Navigate to report screen passing the newly created report ID

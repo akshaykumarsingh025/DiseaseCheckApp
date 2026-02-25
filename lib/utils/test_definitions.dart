@@ -245,6 +245,16 @@ const Map<String, List<LabTestDefinition>> medicalTestCategories = {
         label: 'Lung Consolidation/Pneumonia (0=No, 1=Yes)',
         unit: 'Flag',
         keyboardType: TextInputType.number),
+    LabTestDefinition(
+        key: 'pcos_imaging_flag',
+        label: 'Polycystic Ovaries / PCOS Morphology (0=No, 1=Yes)',
+        unit: 'Flag',
+        keyboardType: TextInputType.number),
+    LabTestDefinition(
+        key: 'prostate_enlarged_flag',
+        label: 'Enlarged Prostate / BPH Flag (0=No, 1=Yes)',
+        unit: 'Flag',
+        keyboardType: TextInputType.number),
   ],
   'Cardiac Markers': [
     LabTestDefinition(key: 'troponin_i', label: 'Troponin I', unit: 'ng/mL'),

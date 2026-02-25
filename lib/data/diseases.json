@@ -88,5 +88,19 @@
     "category": "Imaging & Scans",
     "icd10": "J18.9",
     "detectionMethod": "Detected via OCR parsing of Chest X-Ray reports (keywords: consolidation, infiltrate, opacity, effusion)."
+  },
+  {
+    "id": "IMG05",
+    "name": "Polycystic Ovary Syndrome (Imaging)",
+    "category": "Imaging & Scans",
+    "icd10": "E28.2",
+    "detectionMethod": "Detected via OCR parsing of Pelvic Ultrasound reports (keywords: polycystic morphology, pcom, multiple follicles)."
+  },
+  {
+    "id": "IMG06",
+    "name": "Enlarged Prostate (BPH)",
+    "category": "Imaging & Scans",
+    "icd10": "N40",
+    "detectionMethod": "Detected via OCR parsing of Pelvic Ultrasound reports (keywords: enlarged prostate, bph, prostatomegaly)."
   }
 ]
