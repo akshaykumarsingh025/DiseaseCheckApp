@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:pdfx/pdfx.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../engine/ocr_parser.dart';
 
@@ -16,7 +19,6 @@ class OcrScannerScreen extends ConsumerStatefulWidget {
 
 class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
   File? _image;
-  String _extractedText = '';
   bool _isProcessing = false;
   final ImagePicker _picker = ImagePicker();
   final TextRecognizer _textRecognizer =
@@ -39,6 +41,25 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
       }
     } catch (e) {
       _showError('Error picking image: $e');
+    }
+  }
+
+  Future<void> _pickPdf() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'],
+      );
+
+      if (result != null && result.files.single.path != null) {
+        setState(() {
+          _image = null; // Clear image preview since it's a PDF
+        });
+        File file = File(result.files.single.path!);
+        _processPdf(file);
+      }
+    } catch (e) {
+      _showError('Error picking PDF: $e');
     }
   }
 
@@ -128,11 +149,73 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
 
       // Temporary logging to console for debugging pure text extraction
       print('--- ML KIT OCR EXTRACTED TEXT ---');
-      print(_extractedText);
+      print(alignedText);
       print('---------------------------------');
     } catch (e) {
       setState(() => _isProcessing = false);
       _showError('Error processing image: $e');
+    }
+  }
+
+  Future<void> _processPdf(File pdfFile) async {
+    setState(() => _isProcessing = true);
+    try {
+      final document = await PdfDocument.openFile(pdfFile.path);
+      StringBuffer allText = StringBuffer();
+
+      final tempDir = await getTemporaryDirectory();
+
+      for (int i = 1; i <= document.pagesCount; i++) {
+        final page = await document.getPage(i);
+        // Render at 2x resolution for better OCR accuracy
+        final pageImage = await page.render(
+          width: page.width * 2,
+          height: page.height * 2,
+          format: PdfPageImageFormat.jpeg,
+        );
+
+        if (pageImage != null) {
+          final tempFile = File('${tempDir.path}/pdf_page_$i.jpg');
+          await tempFile.writeAsBytes(pageImage.bytes);
+
+          final inputImage = InputImage.fromFile(tempFile);
+          final RecognizedText recognizedText =
+              await _textRecognizer.processImage(inputImage);
+
+          allText.writeln(_reconstructRows(recognizedText));
+          allText.writeln(); // Add spacing between pages
+        }
+        await page.close();
+      }
+      await document.close();
+
+      setState(() => _isProcessing = false);
+
+      if (!mounted) return;
+
+      final fullText = allText.toString();
+
+      // 1. Analyze the text
+      final flags = OcrParser.analyze(fullText);
+
+      // 2. Map results
+      final initialValues = <String, dynamic>{};
+      flags.forEach((key, value) {
+        initialValues[key] = value;
+      });
+
+      // 3. Navigate
+      context.push('/ocr-review', extra: {
+        'values': initialValues,
+        'rawText': fullText,
+      });
+
+      print('--- ML KIT PDF EXTRACTED TEXT ---');
+      print(fullText);
+      print('---------------------------------');
+    } catch (e) {
+      setState(() => _isProcessing = false);
+      _showError('Error processing PDF: $e');
     }
   }
 
@@ -186,27 +269,46 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
             Padding(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              child: Column(
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: () => _pickImage(ImageSource.camera),
-                    icon: const Icon(Icons.camera_alt),
-                    label: const Text('Camera'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurpleAccent,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
-                    ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => _pickImage(ImageSource.camera),
+                        icon: const Icon(Icons.camera_alt),
+                        label: const Text('Camera'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.deepPurpleAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                        ),
+                      ),
+                      ElevatedButton.icon(
+                        onPressed: () => _pickImage(ImageSource.gallery),
+                        icon: const Icon(Icons.photo_library),
+                        label: const Text('Gallery'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                        ),
+                      ),
+                    ],
                   ),
+                  const SizedBox(height: 16),
                   ElevatedButton.icon(
-                    onPressed: () => _pickImage(ImageSource.gallery),
-                    icon: const Icon(Icons.photo_library),
-                    label: const Text('Gallery'),
+                    onPressed: _pickPdf,
+                    icon: const Icon(Icons.picture_as_pdf),
+                    label: const Text('Upload PDF Lab Report'),
                     style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blueAccent.shade100,
+                      foregroundColor: Colors.blue.shade900,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 24, vertical: 12),
+                          horizontal: 32, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
                 ],
