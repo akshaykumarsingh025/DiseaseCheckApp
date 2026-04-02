@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/health_data_provider.dart';
 import '../providers/profile_provider.dart';
 import '../engine/rule_engine.dart';
+import '../engine/risk_result.dart';
 
 class WomensHealthScreen extends ConsumerWidget {
   const WomensHealthScreen({super.key});
@@ -252,13 +253,12 @@ class WomensHealthScreen extends ConsumerWidget {
     String subtitle,
     IconData icon,
     Color color,
-    Map<String, dynamic>? result,
+    RiskResult? result,
   ) {
     final hasData = result != null;
-    final riskLevel = hasData ? result['riskLevel'] as String : 'no data';
-    final riskScore = hasData ? result['riskScore'] as int : 0;
-    final findings =
-        hasData ? List<String>.from(result['findings'] ?? []) : <String>[];
+    final riskLevel = hasData ? result.riskLevel : 'no data';
+    final riskScore = hasData ? result.riskScore : 0;
+    final findings = hasData ? result.findings : <String>[];
 
     Color riskColor;
     String riskLabel;

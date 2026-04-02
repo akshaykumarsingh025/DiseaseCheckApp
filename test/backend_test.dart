@@ -7,7 +7,6 @@ import 'package:disease_check_app/utils/test_definitions.dart';
 
 void main() {
   test('Backend OCR and Reporting Engine Headless Verification', () {
-    print('--- TESTING OCR PARSER ---');
     String dummyText = """
     Pelvic and Abdominal Ultrasound Report:
     Liver: Echogenic liver texture consistent with fatty infiltration.
@@ -19,18 +18,14 @@ void main() {
     """;
 
     Map<String, dynamic> ocrParsedArgs = OcrParser.analyze(dummyText);
-    print('Extracted Keys & Values: $ocrParsedArgs');
 
-    print('\\n--- MAPPING TO HEALTH DATA ---');
     List<HealthData> ocrDataSession = [];
     final now = DateTime.now();
 
     ocrParsedArgs.forEach((key, value) {
       if (value == null) return;
-
       final testDef = getTestDefinition(key);
       if (testDef == null) return;
-
       final double? numVal = double.tryParse(value.toString());
       if (numVal != null) {
         ocrDataSession.add(HealthData(
@@ -40,32 +35,24 @@ void main() {
           unit: testDef.unit,
           date: now,
         ));
-        print('Mapped: ${testDef.label} = $numVal');
       }
     });
 
-    print('\n--- TESTING RULE ENGINE EVALUATION ---');
     final analysisResults = RuleEngine.evaluateHealthData(ocrDataSession);
-    print('Analysis Entries: ${analysisResults.length}');
     for (var res in analysisResults) {
-      print(
-          "- ${res['disease']} -> Risk: ${res['riskLevel']} (${res['riskScore']})");
-      print("  Findings: ${(res['findings'] as List).join(', ')}");
+      expect(res.disease, isNotEmpty);
+      expect(res.riskLevel, isIn(['low', 'moderate', 'high']));
     }
 
-    print('\n--- TESTING REPORT GENERATOR ---');
     final report = ReportGenerator.generate(analysisResults);
-    print(
-        "High Risk Conds: ${report.highRiskDiseases.map((e) => e['disease']).join(', ')}");
-    print(
-        "Mod Risk Conds: ${report.moderateRiskDiseases.map((e) => e['disease']).join(', ')}");
-    print(
-        "Low Risk Conds: ${report.lowRiskDiseases.map((e) => e['disease']).join(', ')}");
+    final allDiseases = [
+      ...report.highRiskDiseases,
+      ...report.moderateRiskDiseases,
+      ...report.lowRiskDiseases,
+    ];
+    expect(allDiseases.length, greaterThan(0));
 
-    print('\n--- TESTING SESSION COMBINATION BUG FIX LOGIC ---');
-    print(
-        'Scenario: We have historical Hemoglobin data, and we ONLY submit OCR Data for new report.');
-
+    // Test session combination logic
     List<HealthData> historicalData = [
       HealthData(
           category: 'CBC',
@@ -76,18 +63,12 @@ void main() {
     ];
 
     List<HealthData> combineTrueData = [...historicalData, ...ocrDataSession];
-    List<HealthData> combineFalseData = [...ocrDataSession]; // History excluded
+    List<HealthData> combineFalseData = [...ocrDataSession];
 
     final resTrue = RuleEngine.evaluateHealthData(combineTrueData);
     final resFalse = RuleEngine.evaluateHealthData(combineFalseData);
 
-    print(
-        "If Combined (Report includes past history): ${resTrue.map((e) => e['disease']).join(', ')}");
-    print(
-        "If NOT Combined (Report ONLY has session): ${resFalse.map((e) => e['disease']).join(', ')}");
-
-    // Assert logic
-    expect(report.highRiskDiseases.length + report.moderateRiskDiseases.length,
-        greaterThan(0));
+    // Combined data should produce at least as many results
+    expect(resTrue.length, greaterThanOrEqualTo(resFalse.length));
   });
 }

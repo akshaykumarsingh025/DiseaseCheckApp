@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -116,7 +117,10 @@ class StorageService {
         final profile = UserProfile.fromJson(doc.data()!);
         await profileBox.put('current_user', profile);
       }
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log('Failed to fetch profile from cloud for uid=$uid',
+          error: e, stackTrace: s, name: 'StorageService');
+    }
   }
 
   static Future<void> fetchReportsFromCloud(String uid) async {
@@ -126,11 +130,16 @@ class StorageService {
           .doc(uid)
           .collection('reports')
           .get();
+      // Clear existing local data first to avoid duplicates on re-login
+      await historyBox.clear();
       for (var doc in snapshot.docs) {
         final report = HealthReport.fromJson(doc.data());
         await historyBox.put(report.reportId, report);
       }
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log('Failed to fetch reports from cloud for uid=$uid',
+          error: e, stackTrace: s, name: 'StorageService');
+    }
   }
 
   static Future<void> fetchHealthDataFromCloud(String uid) async {
@@ -140,11 +149,16 @@ class StorageService {
           .doc(uid)
           .collection('health_data')
           .get();
+      // Clear existing local data first to avoid duplicates on re-login
+      await healthDataBox.clear();
       for (var doc in snapshot.docs) {
         final data = HealthData.fromJson(doc.data());
         await healthDataBox.add(data);
       }
-    } catch (_) {}
+    } catch (e, s) {
+      developer.log('Failed to fetch health data from cloud for uid=$uid',
+          error: e, stackTrace: s, name: 'StorageService');
+    }
   }
 
   // ═══════════════════════════════════════════════════

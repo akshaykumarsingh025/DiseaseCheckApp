@@ -1,18 +1,35 @@
+import 'dart:developer' as developer;
 import 'package:dio/dio.dart';
 
 class IcdApiService {
-  final Dio _dio = Dio();
+  IcdApiService({Dio? dio, String? clientId, String? clientSecret})
+      : _dio = dio ?? Dio(),
+        _clientId = clientId ??
+            const String.fromEnvironment('WHO_ICD_CLIENT_ID'),
+        _clientSecret = clientSecret ??
+            const String.fromEnvironment('WHO_ICD_CLIENT_SECRET');
+
+  final Dio _dio;
+  final String _clientId;
+  final String _clientSecret;
   String? _accessToken;
   DateTime? _tokenExpiry;
 
-  static const String _tokenUrl = 'https://icdaccessmanagement.who.int/connect/token';
+  static const String _tokenUrl =
+      'https://icdaccessmanagement.who.int/connect/token';
   static const String _apiBase = 'https://id.who.int/icd';
 
-  // Replace with credentials from WHO ICD API
-  static const String _clientId = 'YOUR_CLIENT_ID';
-  static const String _clientSecret = 'YOUR_CLIENT_SECRET';
+  bool get isConfigured =>
+      _clientId.isNotEmpty && _clientSecret.isNotEmpty;
 
   Future<String> _getToken() async {
+    if (!isConfigured) {
+      throw StateError(
+          'WHO ICD API credentials not configured. '
+          'Pass --dart-define=WHO_ICD_CLIENT_ID=<id> --dart-define=WHO_ICD_CLIENT_SECRET=<secret> at build time.',
+      );
+    }
+
     if (_accessToken != null &&
         _tokenExpiry != null &&
         DateTime.now().isBefore(_tokenExpiry!)) {
@@ -31,7 +48,8 @@ class IcdApiService {
     );
 
     _accessToken = response.data['access_token'];
-    _tokenExpiry = DateTime.now().add(Duration(seconds: response.data['expires_in']));
+    _tokenExpiry =
+        DateTime.now().add(Duration(seconds: response.data['expires_in']));
     return _accessToken!;
   }
 
@@ -40,7 +58,10 @@ class IcdApiService {
       final token = await _getToken();
       final response = await _dio.get(
         '$_apiBase/entity/search',
-        queryParameters: {'q': query, 'subtreeFilterUsesFoundationDescendants': false},
+        queryParameters: {
+          'q': query,
+          'subtreeFilterUsesFoundationDescendants': false
+        },
         options: Options(headers: {
           'Authorization': 'Bearer $token',
           'Accept': 'application/json',
@@ -50,12 +71,18 @@ class IcdApiService {
       );
 
       final results = response.data['destinationEntities'] as List? ?? [];
-      return results.map((e) => {
-        'title': e['title'] ?? '',
-        'theCode': e['theCode'] ?? '',
-        'id': e['id'] ?? '',
-      }).toList();
-    } catch (e) {
+      return results
+          .map((e) => {
+                'title': e['title'] ?? '',
+                'theCode': e['theCode'] ?? '',
+                'id': e['id'] ?? '',
+              })
+          .toList();
+    } on StateError {
+      rethrow;
+    } catch (e, s) {
+      developer.log('ICD API search failed for "$query"',
+          error: e, stackTrace: s, name: 'IcdApiService');
       return [];
     }
   }

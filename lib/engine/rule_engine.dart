@@ -1,7 +1,10 @@
+import '../utils/test_definitions.dart';
+import 'risk_result.dart';
+
 /// Comprehensive Rule Engine that evaluates health data against clinical
 /// guidelines for all 12 medical categories.
 ///
-/// Each check method returns a Map with:
+/// Each check method returns a RiskResult with:
 ///   - disease: String (disease name)
 ///   - riskLevel: String ('low', 'moderate', 'high')
 ///   - riskScore: int (0-100)
@@ -11,7 +14,7 @@ class RuleEngine {
   // ═══════════════════════════════════════════════════════════════
   // 1. DIABETES (ADA Standards of Care)
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> checkDiabetes({
+  static RiskResult checkDiabetes({
     double? fastingGlucose,
     double? hba1c,
     double? postPrandial,
@@ -60,7 +63,7 @@ class RuleEngine {
   // ═══════════════════════════════════════════════════════════════
   // 2. HYPERTENSION (AHA/ACC Guidelines)
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> checkHypertension({
+  static RiskResult checkHypertension({
     required double systolic,
     required double diastolic,
   }) {
@@ -93,7 +96,7 @@ class RuleEngine {
   // ═══════════════════════════════════════════════════════════════
   // 3. LIPID PANEL (ATP III / AHA Guidelines)
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> checkCholesterol({
+  static RiskResult checkCholesterol({
     double? totalCholesterol,
     double? ldl,
     double? hdl,
@@ -150,7 +153,7 @@ class RuleEngine {
   // ═══════════════════════════════════════════════════════════════
   // 4. CBC — Complete Blood Count (WHO Anemia & Infection Criteria)
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> checkAnemia({
+  static RiskResult checkAnemia({
     double? hemoglobin,
     double? hematocrit,
     double? mcv,
@@ -187,7 +190,7 @@ class RuleEngine {
         'Anemia', 'D64.9', riskScore, findings, 'WHO Anemia Grading');
   }
 
-  static Map<String, dynamic> checkWBCAbnormality({
+  static RiskResult checkWBCAbnormality({
     double? wbcCount,
     double? plateletCount,
   }) {
@@ -221,7 +224,7 @@ class RuleEngine {
   // ═══════════════════════════════════════════════════════════════
   // 5. LIVER FUNCTION TESTS (NAFLD / Hepatitis / Jaundice)
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> checkLiverDisease({
+  static RiskResult checkLiverDisease({
     double? alt,
     double? ast,
     double? alp,
@@ -270,7 +273,7 @@ class RuleEngine {
   // ═══════════════════════════════════════════════════════════════
   // 6. KIDNEY FUNCTION TESTS (KDIGO CKD Staging)
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> checkKidneyDisease({
+  static RiskResult checkKidneyDisease({
     double? bun,
     double? creatinine,
     double? egfr,
@@ -339,7 +342,7 @@ class RuleEngine {
   // ═══════════════════════════════════════════════════════════════
   // 7. THYROID PANEL
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> checkThyroid({
+  static RiskResult checkThyroid({
     double? tsh,
     double? freeT3,
     double? freeT4,
@@ -383,7 +386,7 @@ class RuleEngine {
   // ═══════════════════════════════════════════════════════════════
   // 8. IRON PANEL
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> checkIronDeficiency({
+  static RiskResult checkIronDeficiency({
     double? serumIron,
     double? tibc,
     double? ferritin,
@@ -420,7 +423,7 @@ class RuleEngine {
   // ═══════════════════════════════════════════════════════════════
   // 9. CARDIAC MARKERS
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> checkCardiacRisk({
+  static RiskResult checkCardiacRisk({
     double? troponinI,
     double? troponinT,
     double? ckMb,
@@ -470,7 +473,7 @@ class RuleEngine {
   // 10. WOMEN'S HEALTH & PREGNANCY (ACOG / RCOG)
   // ═══════════════════════════════════════════════════════════════
 
-  static Map<String, dynamic> checkPCOS({
+  static RiskResult checkPCOS({
     double? testosterone,
     double? dheas,
     double? amh,
@@ -515,7 +518,7 @@ class RuleEngine {
         'PCOS Risk Profile', 'E28.2', riskScore, findings, 'ACOG PB #194');
   }
 
-  static Map<String, dynamic> checkOvarianReserve({
+  static RiskResult checkOvarianReserve({
     double? amh,
     double? fsh,
   }) {
@@ -542,7 +545,7 @@ class RuleEngine {
         'Ovarian Reserve', 'N97.9', riskScore, findings, 'ACOG CO #618');
   }
 
-  static Map<String, dynamic> checkMenopauseRisk({
+  static RiskResult checkMenopauseRisk({
     double? fsh,
     double? estradiol,
   }) {
@@ -570,7 +573,7 @@ class RuleEngine {
         findings, 'RCOG/BMS Guidelines');
   }
 
-  static Map<String, dynamic> checkPregnancyReadiness({
+  static RiskResult checkPregnancyReadiness({
     double? amh,
     double? tsh,
     double? fbg,
@@ -600,7 +603,7 @@ class RuleEngine {
         findings, 'ACOG Composite');
   }
 
-  static Map<String, dynamic> checkCervicalCancerRisk({
+  static RiskResult checkCervicalCancerRisk({
     double? papSmear,
     double? hpvStatus,
   }) {
@@ -624,7 +627,7 @@ class RuleEngine {
     if (hpvStatus != null && hpvStatus == 1) {
       riskScore += 40;
       findings.add('HPV Status: Positive (High-risk strains detected)');
-    } else if (hpvStatus == 0) {
+    } else if (hpvStatus != null && hpvStatus == 0) {
       findings.add('HPV Status: Negative');
     }
 
@@ -635,7 +638,7 @@ class RuleEngine {
   // ═══════════════════════════════════════════════════════════════
   // 11. MEDICAL IMAGING (OCR)
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> checkFattyLiver(double? flag) {
+  static RiskResult checkFattyLiver(double? flag) {
     double riskScore = 0;
     List<String> findings = [];
     if (flag != null && flag == 1.0) {
@@ -647,7 +650,7 @@ class RuleEngine {
         'Imaging OCR Match');
   }
 
-  static Map<String, dynamic> checkGallstones(double? flag) {
+  static RiskResult checkGallstones(double? flag) {
     double riskScore = 0;
     List<String> findings = [];
     if (flag != null && flag == 1.0) {
@@ -659,7 +662,7 @@ class RuleEngine {
         findings, 'Imaging OCR Match');
   }
 
-  static Map<String, dynamic> checkKidneyStones(double? flag) {
+  static RiskResult checkKidneyStones(double? flag) {
     double riskScore = 0;
     List<String> findings = [];
     if (flag != null && flag == 1.0) {
@@ -671,7 +674,7 @@ class RuleEngine {
         findings, 'Imaging OCR Match');
   }
 
-  static Map<String, dynamic> checkPneumonia(double? flag) {
+  static RiskResult checkPneumonia(double? flag) {
     double riskScore = 0;
     List<String> findings = [];
     if (flag != null && flag == 1.0) {
@@ -683,7 +686,7 @@ class RuleEngine {
         findings, 'Imaging OCR Match');
   }
 
-  static Map<String, dynamic> checkPcosImaging(double? flag) {
+  static RiskResult checkPcosImaging(double? flag) {
     double riskScore = 0;
     List<String> findings = [];
     if (flag != null && flag == 1.0) {
@@ -695,7 +698,7 @@ class RuleEngine {
         riskScore, findings, 'Imaging OCR Match');
   }
 
-  static Map<String, dynamic> checkEnlargedProstate(double? flag) {
+  static RiskResult checkEnlargedProstate(double? flag) {
     double riskScore = 0;
     List<String> findings = [];
     if (flag != null && flag == 1.0) {
@@ -710,7 +713,7 @@ class RuleEngine {
   // ═══════════════════════════════════════════════════════════════
   // 12. URINE ANALYSIS
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> checkUrineAnalysis({
+  static RiskResult checkUrineAnalysis({
     double? urineWbc,
     double? microalbumin,
     double? urinePh,
@@ -735,7 +738,7 @@ class RuleEngine {
   // ═══════════════════════════════════════════════════════════════
   // 12. VITALS — SpO2, Heart Rate, Temperature, Respiratory Rate
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> checkVitalSigns({
+  static RiskResult checkVitalSigns({
     double? heartRate,
     double? spo2,
     double? bodyTemp,
@@ -787,31 +790,30 @@ class RuleEngine {
   // ═══════════════════════════════════════════════════════════════
   // MASTER EVALUATOR — processes all HealthData entries
   // ═══════════════════════════════════════════════════════════════
-  static List<Map<String, dynamic>> evaluateHealthData(
-      List<dynamic> dataEntries) {
-    List<Map<String, dynamic>> reports = [];
+  static List<RiskResult> evaluateHealthData(List<dynamic> dataEntries) {
+    List<RiskResult> reports = [];
 
     // Build a flat lookup map from the data entries: key → value
+    // Supports both key-based and label-based lookups for backwards compat
     Map<String, double> vals = {};
     for (var entry in dataEntries) {
-      // Store by the key used in test_definitions.dart
-      // The testName now stores the label, and category stores the category name
-      // We need to map labels back to keys
-      String label = entry.testName.toString();
-      double value = entry.value;
-      vals[label] = value;
+      final rawLabel = entry.testName.toString();
+      final value = entry.value as double;
+
+      // Try to resolve label → key for consistent lookups
+      final key = labelToKey[rawLabel] ?? rawLabel;
+      vals[key] = value;
     }
 
-    // Helper to find a value by checking both the label and key
-    double? v(String label) => vals[label];
+    double? v(String key) => vals[key];
 
     // --- VITALS ---
-    double? heartRate = v('Heart Rate (Resting)');
-    double? systolic = v('Systolic BP');
-    double? diastolic = v('Diastolic BP');
-    double? bodyTemp = v('Body Temperature');
-    double? respRate = v('Respiratory Rate');
-    double? spo2 = v('SpO2 (Oxygen Saturation)');
+    double? heartRate = v('heart_rate');
+    double? systolic = v('systolic');
+    double? diastolic = v('diastolic');
+    double? bodyTemp = v('body_temp_f');
+    double? respRate = v('respiratory_rate');
+    double? spo2 = v('spo2');
 
     if (systolic != null && diastolic != null) {
       reports.add(checkHypertension(systolic: systolic, diastolic: diastolic));
@@ -829,11 +831,11 @@ class RuleEngine {
     }
 
     // --- BLOOD SUGAR ---
-    double? fbs = v('Fasting Blood Glucose');
-    double? hba1c = v('HbA1c');
-    double? pp = v('Post-Prandial (2hr)');
-    double? rg = v('Random Blood Sugar');
-    double? fi = v('Fasting Insulin');
+    double? fbs = v('fasting_glucose');
+    double? hba1c = v('hba1c');
+    double? pp = v('post_prandial');
+    double? rg = v('random_glucose');
+    double? fi = v('fasting_insulin');
     if (fbs != null || hba1c != null || pp != null || rg != null) {
       reports.add(checkDiabetes(
           fastingGlucose: fbs,
@@ -844,11 +846,11 @@ class RuleEngine {
     }
 
     // --- LIPID PANEL ---
-    double? tc = v('Total Cholesterol');
-    double? ldl = v('LDL Cholesterol');
-    double? hdl = v('HDL Cholesterol');
-    double? tg = v('Triglycerides');
-    double? vldl = v('VLDL Cholesterol');
+    double? tc = v('total_cholesterol');
+    double? ldl = v('ldl');
+    double? hdl = v('hdl');
+    double? tg = v('triglycerides');
+    double? vldl = v('vldl');
     if (tc != null || ldl != null || hdl != null || tg != null) {
       reports.add(checkCholesterol(
           totalCholesterol: tc,
@@ -859,12 +861,12 @@ class RuleEngine {
     }
 
     // --- CBC ---
-    double? hb = v('Hemoglobin');
-    double? hct = v('Hematocrit (PCV)');
-    double? mcv = v('MCV');
-    double? mch = v('MCH');
-    double? wbc = v('WBC Count');
-    double? platelets = v('Platelet Count');
+    double? hb = v('hemoglobin');
+    double? hct = v('hematocrit');
+    double? mcv = v('mcv');
+    double? mch = v('mch');
+    double? wbc = v('wbc_count');
+    double? platelets = v('platelet_count');
     if (hb != null || mcv != null) {
       reports.add(
           checkAnemia(hemoglobin: hb, hematocrit: hct, mcv: mcv, mch: mch));
@@ -874,13 +876,13 @@ class RuleEngine {
     }
 
     // --- LFT ---
-    double? alt = v('ALT (SGPT)');
-    double? ast = v('AST (SGOT)');
-    double? alp = v('ALP (Alkaline Phosphatase)');
-    double? tbil = v('Total Bilirubin');
-    double? dbil = v('Direct Bilirubin');
-    double? albm = v('Albumin');
-    double? ggt = v('GGT (Gamma GT)');
+    double? alt = v('alt');
+    double? ast = v('ast');
+    double? alp = v('alp');
+    double? tbil = v('total_bilirubin');
+    double? dbil = v('direct_bilirubin');
+    double? albm = v('albumin');
+    double? ggt = v('ggt');
     if (alt != null ||
         ast != null ||
         alp != null ||
@@ -898,13 +900,13 @@ class RuleEngine {
     }
 
     // --- KFT ---
-    double? bun = v('Blood Urea Nitrogen (BUN)');
-    double? creat = v('Serum Creatinine');
-    double? egfr = v('eGFR');
-    double? uricAcid = v('Uric Acid');
-    double? na = v('Sodium (Na)');
-    double? k = v('Potassium (K)');
-    double? ca = v('Calcium');
+    double? bun = v('bun');
+    double? creat = v('creatinine');
+    double? egfr = v('egfr');
+    double? uricAcid = v('uric_acid');
+    double? na = v('sodium');
+    double? k = v('potassium');
+    double? ca = v('calcium');
     if (bun != null ||
         creat != null ||
         egfr != null ||
@@ -922,18 +924,18 @@ class RuleEngine {
     }
 
     // --- THYROID ---
-    double? tsh = v('TSH');
-    double? ft3 = v('Free T3');
-    double? ft4 = v('Free T4');
+    double? tsh = v('tsh');
+    double? ft3 = v('free_t3');
+    double? ft4 = v('free_t4');
     if (tsh != null || ft3 != null || ft4 != null) {
       reports.add(checkThyroid(tsh: tsh, freeT3: ft3, freeT4: ft4));
     }
 
     // --- IRON PANEL ---
-    double? sIron = v('Serum Iron');
-    double? tibc = v('TIBC');
-    double? ferritin = v('Ferritin');
-    double? tSat = v('Transferrin Saturation');
+    double? sIron = v('serum_iron');
+    double? tibc = v('tibc');
+    double? ferritin = v('ferritin');
+    double? tSat = v('transferrin_saturation');
     if (sIron != null || ferritin != null || tibc != null || tSat != null) {
       reports.add(checkIronDeficiency(
           serumIron: sIron,
@@ -943,13 +945,13 @@ class RuleEngine {
     }
 
     // --- CARDIAC MARKERS ---
-    double? tropI = v('Troponin I');
-    double? tropT = v('Troponin T');
-    double? ckMb = v('CK-MB');
-    double? bnp = v('BNP');
-    double? ntBnp = v('NT-proBNP');
-    double? crpC = v('CRP (High Sensitivity)');
-    double? hcy = v('Homocysteine');
+    double? tropI = v('troponin_i');
+    double? tropT = v('troponin_t');
+    double? ckMb = v('ck_mb');
+    double? bnp = v('bnp');
+    double? ntBnp = v('nt_pro_bnp');
+    double? crpC = v('crp');
+    double? hcy = v('homocysteine');
     if (tropI != null ||
         tropT != null ||
         ckMb != null ||
@@ -968,16 +970,15 @@ class RuleEngine {
     }
 
     // --- WOMEN'S HEALTH & PREGNANCY ---
-    double? testosterone = v('Total Testosterone');
-    double? dheas = v('DHEAS');
-    double? amh = v('AMH (Anti-Müllerian Hormone)');
-    double? lh = v('LH');
-    double? fsh = v('FSH');
-    double? estradiol = v('Estradiol (E2)');
-    double? papSmear =
-        v('Pap Smear Result (0=Normal, 1=ASCUS, 2=LSIL, 3=HSIL)');
-    double? hpvStatus = v('High-Risk HPV (0=Negative, 1=Positive)');
-    double? homaIr = v('HOMA-IR');
+    double? testosterone = v('testosterone');
+    double? dheas = v('dheas');
+    double? amh = v('amh');
+    double? lh = v('lh');
+    double? fsh = v('fsh');
+    double? estradiol = v('estradiol');
+    double? papSmear = v('pap_smear');
+    double? hpvStatus = v('hpv_status');
+    double? homaIr = v('homa_ir');
 
     // Only trigger women's health checks if actual hormonal panel data
     // was entered (not just from overlapping Thyroid/BloodSugar panels)
@@ -1025,37 +1026,36 @@ class RuleEngine {
     }
 
     // --- URINE ANALYSIS ---
-    double? urWbc = v('WBC in Urine');
-    double? microAlb = v('Microalbumin');
-    double? urPh = v('pH');
+    double? urWbc = v('urine_wbc');
+    double? microAlb = v('microalbumin');
+    double? urPh = v('urine_ph');
     if (urWbc != null || microAlb != null) {
       reports.add(checkUrineAnalysis(
           urineWbc: urWbc, microalbumin: microAlb, urinePh: urPh));
     }
 
     // --- IMAGING OCR FLAGS ---
-    double? fattyLiverFlag = v('Fatty Liver Found (0=No, 1=Yes)');
+    double? fattyLiverFlag = v('fatty_liver_flag');
     if (fattyLiverFlag != null && fattyLiverFlag == 1.0) {
       reports.add(checkFattyLiver(fattyLiverFlag));
     }
-    double? gallstoneFlag = v('Gallstones Found (0=No, 1=Yes)');
+    double? gallstoneFlag = v('gallstone_flag');
     if (gallstoneFlag != null && gallstoneFlag == 1.0) {
       reports.add(checkGallstones(gallstoneFlag));
     }
-    double? kidneyStoneFlag = v('Kidney Stones Found (0=No, 1=Yes)');
+    double? kidneyStoneFlag = v('kidney_stone_flag');
     if (kidneyStoneFlag != null && kidneyStoneFlag == 1.0) {
       reports.add(checkKidneyStones(kidneyStoneFlag));
     }
-    double? pneumoniaFlag = v('Lung Consolidation/Pneumonia (0=No, 1=Yes)');
+    double? pneumoniaFlag = v('pneumonia_flag');
     if (pneumoniaFlag != null && pneumoniaFlag == 1.0) {
       reports.add(checkPneumonia(pneumoniaFlag));
     }
-    double? pcosImagingFlag =
-        v('Polycystic Ovaries / PCOS Morphology (0=No, 1=Yes)');
+    double? pcosImagingFlag = v('pcos_imaging_flag');
     if (pcosImagingFlag != null && pcosImagingFlag == 1.0) {
       reports.add(checkPcosImaging(pcosImagingFlag));
     }
-    double? prostateFlag = v('Enlarged Prostate / BPH Flag (0=No, 1=Yes)');
+    double? prostateFlag = v('prostate_enlarged_flag');
     if (prostateFlag != null && prostateFlag == 1.0) {
       reports.add(checkEnlargedProstate(prostateFlag));
     }
@@ -1064,32 +1064,21 @@ class RuleEngine {
   }
 
   // ═══════════════════════════════════════════════════════════════
-  // HELPER — builds a standardized result Map
+  // HELPER — builds a standardized RiskResult
   // ═══════════════════════════════════════════════════════════════
-  static Map<String, dynamic> _buildResult(
+  static RiskResult _buildResult(
     String disease,
     String icdCode,
     double score,
     List<String> findings,
     String guideline,
   ) {
-    score = score.clamp(0, 100);
-    String riskLevel;
-    if (score >= 70) {
-      riskLevel = 'high';
-    } else if (score >= 30) {
-      riskLevel = 'moderate';
-    } else {
-      riskLevel = 'low';
-    }
-
-    return {
-      'disease': disease,
-      'icdCode': icdCode,
-      'riskScore': score.toInt(),
-      'riskLevel': riskLevel,
-      'findings': findings,
-      'guideline': guideline,
-    };
+    return RiskResult.build(
+      disease: disease,
+      icdCode: icdCode,
+      score: score,
+      findings: findings,
+      guideline: guideline,
+    );
   }
 }

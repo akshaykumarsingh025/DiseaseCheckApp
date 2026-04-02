@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:uuid/uuid.dart';
 import '../providers/session_provider.dart';
 import '../providers/report_provider.dart';
 import '../engine/rule_engine.dart';
-import '../models/report.dart';
+import '../engine/report_generator.dart';
 
 class ProcessingScreen extends ConsumerStatefulWidget {
   const ProcessingScreen({super.key});
@@ -15,6 +14,8 @@ class ProcessingScreen extends ConsumerStatefulWidget {
 }
 
 class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
+  String? _error;
+
   @override
   void initState() {
     super.initState();
@@ -22,62 +23,68 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
   }
 
   Future<void> _processData() async {
-    // Artificial delay for UX
-    await Future.delayed(const Duration(seconds: 2));
+    try {
+      // Artificial delay for UX
+      await Future.delayed(const Duration(seconds: 2));
 
-    final session = ref.read(currentSessionProvider.notifier);
-    final healthDataList = ref.read(currentSessionProvider);
+      final session = ref.read(currentSessionProvider.notifier);
+      final healthDataList = ref.read(currentSessionProvider);
 
-    // Process health data through the Rule Engine
-    final analysisResults = RuleEngine.evaluateHealthData(healthDataList);
+      // Process health data through the Rule Engine
+      final analysisResults = RuleEngine.evaluateHealthData(healthDataList);
 
-    List<String> high = [];
-    List<String> moderate = [];
-    List<String> low = [];
-    List<String> abnormalities = [];
+      // Generate report using ReportGenerator
+      final newReport = ReportGenerator.generate(analysisResults);
 
-    for (var result in analysisResults) {
-      String disease = result['disease'];
-      String level = result['riskLevel'];
-      List<String> findings = List<String>.from(result['findings'] ?? []);
-      int score = result['riskScore'] ?? 0;
+      await ref.read(reportProvider.notifier).addReport(newReport);
 
-      String label = '$disease — Risk: $score%';
+      // Clear the session so the next report starts fresh unless combined
+      session.clearSession();
 
-      if (level == 'high' || level == 'critical') {
-        high.add(label);
-      } else if (level == 'moderate') {
-        moderate.add(label);
-      } else {
-        low.add(label);
+      if (mounted) {
+        context.go('/report', extra: newReport);
       }
-      abnormalities.addAll(findings);
-    }
-
-    // In a real scenario, we might merge RuleEngine with ML Engine results here.
-
-    final newReport = HealthReport(
-      reportId: const Uuid().v4(),
-      date: DateTime.now(),
-      highRiskDiseases: high,
-      moderateRiskDiseases: moderate,
-      lowRiskDiseases: low,
-      abnormalValues: abnormalities,
-    );
-
-    await ref.read(reportProvider.notifier).addReport(newReport);
-
-    // Clear the session so the next report starts fresh unless combined
-    session.clearSession();
-
-    if (mounted) {
-      // Navigate to report screen passing the newly created report ID
-      context.go('/report', extra: newReport);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _error = e.toString());
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_error != null) {
+      return Scaffold(
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, size: 64, color: Colors.red.shade400),
+                const SizedBox(height: 16),
+                const Text(
+                  'Analysis Failed',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  _error!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: () => context.go('/dashboard'),
+                  child: const Text('Back to Dashboard'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return const Scaffold(
       body: Center(
         child: Column(

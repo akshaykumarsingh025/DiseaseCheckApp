@@ -1,3 +1,4 @@
+import 'dart:developer' as developer;
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -147,10 +148,8 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
         'rawText': alignedText,
       });
 
-      // Temporary logging to console for debugging pure text extraction
-      print('--- ML KIT OCR EXTRACTED TEXT ---');
-      print(alignedText);
-      print('---------------------------------');
+      developer.log('OCR extracted ${alignedText.length} chars from image',
+          name: 'OcrScanner');
     } catch (e) {
       setState(() => _isProcessing = false);
       _showError('Error processing image: $e');
@@ -210,9 +209,8 @@ class _OcrScannerScreenState extends ConsumerState<OcrScannerScreen> {
         'rawText': fullText,
       });
 
-      print('--- ML KIT PDF EXTRACTED TEXT ---');
-      print(fullText);
-      print('---------------------------------');
+      developer.log('OCR extracted ${fullText.length} chars from PDF',
+          name: 'OcrScanner');
     } catch (e) {
       setState(() => _isProcessing = false);
       _showError('Error processing PDF: $e');

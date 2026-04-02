@@ -105,8 +105,11 @@ class TrendsScreen extends ConsumerWidget {
     final maxVal =
         dataPoints.map((d) => d.value).reduce((a, b) => a > b ? a : b);
     final range = maxVal - minVal;
-    final yMin = (minVal - range * 0.2).clamp(0.0, double.infinity).toDouble();
-    final yMax = (maxVal + range * 0.2).toDouble();
+    final effectiveRange = range > 0 ? range : (maxVal.abs() * 0.1 + 5.0);
+    final yMin = (minVal - effectiveRange * 0.2)
+        .clamp(0.0, double.infinity)
+        .toDouble();
+    final yMax = (maxVal + effectiveRange * 0.2).toDouble();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 16),

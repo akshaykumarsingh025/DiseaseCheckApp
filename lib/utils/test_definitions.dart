@@ -6,6 +6,8 @@ class LabTestDefinition {
   final String unit;
   final TextInputType keyboardType;
   final List<String> ocrAliases;
+  final double? minValue;
+  final double? maxValue;
 
   const LabTestDefinition({
     required this.key,
@@ -13,7 +15,15 @@ class LabTestDefinition {
     required this.unit,
     this.keyboardType = const TextInputType.numberWithOptions(decimal: true),
     this.ocrAliases = const [],
+    this.minValue,
+    this.maxValue,
   });
+
+  bool isValidValue(double value) {
+    if (minValue != null && value < minValue!) return false;
+    if (maxValue != null && value > maxValue!) return false;
+    return true;
+  }
 }
 
 /// A master dictionary of all medical categories and their corresponding test fields.
@@ -24,72 +34,141 @@ const Map<String, List<LabTestDefinition>> medicalTestCategories = {
         key: 'heart_rate',
         label: 'Heart Rate (Resting)',
         unit: 'bpm',
-        keyboardType: TextInputType.number),
+        keyboardType: TextInputType.number,
+        minValue: 20,
+        maxValue: 300),
     LabTestDefinition(
         key: 'systolic',
         label: 'Systolic BP',
         unit: 'mmHg',
-        keyboardType: TextInputType.number),
+        keyboardType: TextInputType.number,
+        minValue: 40,
+        maxValue: 300),
     LabTestDefinition(
         key: 'diastolic',
         label: 'Diastolic BP',
         unit: 'mmHg',
-        keyboardType: TextInputType.number),
+        keyboardType: TextInputType.number,
+        minValue: 20,
+        maxValue: 200),
     LabTestDefinition(
-        key: 'body_temp_f', label: 'Body Temperature', unit: '°F'),
+        key: 'body_temp_f',
+        label: 'Body Temperature',
+        unit: '°F',
+        minValue: 90,
+        maxValue: 115),
     LabTestDefinition(
         key: 'respiratory_rate',
         label: 'Respiratory Rate',
         unit: 'breaths/min',
-        keyboardType: TextInputType.number),
+        keyboardType: TextInputType.number,
+        minValue: 4,
+        maxValue: 60),
     LabTestDefinition(
         key: 'spo2',
         label: 'SpO2 (Oxygen Saturation)',
         unit: '%',
-        keyboardType: TextInputType.number),
+        keyboardType: TextInputType.number,
+        minValue: 50,
+        maxValue: 100),
   ],
   'Blood Sugar / Diabetes Panel': [
     LabTestDefinition(
-        key: 'fasting_glucose', label: 'Fasting Blood Glucose', unit: 'mg/dL'),
+        key: 'fasting_glucose',
+        label: 'Fasting Blood Glucose',
+        unit: 'mg/dL',
+        minValue: 20,
+        maxValue: 600),
     LabTestDefinition(
-        key: 'post_prandial', label: 'Post-Prandial (2hr)', unit: 'mg/dL'),
-    LabTestDefinition(key: 'hba1c', label: 'HbA1c', unit: '%'),
+        key: 'post_prandial',
+        label: 'Post-Prandial (2hr)',
+        unit: 'mg/dL',
+        minValue: 20,
+        maxValue: 600),
     LabTestDefinition(
-        key: 'random_glucose', label: 'Random Blood Sugar', unit: 'mg/dL'),
+        key: 'hba1c', label: 'HbA1c', unit: '%', minValue: 3, maxValue: 20),
     LabTestDefinition(
-        key: 'fasting_insulin', label: 'Fasting Insulin', unit: 'µIU/mL'),
+        key: 'random_glucose',
+        label: 'Random Blood Sugar',
+        unit: 'mg/dL',
+        minValue: 20,
+        maxValue: 600),
+    LabTestDefinition(
+        key: 'fasting_insulin',
+        label: 'Fasting Insulin',
+        unit: 'µIU/mL',
+        minValue: 0,
+        maxValue: 500),
   ],
   'Lipid Panel (Cholesterol)': [
     LabTestDefinition(
-        key: 'total_cholesterol', label: 'Total Cholesterol', unit: 'mg/dL'),
-    LabTestDefinition(key: 'ldl', label: 'LDL Cholesterol', unit: 'mg/dL'),
-    LabTestDefinition(key: 'hdl', label: 'HDL Cholesterol', unit: 'mg/dL'),
+        key: 'total_cholesterol',
+        label: 'Total Cholesterol',
+        unit: 'mg/dL',
+        minValue: 50,
+        maxValue: 600),
     LabTestDefinition(
-        key: 'triglycerides', label: 'Triglycerides', unit: 'mg/dL'),
-    LabTestDefinition(key: 'vldl', label: 'VLDL Cholesterol', unit: 'mg/dL'),
+        key: 'ldl',
+        label: 'LDL Cholesterol',
+        unit: 'mg/dL',
+        minValue: 20,
+        maxValue: 400),
+    LabTestDefinition(
+        key: 'hdl',
+        label: 'HDL Cholesterol',
+        unit: 'mg/dL',
+        minValue: 10,
+        maxValue: 150),
+    LabTestDefinition(
+        key: 'triglycerides',
+        label: 'Triglycerides',
+        unit: 'mg/dL',
+        minValue: 20,
+        maxValue: 2000),
+    LabTestDefinition(
+        key: 'vldl',
+        label: 'VLDL Cholesterol',
+        unit: 'mg/dL',
+        minValue: 0,
+        maxValue: 200),
   ],
   'Complete Blood Count (CBC)': [
-    LabTestDefinition(key: 'hemoglobin', label: 'Hemoglobin', unit: 'g/dL'),
+    LabTestDefinition(
+        key: 'hemoglobin',
+        label: 'Hemoglobin',
+        unit: 'g/dL',
+        minValue: 2,
+        maxValue: 25),
     LabTestDefinition(
         key: 'hematocrit',
         label: 'Hematocrit (PCV)',
         unit: '%',
-        ocrAliases: ['HCT', 'PCV']),
+        ocrAliases: ['HCT', 'PCV'],
+        minValue: 5,
+        maxValue: 75),
     LabTestDefinition(
         key: 'rbc_count',
         label: 'RBC Count',
         unit: 'million/µL',
-        ocrAliases: ['RBC']),
+        ocrAliases: ['RBC'],
+        minValue: 1,
+        maxValue: 10),
     LabTestDefinition(
         key: 'wbc_count',
         label: 'WBC Count',
         unit: 'cells/µL',
-        ocrAliases: ['WBC', 'Total Leucocyte Count']),
+        ocrAliases: ['WBC', 'Total Leucocyte Count'],
+        minValue: 100,
+        maxValue: 100000),
     LabTestDefinition(
-        key: 'platelet_count', label: 'Platelet Count', unit: '/µL'),
-    LabTestDefinition(key: 'mcv', label: 'MCV', unit: 'fL'),
-    LabTestDefinition(key: 'mch', label: 'MCH', unit: 'pg'),
-    LabTestDefinition(key: 'mchc', label: 'MCHC', unit: 'g/dL'),
+        key: 'platelet_count',
+        label: 'Platelet Count',
+        unit: '/µL',
+        minValue: 5000,
+        maxValue: 2000000),
+    LabTestDefinition(key: 'mcv', label: 'MCV', unit: 'fL', minValue: 50, maxValue: 150),
+    LabTestDefinition(key: 'mch', label: 'MCH', unit: 'pg', minValue: 15, maxValue: 50),
+    LabTestDefinition(key: 'mchc', label: 'MCHC', unit: 'g/dL', minValue: 20, maxValue: 40),
     LabTestDefinition(
         key: 'rdw', label: 'RDW', unit: '%', ocrAliases: ['RDW-CV', 'RDW-SD']),
     LabTestDefinition(
@@ -271,10 +350,44 @@ const Map<String, List<LabTestDefinition>> medicalTestCategories = {
 
 /// Get a test definition by its key
 LabTestDefinition? getTestDefinition(String key) {
+  return testByKey[key];
+}
+
+/// Flat map of all test definitions keyed by their key for O(1) lookup.
+final Map<String, LabTestDefinition> testByKey = _buildTestByKey();
+
+Map<String, LabTestDefinition> _buildTestByKey() {
+  final map = <String, LabTestDefinition>{};
   for (var category in medicalTestCategories.values) {
     for (var def in category) {
-      if (def.key == key) return def;
+      map[def.key] = def;
     }
+  }
+  return map;
+}
+
+/// Maps display labels to their keys for reverse lookup (used in RuleEngine).
+final Map<String, String> labelToKey = _buildLabelToKey();
+
+Map<String, String> _buildLabelToKey() {
+  final map = <String, String>{};
+  for (var category in medicalTestCategories.values) {
+    for (var def in category) {
+      map[def.label] = def.key;
+    }
+  }
+  return map;
+}
+
+/// Validate a value for a given test key. Returns null if valid, or a
+/// user-friendly error message if out of bounds.
+String? validateTestValue(String key, double value) {
+  final def = testByKey[key];
+  if (def == null) return null;
+  if (!def.isValidValue(value)) {
+    final range =
+        '${def.minValue?.toStringAsFixed(1) ?? '??'} – ${def.maxValue?.toStringAsFixed(1) ?? '??'}';
+    return '${def.label} must be within $range ${def.unit}';
   }
   return null;
 }
