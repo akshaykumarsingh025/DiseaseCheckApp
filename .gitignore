@@ -48,3 +48,16 @@ app.*.map.json
 .env
 .env.*
 *.env
+
+node_modules/
+Library/
+Logs/
+Temp/
+UserSettings/
+obj/
+bin/
+.vs/
+.idea/
+Builds/
+venv/
+__pycache__/
