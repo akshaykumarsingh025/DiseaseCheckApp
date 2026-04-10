@@ -23,13 +23,18 @@ class HealthReportAdapter extends TypeAdapter<HealthReport> {
       moderateRiskDiseases: (fields[3] as List).cast<dynamic>(),
       lowRiskDiseases: (fields[4] as List).cast<dynamic>(),
       abnormalValues: (fields[5] as List).cast<String>(),
+      auditTrail: fields.containsKey(6)
+          ? (fields[6] as List)
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList()
+          : [],
     );
   }
 
   @override
   void write(BinaryWriter writer, HealthReport obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.reportId)
       ..writeByte(1)
@@ -41,7 +46,9 @@ class HealthReportAdapter extends TypeAdapter<HealthReport> {
       ..writeByte(4)
       ..write(obj.lowRiskDiseases)
       ..writeByte(5)
-      ..write(obj.abnormalValues);
+      ..write(obj.abnormalValues)
+      ..writeByte(6)
+      ..write(obj.auditTrail);
   }
 
   @override

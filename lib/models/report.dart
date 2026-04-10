@@ -22,6 +22,9 @@ class HealthReport extends HiveObject {
   @HiveField(5)
   final List<String> abnormalValues;
 
+  @HiveField(6)
+  final List<Map<String, dynamic>> auditTrail;
+
   HealthReport({
     required this.reportId,
     required this.date,
@@ -29,6 +32,7 @@ class HealthReport extends HiveObject {
     required this.moderateRiskDiseases,
     required this.lowRiskDiseases,
     required this.abnormalValues,
+    this.auditTrail = const [],
   });
 
   factory HealthReport.fromJson(Map<String, dynamic> json) {
@@ -40,6 +44,11 @@ class HealthReport extends HiveObject {
           List<dynamic>.from(json['moderateRiskDiseases'] ?? []),
       lowRiskDiseases: List<dynamic>.from(json['lowRiskDiseases'] ?? []),
       abnormalValues: List<String>.from(json['abnormalValues'] ?? []),
+      auditTrail: List<Map<String, dynamic>>.from(
+        (json['auditTrail'] as List?)
+                ?.map((e) => Map<String, dynamic>.from(e as Map)) ??
+            [],
+      ),
     );
   }
 
@@ -51,6 +60,7 @@ class HealthReport extends HiveObject {
       'moderateRiskDiseases': moderateRiskDiseases,
       'lowRiskDiseases': lowRiskDiseases,
       'abnormalValues': abnormalValues,
+      'auditTrail': auditTrail,
     };
   }
 }

@@ -4,6 +4,8 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import '../providers/profile_provider.dart';
+import '../services/storage_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -22,10 +24,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       setState(() => _isLoading = true);
       try {
         final data = _formKey.currentState!.value;
-        await ref.read(authServiceProvider).signInWithEmail(
-              data['email'],
+        final email = data['email'] as String;
+        final credential = await ref.read(authServiceProvider).signInWithEmail(
+              email,
               data['password'],
             );
+
+        // Check if email is verified before proceeding
+        if (credential.user != null && !credential.user!.emailVerified) {
+          if (mounted) {
+            context.go('/verify-email', extra: {'email': email});
+          }
+          return;
+        }
+
+        // Clear stale local data from previous user, fetch new user's data
+        await StorageService.clearAllLocalData();
+        final user = ref.read(authServiceProvider).currentUser;
+        if (user != null) {
+          try {
+            await StorageService.fetchAllFromCloud(user.uid);
+          } catch (_) {}
+        }
+
+        // Refresh profile provider so it picks up the new user's profile
+        ref.invalidate(profileProvider);
+
         // Navigation will be handled by the router's redirect logic
       } catch (e) {
         if (mounted) {

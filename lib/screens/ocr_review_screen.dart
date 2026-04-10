@@ -22,50 +22,52 @@ class OcrReviewScreen extends ConsumerStatefulWidget {
 class _OcrReviewScreenState extends ConsumerState<OcrReviewScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
   bool _combineWithHistory = true;
+  bool _isSubmitting = false;
 
-  void _saveDataAndNext() {
+  Future<void> _saveDataAndNext() async {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
-      final formValues = _formKey.currentState!.value;
-      final now = DateTime.now();
-      List<HealthData> ocrEntries = [];
+      setState(() => _isSubmitting = true);
+      try {
+        final formValues = _formKey.currentState!.value;
+        final now = DateTime.now();
+        List<HealthData> ocrEntries = [];
 
-      formValues.forEach((key, value) {
-        if (value == null) return;
+        formValues.forEach((key, value) {
+          if (value == null) return;
 
-        // Find the test definition to get label and unit
-        final testDef = getTestDefinition(key);
-        if (testDef == null) return;
+          final testDef = getTestDefinition(key);
+          if (testDef == null) return;
 
-        final double? numericValue = double.tryParse(value.toString());
-        if (numericValue != null) {
-          final data = HealthData(
-            category:
-                'OCR Extraction', // Use a generic category or find its actual one if needed
-            testName: testDef.label,
-            value: numericValue,
-            unit: testDef.unit,
-            date: now,
-          );
+          final double? numericValue = double.tryParse(value.toString());
+          if (numericValue != null) {
+            final data = HealthData(
+              category: 'OCR Extraction',
+              testName: testDef.label,
+              value: numericValue,
+              unit: testDef.unit,
+              date: now,
+            );
 
-          ocrEntries.add(data);
-          ref.read(healthDataProvider.notifier).addHealthData(data);
+            ocrEntries.add(data);
+            ref.read(healthDataProvider.notifier).addHealthData(data);
+          }
+        });
+
+        final session = ref.read(currentSessionProvider.notifier);
+        session.clearSession();
+
+        if (_combineWithHistory) {
+          session.addMultipleData(ref.read(healthDataProvider));
+        } else {
+          session.addMultipleData(ocrEntries);
         }
-      });
 
-      // 2. Prepare the Temporary Session Provider for THIS specific report
-      final session = ref.read(currentSessionProvider.notifier);
-      session.clearSession();
-
-      if (_combineWithHistory) {
-        // Add all historical data PLUS the newly added data
-        session.addMultipleData(ref.read(healthDataProvider));
-      } else {
-        // ONLY add the new data we just entered
-        session.addMultipleData(ocrEntries);
+        if (context.mounted) {
+          context.push('/ocr-action');
+        }
+      } finally {
+        if (mounted) setState(() => _isSubmitting = false);
       }
-
-      // Navigate to action choices
-      context.push('/ocr-action');
     }
   }
 
@@ -207,9 +209,17 @@ class _OcrReviewScreenState extends ConsumerState<OcrReviewScreen> {
                       width: double.infinity,
                       height: 50,
                       child: ElevatedButton.icon(
-                        onPressed: _saveDataAndNext,
-                        icon: const Icon(Icons.check_circle),
-                        label: const Text('Save Page Data'),
+                        onPressed: _isSubmitting ? null : _saveDataAndNext,
+                        icon: _isSubmitting
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                    strokeWidth: 2, color: Colors.white),
+                              )
+                            : const Icon(Icons.check_circle),
+                        label: Text(
+                            _isSubmitting ? 'Saving...' : 'Save Page Data'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.deepPurpleAccent,
                           foregroundColor: Colors.white,

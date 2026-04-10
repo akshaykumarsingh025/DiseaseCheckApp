@@ -4,6 +4,7 @@ import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
+import '../services/storage_service.dart';
 
 class SignupScreen extends ConsumerStatefulWidget {
   const SignupScreen({super.key});
@@ -22,22 +23,17 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       setState(() => _isLoading = true);
       try {
         final data = _formKey.currentState!.value;
+        final email = data['email'] as String;
         await ref.read(authServiceProvider).signUpWithEmail(
-              data['email'],
+              email,
               data['password'],
             );
 
+        await StorageService.clearAllLocalData();
+
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content:
-                  Text('Account created! A verification email has been sent.'),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          context.go('/verify-email', extra: {'email': email});
         }
-        // After signup, Firebase auth state changes → router redirects to /profile-setup
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(

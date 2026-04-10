@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../providers/profile_provider.dart';
 import '../services/storage_service.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   void initState() {
     super.initState();
@@ -26,27 +28,37 @@ class _SplashScreenState extends State<SplashScreen> {
     final prefs = await SharedPreferences.getInstance();
     final disclaimerAccepted = prefs.getBool('disclaimer_accepted') ?? false;
 
-    // 1. First launch — show disclaimer
     if (!disclaimerAccepted) {
       context.go('/disclaimer');
       return;
     }
 
-    // 2. Check if user is logged in
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       context.go('/login');
       return;
     }
 
-    // 3. User is logged in — fetch cloud data and go to dashboard
+    // If email not verified, send to verify-email info page (user stays authenticated)
+    if (!user.emailVerified) {
+      context.go('/verify-email');
+      return;
+    }
+
+    // Clear stale local data from previous user before fetching new user's data
+    await StorageService.clearAllLocalData();
+
     try {
       await StorageService.fetchAllFromCloud(user.uid);
     } catch (_) {
       // Ignore fetch errors (offline mode falls back to Hive cache)
     }
 
-    // 4. Check if user has a profile
+    if (!mounted) return;
+
+    // Refresh the profile provider so it reads the newly fetched profile
+    ref.invalidate(profileProvider);
+
     final profile = StorageService.getProfile();
     if (profile == null) {
       context.go('/profile-setup');

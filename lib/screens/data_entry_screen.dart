@@ -6,6 +6,7 @@ import '../models/health_data.dart';
 import '../providers/health_data_provider.dart';
 import '../providers/session_provider.dart';
 import '../utils/test_definitions.dart';
+import '../engine/critical_value_checker.dart';
 
 class DataEntryScreen extends ConsumerStatefulWidget {
   final List<String> selectedCategories;
@@ -24,6 +25,7 @@ class DataEntryScreen extends ConsumerStatefulWidget {
 class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
   bool _combineWithHistory = true;
+  bool _isSubmitting = false;
 
   @override
   Widget build(BuildContext context) {
@@ -60,8 +62,14 @@ class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
               ),
               const SizedBox(height: 32),
               ElevatedButton(
-                onPressed: _submitForm,
-                child: const Text('Analyze Health Risk'),
+                onPressed: _isSubmitting ? null : _submitForm,
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Text('Analyze Health Risk'),
               ),
             ],
           ),
@@ -116,62 +124,82 @@ class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
 
   Future<void> _submitForm() async {
     if (_formKey.currentState?.saveAndValidate() ?? false) {
-      final formData = _formKey.currentState!.value;
-      List<HealthData> entries = [];
-      final now = DateTime.now();
+      setState(() => _isSubmitting = true);
+      try {
+        final formData = _formKey.currentState!.value;
+        List<HealthData> entries = [];
+        final now = DateTime.now();
 
-      formData.forEach((key, value) {
-        if (value != null && value.toString().isNotEmpty) {
-          double? numericValue = double.tryParse(value.toString());
-          if (numericValue != null) {
-            // Look up the definition for this key to get its real Category and Unit
-            final def = getTestDefinition(key);
-            String actualCategory = 'General';
+        formData.forEach((key, value) {
+          if (value != null && value.toString().isNotEmpty) {
+            double? numericValue = double.tryParse(value.toString());
+            if (numericValue != null) {
+              // Look up the definition for this key to get its real Category and Unit
+              final def = getTestDefinition(key);
+              String actualCategory = 'General';
 
-            // Find which category this test belongs to in the master dictionary
-            for (var entry in medicalTestCategories.entries) {
-              if (entry.value.any((t) => t.key == key)) {
-                actualCategory = entry.key;
-                break;
+              // Find which category this test belongs to in the master dictionary
+              for (var entry in medicalTestCategories.entries) {
+                if (entry.value.any((t) => t.key == key)) {
+                  actualCategory = entry.key;
+                  break;
+                }
               }
+
+              entries.add(HealthData(
+                category: actualCategory,
+                testName: def?.label ?? key,
+                value: numericValue,
+                unit: def?.unit ?? '',
+                date: now,
+              ));
             }
-
-            entries.add(HealthData(
-              category: actualCategory,
-              testName: def?.label ?? key,
-              value: numericValue,
-              unit: def?.unit ?? '',
-              date: now,
-            ));
           }
-        }
-      });
+        });
 
-      if (entries.isNotEmpty) {
-        // 1. Always save to physical storage / global history (for Trends & Women's Hub)
-        for (var entry in entries) {
-          await ref.read(healthDataProvider.notifier).addHealthData(entry);
-        }
+        if (entries.isNotEmpty) {
+          // Check for critical values before proceeding
+          Map<String, double> valueMap = {
+            for (var e in entries) e.testName: e.value,
+          };
+          final keyMap = <String, double>{};
+          for (var entry in valueMap.entries) {
+            final key = labelToKey[entry.key] ?? entry.key;
+            keyMap[key] = entry.value;
+          }
+          final criticalAlerts = CriticalValueChecker.checkValues(keyMap);
+          if (criticalAlerts.isNotEmpty && context.mounted) {
+            CriticalValueChecker.showCriticalAlert(context, criticalAlerts);
+          }
 
-        // 2. Prepare the Temporary Session Provider for THIS specific report
-        final session = ref.read(currentSessionProvider.notifier);
-        session.clearSession();
+          // 1. Always save to physical storage / global history (for Trends & Women's Hub)
+          for (var entry in entries) {
+            await ref.read(healthDataProvider.notifier).addHealthData(entry);
+          }
 
-        if (_combineWithHistory) {
-          // Add all historical data PLUS the newly added data
-          session.addMultipleData(ref.read(healthDataProvider));
+          // 2. Prepare the Temporary Session Provider for THIS specific report
+          final session = ref.read(currentSessionProvider.notifier);
+          session.clearSession();
+
+          if (!mounted) return;
+          if (_combineWithHistory) {
+            // Add all historical data PLUS the newly added data
+            session.addMultipleData(ref.read(healthDataProvider));
+          } else {
+            // ONLY add the new data we just entered
+            session.addMultipleData(entries);
+          }
+
+          if (context.mounted) {
+            context.go('/processing');
+          }
         } else {
-          // ONLY add the new data we just entered
-          session.addMultipleData(entries);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please enter at least one value.')),
+          );
         }
-
-        if (context.mounted) {
-          context.go('/processing');
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter at least one value.')),
-        );
+      } finally {
+        if (mounted) setState(() => _isSubmitting = false);
       }
     }
   }

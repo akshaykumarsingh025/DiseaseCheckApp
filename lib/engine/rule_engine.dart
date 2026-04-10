@@ -1060,6 +1060,559 @@ class RuleEngine {
       reports.add(checkEnlargedProstate(prostateFlag));
     }
 
+    reports.addAll(evaluateAdditionalChecks(vals));
+
+    return reports;
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 13. METABOLIC SYNDROME (NCEP ATP III)
+  // ═══════════════════════════════════════════════════════════════
+  static RiskResult checkMetabolicSyndrome({
+    double? waistCircumference,
+    bool? isMale,
+    double? triglycerides,
+    double? hdl,
+    double? systolic,
+    double? diastolic,
+    double? fastingGlucose,
+  }) {
+    int criteria = 0;
+    List<String> findings = [];
+
+    if (waistCircumference != null && isMale != null) {
+      if ((isMale && waistCircumference >= 102) ||
+          (!isMale && waistCircumference >= 88)) {
+        criteria++;
+        findings.add(
+            'Waist circumference $waistCircumference cm (Elevated: ≥${isMale ? 102 : 88})');
+      }
+    }
+    if (triglycerides != null && triglycerides >= 150) {
+      criteria++;
+      findings.add('Triglycerides $triglycerides mg/dL (Elevated: ≥150)');
+    }
+    if (hdl != null && isMale != null) {
+      if ((isMale && hdl < 40) || (!isMale && hdl < 50)) {
+        criteria++;
+        findings.add('HDL $hdl mg/dL (Low: <${isMale ? 40 : 50})');
+      }
+    }
+    if (systolic != null && diastolic != null) {
+      if (systolic >= 130 || diastolic >= 85) {
+        criteria++;
+        findings.add('BP $systolic/$diastolic mmHg (Elevated: ≥130/85)');
+      }
+    }
+    if (fastingGlucose != null && fastingGlucose >= 100) {
+      criteria++;
+      findings.add('Fasting Glucose $fastingGlucose mg/dL (Elevated: ≥100)');
+    }
+
+    double riskScore = criteria >= 3 ? 70.0 : (criteria == 2 ? 30.0 : 0.0);
+    if (criteria >= 3) {
+      findings.add(
+          '$criteria of 5 ATP III criteria met — Metabolic Syndrome diagnosed');
+    } else if (criteria >= 1) {
+      findings.add('$criteria of 5 ATP III criteria met');
+    }
+
+    return _buildResult('Metabolic Syndrome', 'E88.81', riskScore, findings,
+        'NCEP ATP III Criteria');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 14. VITAMIN D DEFICIENCY
+  // ═══════════════════════════════════════════════════════════════
+  static RiskResult checkVitaminDDeficiency({double? vitaminD}) {
+    double riskScore = 0;
+    List<String> findings = [];
+
+    if (vitaminD != null) {
+      if (vitaminD < 12) {
+        riskScore = 70;
+        findings
+            .add('25-OH Vitamin D $vitaminD ng/mL (Severe deficiency: <12)');
+      } else if (vitaminD < 20) {
+        riskScore = 50;
+        findings.add('25-OH Vitamin D $vitaminD ng/mL (Deficiency: <20)');
+      } else if (vitaminD < 30) {
+        riskScore = 20;
+        findings.add('25-OH Vitamin D $vitaminD ng/mL (Insufficiency: 20-29)');
+      }
+    }
+
+    return _buildResult('Vitamin D Deficiency', 'E55.9', riskScore, findings,
+        'Endocrine Society Guidelines');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 15. GOUT / HYPERURICEMIA
+  // ═══════════════════════════════════════════════════════════════
+  static RiskResult checkGout({double? uricAcid}) {
+    double riskScore = 0;
+    List<String> findings = [];
+
+    if (uricAcid != null) {
+      if (uricAcid > 9.0) {
+        riskScore = 60;
+        findings
+            .add('Uric Acid $uricAcid mg/dL (Very High: >9.0 — Gout likely)');
+      } else if (uricAcid > 7.0) {
+        riskScore = 40;
+        findings
+            .add('Uric Acid $uricAcid mg/dL (Elevated: >7.0 — Hyperuricemia)');
+      } else if (uricAcid > 6.0) {
+        riskScore = 15;
+        findings.add('Uric Acid $uricAcid mg/dL (Borderline: 6.0-7.0)');
+      }
+    }
+
+    return _buildResult('Gout / Hyperuricemia', 'M10.9', riskScore, findings,
+        'ACR Gout Guidelines');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 16. B12 DEFICIENCY
+  // ═══════════════════════════════════════════════════════════════
+  static RiskResult checkB12Deficiency({
+    double? vitaminB12,
+    double? mcv,
+    double? homocysteine,
+  }) {
+    double riskScore = 0;
+    List<String> findings = [];
+
+    if (vitaminB12 != null) {
+      if (vitaminB12 < 200) {
+        riskScore += 50;
+        findings.add('Vitamin B12 $vitaminB12 pg/mL (Deficient: <200)');
+      } else if (vitaminB12 < 300) {
+        riskScore += 20;
+        findings.add('Vitamin B12 $vitaminB12 pg/mL (Borderline: 200-300)');
+      }
+    }
+    if (mcv != null && mcv > 100) {
+      riskScore += 20;
+      findings.add('MCV $mcv fL (Macrocytic — consistent with B12 deficiency)');
+    }
+    if (homocysteine != null && homocysteine > 15) {
+      riskScore += 15;
+      findings.add(
+          'Homocysteine $homocysteine µmol/L (Elevated — supports B12 deficiency)');
+    }
+
+    return _buildResult('Vitamin B12 Deficiency', 'D51.9', riskScore, findings,
+        'Hematology Guidelines');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 17. CHRONIC KIDNEY DISEASE STAGING (KDIGO)
+  // ═══════════════════════════════════════════════════════════════
+  static RiskResult checkCKDStaging({double? egfr}) {
+    double riskScore = 0;
+    List<String> findings = [];
+    String stage = 'Normal';
+
+    if (egfr != null) {
+      if (egfr >= 90) {
+        stage = 'G1 — Normal or High';
+        riskScore = 5;
+      } else if (egfr >= 60) {
+        stage = 'G2 — Mildly Decreased';
+        riskScore = 15;
+      } else if (egfr >= 45) {
+        stage = 'G3a — Mildly to Moderately Decreased';
+        riskScore = 30;
+      } else if (egfr >= 30) {
+        stage = 'G3b — Moderately to Severely Decreased';
+        riskScore = 45;
+      } else if (egfr >= 15) {
+        stage = 'G4 — Severely Decreased';
+        riskScore = 70;
+      } else {
+        stage = 'G5 — Kidney Failure';
+        riskScore = 90;
+      }
+      findings.add('eGFR $egfr mL/min/1.73m² — CKD $stage (KDIGO)');
+    }
+
+    return _buildResult('CKD Staging', 'N18', riskScore, findings,
+        'KDIGO CKD Staging Guidelines');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 18. HYPOTHYROIDISM (explicit)
+  // ═══════════════════════════════════════════════════════════════
+  static RiskResult checkHypothyroidism({
+    double? tsh,
+    double? freeT4,
+  }) {
+    double riskScore = 0;
+    List<String> findings = [];
+
+    if (tsh != null && tsh > 4.5) {
+      riskScore += 40;
+      findings.add('TSH $tsh mIU/L (Elevated: >4.5 — Hypothyroidism likely)');
+      if (freeT4 != null && freeT4 < 0.8) {
+        riskScore += 30;
+        findings.add(
+            'Free T4 $freeT4 ng/dL (Low: <0.8 — Confirms overt hypothyroidism)');
+      } else if (freeT4 != null) {
+        riskScore += 10;
+        findings
+            .add('Free T4 $freeT4 ng/dL (Normal — Subclinical hypothyroidism)');
+      }
+    }
+
+    return _buildResult('Hypothyroidism', 'E03.9', riskScore, findings,
+        'ATA/AACE Hypothyroidism Guidelines');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 19. HYPERTHYROIDISM (explicit)
+  // ═══════════════════════════════════════════════════════════════
+  static RiskResult checkHyperthyroidism({
+    double? tsh,
+    double? freeT4,
+    double? freeT3,
+  }) {
+    double riskScore = 0;
+    List<String> findings = [];
+
+    if (tsh != null && tsh < 0.1) {
+      riskScore += 40;
+      findings
+          .add('TSH $tsh mIU/L (Suppressed: <0.1 — Hyperthyroidism likely)');
+      if (freeT4 != null && freeT4 > 1.8) {
+        riskScore += 30;
+        findings.add(
+            'Free T4 $freeT4 ng/dL (Elevated: >1.8 — Confirms overt hyperthyroidism)');
+      }
+      if (freeT3 != null && freeT3 > 4.2) {
+        riskScore += 20;
+        findings.add('Free T3 $freeT3 pg/mL (Elevated: >4.2)');
+      }
+    } else if (tsh != null && tsh < 0.4) {
+      riskScore += 20;
+      findings.add(
+          'TSH $tsh mIU/L (Low: 0.1-0.4 — Subclinical hyperthyroidism possible)');
+    }
+
+    return _buildResult('Hyperthyroidism', 'E05.9', riskScore, findings,
+        'ATA Hyperthyroidism Guidelines');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 20. IRON DEFICIENCY ANEMIA (specific)
+  // ═══════════════════════════════════════════════════════════════
+  static RiskResult checkIronDeficiencyAnemia({
+    double? hemoglobin,
+    double? mcv,
+    double? ferritin,
+    double? transferrinSaturation,
+  }) {
+    double riskScore = 0;
+    List<String> findings = [];
+
+    bool hasAnemia = hemoglobin != null && hemoglobin < 12;
+    bool hasMicrocytosis = mcv != null && mcv < 80;
+    bool hasLowFerritin = ferritin != null && ferritin < 15;
+    bool hasLowTsat =
+        transferrinSaturation != null && transferrinSaturation < 20;
+
+    if (hasAnemia) {
+      riskScore += 20;
+      findings.add('Hemoglobin $hemoglobin g/dL (Anemic)');
+    }
+    if (hasMicrocytosis) {
+      riskScore += 20;
+      findings.add('MCV $mcv fL (Microcytic — suggests iron deficiency)');
+    }
+    if (hasLowFerritin) {
+      riskScore += 30;
+      findings
+          .add('Ferritin $ferritin ng/mL (Low: <15 — Iron stores depleted)');
+    }
+    if (hasLowTsat) {
+      riskScore += 15;
+      findings.add('Transferrin Sat. $transferrinSaturation% (Low: <20%)');
+    }
+
+    if (hasAnemia && (hasMicrocytosis || hasLowFerritin)) {
+      riskScore = riskScore.clamp(50, 100);
+    }
+
+    return _buildResult('Iron Deficiency Anemia', 'D50.9', riskScore, findings,
+        'WHO Iron Deficiency Guidelines');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 21. ALCOHOLIC LIVER DISEASE
+  // ═══════════════════════════════════════════════════════════════
+  static RiskResult checkAlcoholicLiverDisease({
+    double? ast,
+    double? alt,
+    double? ggt,
+    double? mcv,
+  }) {
+    double riskScore = 0;
+    List<String> findings = [];
+
+    double? astAltRatio;
+    if (ast != null && alt != null && alt > 0) {
+      astAltRatio = ast / alt;
+    }
+
+    if (astAltRatio != null && astAltRatio >= 2.0) {
+      riskScore += 40;
+      findings.add(
+          'AST/ALT Ratio ${astAltRatio.toStringAsFixed(1)} (≥2.0 — Suggests alcoholic liver disease)');
+    } else if (astAltRatio != null && astAltRatio >= 1.5) {
+      riskScore += 20;
+      findings.add(
+          'AST/ALT Ratio ${astAltRatio.toStringAsFixed(1)} (1.5-2.0 — Borderline)');
+    }
+    if (ggt != null && ggt > 48) {
+      riskScore += 20;
+      findings
+          .add('GGT $ggt U/L (Elevated: >48 — Consistent with alcohol use)');
+    }
+    if (mcv != null && mcv > 100) {
+      riskScore += 15;
+      findings.add('MCV $mcv fL (Macrocytosis — Possible alcohol effect)');
+    }
+
+    return _buildResult('Alcoholic Liver Disease', 'K70.9', riskScore, findings,
+        'AASLD Liver Disease Guidelines');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 22. LOW TESTOSTERONE / HYPOGONADISM (Men's Health)
+  // ═══════════════════════════════════════════════════════════════
+  static RiskResult checkLowTestosterone({
+    double? testosterone,
+    double? lh,
+    double? fsh,
+  }) {
+    double riskScore = 0;
+    List<String> findings = [];
+
+    if (testosterone != null && testosterone < 300) {
+      riskScore += 50;
+      findings.add(
+          'Total Testosterone $testosterone ng/dL (Low: <300 — Hypogonadism)');
+      if (lh != null && fsh != null) {
+        if (lh < 9 && fsh < 9) {
+          riskScore += 20;
+          findings.add(
+              'LH/FSH low-normal — Suggests secondary (hypogonadotropic) hypogonadism');
+        } else {
+          riskScore += 15;
+          findings.add(
+              'LH $lh / FSH $fsh mIU/mL — Suggests primary testicular failure');
+        }
+      }
+    } else if (testosterone != null && testosterone < 400) {
+      riskScore += 20;
+      findings.add(
+          'Total Testosterone $testosterone ng/dL (Borderline low: 300-400)');
+    }
+
+    return _buildResult('Low Testosterone / Hypogonadism', 'E29.1', riskScore,
+        findings, 'AUA Endocrine Guidelines');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 23. PROSTATE CANCER RISK (Men's Health)
+  // ═══════════════════════════════════════════════════════════════
+  static RiskResult checkProstateCancerRisk({
+    double? psaTotal,
+    int? age,
+  }) {
+    double riskScore = 0;
+    List<String> findings = [];
+
+    if (psaTotal != null) {
+      if (psaTotal > 10) {
+        riskScore += 60;
+        findings.add(
+            'PSA $psaTotal ng/mL (High: >10 — Biopsy generally recommended)');
+      } else if (psaTotal > 4.0) {
+        riskScore += 40;
+        findings.add(
+            'PSA $psaTotal ng/mL (Elevated: 4-10 — Further workup needed)');
+      } else if (psaTotal > 2.5 && age != null && age < 60) {
+        riskScore += 20;
+        findings
+            .add('PSA $psaTotal ng/mL (Age-adjusted: elevated for age <60)');
+      }
+    }
+    if (age != null && age >= 50 && psaTotal != null && psaTotal > 2.5) {
+      riskScore += 10;
+      findings.add('Age $age + PSA $psaTotal — Risk increases with age');
+    }
+
+    return _buildResult('Prostate Cancer Risk', 'C61', riskScore, findings,
+        'AUA/NCCN Prostate Cancer Guidelines');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // 24. COAGULATION ABNORMALITY
+  // ═══════════════════════════════════════════════════════════════
+  static RiskResult checkCoagulation({
+    double? ptInr,
+    double? aptt,
+    double? dDimer,
+  }) {
+    double riskScore = 0;
+    List<String> findings = [];
+
+    if (ptInr != null) {
+      if (ptInr > 3.0) {
+        riskScore += 40;
+        findings.add(
+            'INR $ptInr (High: >3.0 — Significant coagulopathy / over-anticoagulation)');
+      } else if (ptInr > 1.2) {
+        riskScore += 20;
+        findings.add('INR $ptInr (Elevated: >1.2)');
+      }
+    }
+    if (aptt != null) {
+      if (aptt > 45) {
+        riskScore += 30;
+        findings.add(
+            'aPTT $aptt sec (Prolonged: >45 — Possible heparin effect or factor deficiency)');
+      } else if (aptt < 25) {
+        riskScore += 15;
+        findings.add(
+            'aPTT $aptt sec (Shortened: <25 — Possible hypercoagulable state)');
+      }
+    }
+    if (dDimer != null && dDimer > 0.5) {
+      riskScore += 25;
+      findings.add(
+          'D-Dimer $dDimer µg/mL FEU (Elevated: >0.5 — Possible thrombosis/DVT/PE)');
+    }
+
+    return _buildResult('Coagulation Abnormality', 'D68.9', riskScore, findings,
+        'ISTH Coagulation Guidelines');
+  }
+
+  // ═══════════════════════════════════════════════════════════════
+  // MASTER EVALUATOR — ADDITIONAL CHECKS (integrated)
+  // ═══════════════════════════════════════════════════════════════
+
+  static List<RiskResult> evaluateAdditionalChecks(Map<String, double> vals,
+      {bool? isMale, int? age}) {
+    List<RiskResult> reports = [];
+    double? v(String key) => vals[key];
+
+    // --- METABOLIC SYNDROME ---
+    if (v('triglycerides') != null ||
+        v('hdl') != null ||
+        v('systolic') != null ||
+        v('fasting_glucose') != null) {
+      reports.add(checkMetabolicSyndrome(
+        isMale: isMale,
+        triglycerides: v('triglycerides'),
+        hdl: v('hdl'),
+        systolic: v('systolic'),
+        diastolic: v('diastolic'),
+        fastingGlucose: v('fasting_glucose'),
+      ));
+    }
+
+    // --- GOUT ---
+    if (v('uric_acid') != null) {
+      reports.add(checkGout(uricAcid: v('uric_acid')));
+    }
+
+    // --- CKD STAGING (separate from general kidney check) ---
+    if (v('egfr') != null && v('egfr')! < 90) {
+      reports.add(checkCKDStaging(egfr: v('egfr')));
+    }
+
+    // --- HYPOTHYROIDISM (explicit) ---
+    if (v('tsh') != null && v('tsh')! > 4.5) {
+      reports.add(checkHypothyroidism(tsh: v('tsh'), freeT4: v('free_t4')));
+    }
+
+    // --- HYPERTHYROIDISM (explicit) ---
+    if (v('tsh') != null && v('tsh')! < 0.4) {
+      reports.add(checkHyperthyroidism(
+          tsh: v('tsh'), freeT4: v('free_t4'), freeT3: v('free_t3')));
+    }
+
+    // --- VITAMIN D DEFICIENCY ---
+    double? vitaminD = v('vitamin_d_25oh');
+    if (vitaminD != null && vitaminD < 30) {
+      reports.add(checkVitaminDDeficiency(vitaminD: vitaminD));
+    }
+
+    // --- B12 DEFICIENCY ---
+    double? b12 = v('vitamin_b12');
+    if (b12 != null && b12 < 300) {
+      reports.add(checkB12Deficiency(
+        vitaminB12: b12,
+        mcv: v('mcv'),
+        homocysteine: v('homocysteine'),
+      ));
+    }
+
+    // --- IRON DEFICIENCY ANEMIA (specific) ---
+    if (v('ferritin') != null &&
+        v('ferritin')! < 30 &&
+        v('hemoglobin') != null &&
+        v('hemoglobin')! < 12) {
+      reports.add(checkIronDeficiencyAnemia(
+        hemoglobin: v('hemoglobin'),
+        mcv: v('mcv'),
+        ferritin: v('ferritin'),
+        transferrinSaturation: v('transferrin_saturation'),
+      ));
+    }
+
+    // --- ALCOHOLIC LIVER DISEASE ---
+    if (v('ast') != null &&
+        v('alt') != null &&
+        (v('ast')! / v('alt')!) >= 1.5) {
+      reports.add(checkAlcoholicLiverDisease(
+        ast: v('ast'),
+        alt: v('alt'),
+        ggt: v('ggt'),
+        mcv: v('mcv'),
+      ));
+    }
+
+    // --- LOW TESTOSTERONE (Men's Health) ---
+    if (isMale == true &&
+        v('testosterone') != null &&
+        v('testosterone')! < 400) {
+      reports.add(checkLowTestosterone(
+        testosterone: v('testosterone'),
+        lh: v('lh'),
+        fsh: v('fsh'),
+      ));
+    }
+
+    // --- PROSTATE CANCER RISK (Men's Health) ---
+    if (isMale == true && v('psa_total') != null && v('psa_total')! > 2.5) {
+      reports.add(checkProstateCancerRisk(
+        psaTotal: v('psa_total'),
+        age: age,
+      ));
+    }
+
+    // --- COAGULATION ---
+    if (v('pt_inr') != null || v('aptt') != null || v('d_dimer') != null) {
+      reports.add(checkCoagulation(
+        ptInr: v('pt_inr'),
+        aptt: v('aptt'),
+        dDimer: v('d_dimer'),
+      ));
+    }
+
     return reports;
   }
 

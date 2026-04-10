@@ -75,6 +75,16 @@ class StorageService {
     return historyBox.values.toList()..sort((a, b) => b.date.compareTo(a.date));
   }
 
+  static List<HealthReport> getReportsPaginated(
+      {int offset = 0, int limit = 20}) {
+    final all = getAllReports();
+    if (offset >= all.length) return [];
+    final end = (offset + limit).clamp(0, all.length);
+    return all.sublist(offset, end);
+  }
+
+  static int get reportCount => historyBox.length;
+
   static Future<void> saveHealthData(HealthData data) async {
     // Save locally
     await healthDataBox.add(data);

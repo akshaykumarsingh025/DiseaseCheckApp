@@ -3,20 +3,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Stream to listen to authentication state changes
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  // Get current user
   User? get currentUser => _auth.currentUser;
 
-  // Sign up with email and password
   Future<UserCredential> signUpWithEmail(String email, String password) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
-      // Send email verification
       await credential.user?.sendEmailVerification();
       return credential;
     } on FirebaseAuthException catch (e) {
@@ -24,7 +20,6 @@ class AuthService {
     }
   }
 
-  // Sign in with email and password
   Future<UserCredential> signInWithEmail(String email, String password) async {
     try {
       return await _auth.signInWithEmailAndPassword(
@@ -36,7 +31,6 @@ class AuthService {
     }
   }
 
-  // Send password reset email
   Future<void> sendPasswordReset(String email) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
@@ -45,25 +39,16 @@ class AuthService {
     }
   }
 
-  // Resend email verification
   Future<void> resendEmailVerification() async {
     await _auth.currentUser?.sendEmailVerification();
   }
 
-  // Check if email is verified
   bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
 
-  // Reload user to check latest email verification status
-  Future<void> reloadUser() async {
-    await _auth.currentUser?.reload();
-  }
-
-  // Sign out
   Future<void> signOut() async {
     await _auth.signOut();
   }
 
-  /// Convert Firebase error codes to user-friendly messages
   String _friendlyError(String code) {
     switch (code) {
       case 'email-already-in-use':

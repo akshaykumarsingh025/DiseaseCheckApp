@@ -5,11 +5,13 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
+import 'services/storage_service.dart';
 import 'screens/splash_screen.dart';
 import 'screens/disclaimer_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/forgot_password_screen.dart';
+import 'screens/email_verification_screen.dart';
 import 'screens/profile_setup_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/data_category_screen.dart';
@@ -30,19 +32,40 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
     redirect: (context, state) {
-      // If auth state is still loading, don't interrupt
       if (authState.isLoading) return null;
 
       final isAuth = authState.valueOrNull != null;
+      final isEmailVerified = authState.valueOrNull?.emailVerified ?? false;
       final isLoggingIn = state.matchedLocation == '/login' ||
           state.matchedLocation == '/signup' ||
-          state.matchedLocation == '/forgot-password';
+          state.matchedLocation == '/forgot-password' ||
+          state.matchedLocation == '/verify-email';
       final isInitializing = state.matchedLocation == '/' ||
           state.matchedLocation == '/disclaimer';
 
       if (!isInitializing) {
+        // Unauthenticated users can only access login/signup/verify-email
         if (!isAuth && !isLoggingIn) return '/login';
-        if (isAuth && isLoggingIn) return '/dashboard';
+
+        // Authenticated but unverified — shouldn't happen since we sign out
+        // unverified users, but guard just in case
+        if (isAuth && !isEmailVerified && !isLoggingIn) {
+          return '/verify-email';
+        }
+
+        // Authenticated + verified users shouldn't sit on login/signup/verify-email
+        if (isAuth && isEmailVerified && isLoggingIn) {
+          final hasProfile = StorageService.getProfile() != null;
+          return hasProfile ? '/dashboard' : '/profile-setup';
+        }
+
+        // Authenticated + verified + no profile → profile-setup
+        if (isAuth && isEmailVerified) {
+          final hasProfile = StorageService.getProfile() != null;
+          if (!hasProfile && state.matchedLocation != '/profile-setup') {
+            return '/profile-setup';
+          }
+        }
       }
       return null;
     },
@@ -68,8 +91,20 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ForgotPasswordScreen(),
       ),
       GoRoute(
+        path: '/verify-email',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final email = extra?['email'] as String?;
+          return EmailVerificationScreen(email: email);
+        },
+      ),
+      GoRoute(
         path: '/profile-setup',
-        builder: (context, state) => const ProfileSetupScreen(),
+        builder: (context, state) {
+          final isAuth = authState.valueOrNull != null;
+          if (!isAuth) return const LoginScreen();
+          return const ProfileSetupScreen();
+        },
       ),
       GoRoute(
         path: '/dashboard',
@@ -103,6 +138,14 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/report',
         builder: (context, state) {
           final report = state.extra as HealthReport?;
+          if (report == null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Risk Assessment Report')),
+              body: const Center(
+                  child: Text(
+                      'No report data found. Please generate a report first.')),
+            );
+          }
           return ReportScreen(report: report);
         },
       ),

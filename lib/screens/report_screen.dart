@@ -64,6 +64,8 @@ class ReportScreen extends StatelessWidget {
               const SizedBox(height: 8),
               if (report!.abnormalValues.isNotEmpty)
                 _buildAbnormalitiesSection(context, report!.abnormalValues),
+              if (report!.auditTrail.isNotEmpty)
+                _buildAuditTrailSection(context),
               if (report!.highRiskDiseases.isEmpty &&
                   report!.moderateRiskDiseases.isEmpty &&
                   report!.lowRiskDiseases.isEmpty &&
@@ -213,6 +215,85 @@ class ReportScreen extends StatelessWidget {
                 )),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildAuditTrailSection(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
+    return Card(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: ExpansionTile(
+        title: const Text('Rule Engine Audit Trail',
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: const Text('Tap to see which rules fired and why',
+            style: TextStyle(fontSize: 12)),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: report!.auditTrail.map((entry) {
+                final riskColor = entry['riskLevel'] == 'high'
+                    ? Colors.red
+                    : entry['riskLevel'] == 'moderate'
+                        ? Colors.orange
+                        : Colors.green;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: riskColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text('${entry['disease']} (${entry['icdCode']})',
+                              style:
+                                  const TextStyle(fontWeight: FontWeight.bold)),
+                          const Spacer(),
+                          Text('Score: ${entry['riskScore']}%',
+                              style: TextStyle(
+                                  color: riskColor,
+                                  fontWeight: FontWeight.bold)),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text('Guideline: ${entry['guideline']}',
+                          style: TextStyle(
+                              fontSize: 12, color: Colors.grey.shade600)),
+                      if ((entry['findings'] as List).isNotEmpty) ...[
+                        const SizedBox(height: 4),
+                        ...(entry['findings'] as List).map((f) => Padding(
+                              padding: const EdgeInsets.only(left: 20, top: 2),
+                              child: Text('• $f',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: isDark
+                                        ? Colors.grey.shade300
+                                        : Colors.black87,
+                                  )),
+                            )),
+                      ],
+                      const Divider(height: 24),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
       ),
     );
   }

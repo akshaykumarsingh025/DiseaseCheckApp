@@ -34,6 +34,7 @@ class DashboardScreen extends ConsumerWidget {
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await StorageService.clearAllLocalData();
+              ref.invalidate(profileProvider);
               ref.read(authServiceProvider).signOut();
             },
           ),

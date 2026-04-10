@@ -1,16 +1,16 @@
 [
   {
-    "id": "1",
+    "id": "D001",
     "name": "Hypertension (High BP)",
     "category": "Cardiovascular",
-    "icdCode": "I10",
+    "icd10": "I10",
     "detectionMethod": "Rule: AHA/WHO guidelines"
   },
   {
-    "id": "10",
+    "id": "D010",
     "name": "Type 2 Diabetes",
     "category": "Diabetes",
-    "icdCode": "E11",
+    "icd10": "E11",
     "detectionMethod": "Rule: ADA criteria + ML"
   },
   {
@@ -60,6 +60,7 @@
     "name": "Thyroid Dysfunction in Pregnancy",
     "category": "Pregnancy",
     "icd10": "O99.28",
+    "detectionMethod": "Detected via abnormal TSH levels during pregnancy (TSH >2.5 in first trimester, >3.0 in second/third trimester) per ACOG PB #148."
   },
   {
     "id": "IMG01",

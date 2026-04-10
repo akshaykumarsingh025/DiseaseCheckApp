@@ -166,9 +166,12 @@ const Map<String, List<LabTestDefinition>> medicalTestCategories = {
         unit: '/µL',
         minValue: 5000,
         maxValue: 2000000),
-    LabTestDefinition(key: 'mcv', label: 'MCV', unit: 'fL', minValue: 50, maxValue: 150),
-    LabTestDefinition(key: 'mch', label: 'MCH', unit: 'pg', minValue: 15, maxValue: 50),
-    LabTestDefinition(key: 'mchc', label: 'MCHC', unit: 'g/dL', minValue: 20, maxValue: 40),
+    LabTestDefinition(
+        key: 'mcv', label: 'MCV', unit: 'fL', minValue: 50, maxValue: 150),
+    LabTestDefinition(
+        key: 'mch', label: 'MCH', unit: 'pg', minValue: 15, maxValue: 50),
+    LabTestDefinition(
+        key: 'mchc', label: 'MCHC', unit: 'g/dL', minValue: 20, maxValue: 40),
     LabTestDefinition(
         key: 'rdw', label: 'RDW', unit: '%', ocrAliases: ['RDW-CV', 'RDW-SD']),
     LabTestDefinition(
@@ -345,6 +348,92 @@ const Map<String, List<LabTestDefinition>> medicalTestCategories = {
         key: 'crp', label: 'CRP (High Sensitivity)', unit: 'mg/L'),
     LabTestDefinition(
         key: 'homocysteine', label: 'Homocysteine', unit: 'µmol/L'),
+  ],
+  'Vitamins': [
+    LabTestDefinition(
+        key: 'vitamin_b12',
+        label: 'Vitamin B12',
+        unit: 'pg/mL',
+        minValue: 50,
+        maxValue: 2000),
+    LabTestDefinition(
+        key: 'folate',
+        label: 'Folate (Folic Acid)',
+        unit: 'ng/mL',
+        minValue: 0,
+        maxValue: 50),
+    LabTestDefinition(
+        key: 'vitamin_d_25oh',
+        label: '25-OH Vitamin D',
+        unit: 'ng/mL',
+        minValue: 0,
+        maxValue: 200),
+  ],
+  'Coagulation': [
+    LabTestDefinition(
+        key: 'pt_inr',
+        label: 'PT/INR',
+        unit: 'INR',
+        minValue: 0.5,
+        maxValue: 10),
+    LabTestDefinition(
+        key: 'aptt',
+        label: 'aPTT',
+        unit: 'seconds',
+        minValue: 10,
+        maxValue: 150),
+    LabTestDefinition(
+        key: 'd_dimer',
+        label: 'D-Dimer',
+        unit: 'µg/mL FEU',
+        minValue: 0,
+        maxValue: 20),
+  ],
+  'Tumor Markers': [
+    LabTestDefinition(
+        key: 'psa_total',
+        label: 'PSA (Total)',
+        unit: 'ng/mL',
+        minValue: 0,
+        maxValue: 100),
+    LabTestDefinition(
+        key: 'ca_125',
+        label: 'CA-125',
+        unit: 'U/mL',
+        minValue: 0,
+        maxValue: 500),
+    LabTestDefinition(
+        key: 'afp',
+        label: 'AFP (Alpha-Fetoprotein)',
+        unit: 'ng/mL',
+        minValue: 0,
+        maxValue: 1000),
+    LabTestDefinition(
+        key: 'cea',
+        label: 'CEA (Carcinoembryonic Antigen)',
+        unit: 'ng/mL',
+        minValue: 0,
+        maxValue: 100),
+    LabTestDefinition(
+        key: 'ca_19_9',
+        label: 'CA 19-9',
+        unit: 'U/mL',
+        minValue: 0,
+        maxValue: 500),
+  ],
+  'Inflammatory Markers': [
+    LabTestDefinition(
+        key: 'crp',
+        label: 'CRP (C-Reactive Protein)',
+        unit: 'mg/L',
+        minValue: 0,
+        maxValue: 300),
+    LabTestDefinition(
+        key: 'procalcitonin',
+        label: 'Procalcitonin',
+        unit: 'ng/mL',
+        minValue: 0,
+        maxValue: 50),
   ],
 };
 
