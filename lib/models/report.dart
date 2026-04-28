@@ -11,19 +11,22 @@ class HealthReport extends HiveObject {
   final DateTime date;
 
   @HiveField(2)
-  final List<dynamic> highRiskDiseases;
+  final List<Map<String, dynamic>> highRiskDiseases;
 
   @HiveField(3)
-  final List<dynamic> moderateRiskDiseases;
+  final List<Map<String, dynamic>> moderateRiskDiseases;
 
   @HiveField(4)
-  final List<dynamic> lowRiskDiseases;
+  final List<Map<String, dynamic>> lowRiskDiseases;
 
   @HiveField(5)
   final List<String> abnormalValues;
 
   @HiveField(6)
   final List<Map<String, dynamic>> auditTrail;
+
+  @HiveField(7)
+  String? aiRefinedText;
 
   HealthReport({
     required this.reportId,
@@ -33,22 +36,32 @@ class HealthReport extends HiveObject {
     required this.lowRiskDiseases,
     required this.abnormalValues,
     this.auditTrail = const [],
+    this.aiRefinedText,
   });
 
   factory HealthReport.fromJson(Map<String, dynamic> json) {
     return HealthReport(
       reportId: json['reportId'] as String,
       date: DateTime.parse(json['date'] as String),
-      highRiskDiseases: List<dynamic>.from(json['highRiskDiseases'] ?? []),
-      moderateRiskDiseases:
-          List<dynamic>.from(json['moderateRiskDiseases'] ?? []),
-      lowRiskDiseases: List<dynamic>.from(json['lowRiskDiseases'] ?? []),
+      highRiskDiseases: (json['highRiskDiseases'] as List?)
+              ?.map((e) => Map<String, dynamic>.from(e as Map))
+              .toList() ??
+          [],
+      moderateRiskDiseases: (json['moderateRiskDiseases'] as List?)
+              ?.map((e) => Map<String, dynamic>.from(e as Map))
+              .toList() ??
+          [],
+      lowRiskDiseases: (json['lowRiskDiseases'] as List?)
+              ?.map((e) => Map<String, dynamic>.from(e as Map))
+              .toList() ??
+          [],
       abnormalValues: List<String>.from(json['abnormalValues'] ?? []),
       auditTrail: List<Map<String, dynamic>>.from(
         (json['auditTrail'] as List?)
                 ?.map((e) => Map<String, dynamic>.from(e as Map)) ??
             [],
       ),
+      aiRefinedText: json['aiRefinedText'] as String?,
     );
   }
 
@@ -61,6 +74,7 @@ class HealthReport extends HiveObject {
       'lowRiskDiseases': lowRiskDiseases,
       'abnormalValues': abnormalValues,
       'auditTrail': auditTrail,
+      'aiRefinedText': aiRefinedText,
     };
   }
 }

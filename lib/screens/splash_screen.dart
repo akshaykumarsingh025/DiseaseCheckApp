@@ -45,8 +45,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       return;
     }
 
-    // Clear stale local data from previous user before fetching new user's data
-    await StorageService.clearAllLocalData();
+    final lastSyncUid = prefs.getString('last_sync_uid');
+
+    if (lastSyncUid != user.uid) {
+      await StorageService.clearAllLocalData();
+      await prefs.setString('last_sync_uid', user.uid);
+    }
 
     try {
       await StorageService.fetchAllFromCloud(user.uid);

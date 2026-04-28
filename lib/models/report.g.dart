@@ -19,22 +19,29 @@ class HealthReportAdapter extends TypeAdapter<HealthReport> {
     return HealthReport(
       reportId: fields[0] as String,
       date: fields[1] as DateTime,
-      highRiskDiseases: (fields[2] as List).cast<dynamic>(),
-      moderateRiskDiseases: (fields[3] as List).cast<dynamic>(),
-      lowRiskDiseases: (fields[4] as List).cast<dynamic>(),
+      highRiskDiseases: (fields[2] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+      moderateRiskDiseases: (fields[3] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
+      lowRiskDiseases: (fields[4] as List)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList(),
       abnormalValues: (fields[5] as List).cast<String>(),
       auditTrail: fields.containsKey(6)
           ? (fields[6] as List)
               .map((e) => Map<String, dynamic>.from(e as Map))
               .toList()
           : [],
+      aiRefinedText: fields.containsKey(7) ? fields[7] as String? : null,
     );
   }
 
   @override
   void write(BinaryWriter writer, HealthReport obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(8)
       ..writeByte(0)
       ..write(obj.reportId)
       ..writeByte(1)
@@ -48,7 +55,9 @@ class HealthReportAdapter extends TypeAdapter<HealthReport> {
       ..writeByte(5)
       ..write(obj.abnormalValues)
       ..writeByte(6)
-      ..write(obj.auditTrail);
+      ..write(obj.auditTrail)
+      ..writeByte(7)
+      ..write(obj.aiRefinedText);
   }
 
   @override

@@ -169,12 +169,14 @@ class WomensHealthScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          context.push('/data-entry', extra: [
-            'Pregnancy',
-            'Hormonal Panel',
-            'Metabolic Panel (Women\'s Health)',
-            'Cervical Screening'
-          ]);
+          context.push('/data-entry', extra: {
+            'categories': [
+              'Pregnancy',
+              'Hormonal Panel',
+              'Metabolic Panel (Women\'s Health)',
+              'Cervical Screening'
+            ],
+          });
         },
         backgroundColor: Colors.pinkAccent,
         icon: const Icon(Icons.add),

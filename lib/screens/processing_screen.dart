@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/session_provider.dart';
 import '../providers/report_provider.dart';
+import '../providers/gemma_provider.dart';
 import '../engine/rule_engine.dart';
 import '../engine/report_generator.dart';
+import '../services/gemma_service.dart';
 
 class ProcessingScreen extends ConsumerStatefulWidget {
   const ProcessingScreen({super.key});
@@ -15,6 +17,8 @@ class ProcessingScreen extends ConsumerStatefulWidget {
 
 class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
   String? _error;
+  double _progress = 0.0;
+  String _statusText = 'Initializing analysis...';
 
   @override
   void initState() {
@@ -24,22 +28,70 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
 
   Future<void> _processData() async {
     try {
-      // Artificial delay for UX
-      await Future.delayed(const Duration(seconds: 2));
+      setState(() {
+        _progress = 0.1;
+        _statusText = 'Reading your health data...';
+      });
+
+      await Future.delayed(const Duration(milliseconds: 500));
 
       final session = ref.read(currentSessionProvider.notifier);
       final healthDataList = ref.read(currentSessionProvider);
 
-      // Process health data through the Rule Engine
+      setState(() {
+        _progress = 0.3;
+        _statusText = 'Running clinical rule engine...';
+      });
+
+      await Future.delayed(const Duration(milliseconds: 500));
+
       final analysisResults = RuleEngine.evaluateHealthData(healthDataList);
 
-      // Generate report using ReportGenerator
+      setState(() {
+        _progress = 0.5;
+        _statusText = 'Generating risk assessment report...';
+      });
+
+      await Future.delayed(const Duration(milliseconds: 500));
+
       final newReport = ReportGenerator.generate(analysisResults);
+
+      setState(() {
+        _progress = 0.65;
+        _statusText = 'Saving report...';
+      });
 
       await ref.read(reportProvider.notifier).addReport(newReport);
 
-      // Clear the session so the next report starts fresh unless combined
       session.clearSession();
+
+      final gemmaState = ref.read(gemmaProvider);
+      if (gemmaState.isDownloaded && gemmaState.isEnabled) {
+        setState(() {
+          _progress = 0.75;
+          _statusText = 'AI is simplifying your report in easy words...';
+        });
+
+        try {
+          final rawText = GemmaService.buildRawReportText(newReport.toJson());
+          final refined = await GemmaService.refineReport(rawText);
+          if (refined.success && refined.text != null) {
+            newReport.aiRefinedText = refined.text;
+            await ref.read(reportProvider.notifier).addReport(newReport);
+          }
+        } catch (_) {}
+
+        setState(() => _progress = 0.95);
+      } else {
+        setState(() => _progress = 0.9);
+      }
+
+      setState(() {
+        _progress = 1.0;
+        _statusText = 'Done!';
+      });
+
+      await Future.delayed(const Duration(milliseconds: 300));
 
       if (mounted) {
         context.go('/report', extra: newReport);
@@ -85,17 +137,41 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
       );
     }
 
-    return const Scaffold(
+    return Scaffold(
       body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 24),
-            Text('Analyzing data with AI Models...'),
-            SizedBox(height: 8),
-            Text('Checking clinical guidelines...'),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: 200,
+                child: LinearProgressIndicator(
+                  value: _progress,
+                  minHeight: 10,
+                  borderRadius: BorderRadius.circular(5),
+                  backgroundColor: Colors.grey.shade300,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                _statusText,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '${(_progress * 100).toStringAsFixed(0)}%',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

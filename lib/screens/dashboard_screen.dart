@@ -111,6 +111,15 @@ class DashboardScreen extends ConsumerWidget {
                       Colors.green,
                       () => context.push('/report-history'),
                     ),
+                    const SizedBox(height: 16),
+                    _buildDashboardCard(
+                      context,
+                      'AI Report Assistant',
+                      'Download AI to explain reports in simple words',
+                      Icons.auto_awesome,
+                      Colors.purple,
+                      () => context.push('/ai-settings'),
+                    ),
                   ],
                 ),
               ),
@@ -128,7 +137,7 @@ class DashboardScreen extends ConsumerWidget {
 
     return Card(
       color:
-          isDark ? Colors.blue.shade900.withOpacity(0.3) : Colors.blue.shade50,
+          isDark ? Colors.blue.shade900.withValues(alpha: 0.3) : Colors.blue.shade50,
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
@@ -185,7 +194,7 @@ class DashboardScreen extends ConsumerWidget {
             children: [
               CircleAvatar(
                 radius: 30,
-                backgroundColor: color.withOpacity(0.2),
+                backgroundColor: color.withValues(alpha: 0.2),
                 child: Icon(icon, size: 30, color: color),
               ),
               const SizedBox(width: 20),

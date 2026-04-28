@@ -23,11 +23,13 @@ class PdfReportService {
           if (profile != null) _buildPatientInfo(profile),
           pw.SizedBox(height: 16),
 
-          // High Risk Section
           if (report.highRiskDiseases.isNotEmpty)
             _buildRiskSection(
               'HIGH / CRITICAL RISK',
-              report.highRiskDiseases.cast<String>(),
+              report.highRiskDiseases
+                  .map((e) =>
+                      '${e['disease']}${e['icdCode'] != null ? ' (${e['icdCode']})' : ''} — ${e['riskScore']}% risk')
+                  .toList(),
               PdfColors.red,
             ),
 
@@ -35,7 +37,10 @@ class PdfReportService {
           if (report.moderateRiskDiseases.isNotEmpty)
             _buildRiskSection(
               'MODERATE RISK',
-              report.moderateRiskDiseases.cast<String>(),
+              report.moderateRiskDiseases
+                  .map((e) =>
+                      '${e['disease']}${e['icdCode'] != null ? ' (${e['icdCode']})' : ''} — ${e['riskScore']}% risk')
+                  .toList(),
               PdfColors.orange,
             ),
 
@@ -43,7 +48,10 @@ class PdfReportService {
           if (report.lowRiskDiseases.isNotEmpty)
             _buildRiskSection(
               'LOW RISK (WITHIN NORMAL)',
-              report.lowRiskDiseases.cast<String>(),
+              report.lowRiskDiseases
+                  .map((e) =>
+                      '${e['disease']}${e['icdCode'] != null ? ' (${e['icdCode']})' : ''} — ${e['riskScore']}% risk')
+                  .toList(),
               PdfColors.green,
             ),
 

@@ -107,12 +107,14 @@ class _ReportHistoryScreenState extends ConsumerState<ReportHistoryScreen> {
                   Color riskColor = Colors.green;
 
                   if (report.highRiskDiseases.isNotEmpty) {
+                    final first = report.highRiskDiseases.first;
                     subtitleText =
-                        'High Risk: ${report.highRiskDiseases.first}';
+                        'High Risk: ${first['disease'] ?? 'Unknown'}';
                     riskColor = Colors.red;
                   } else if (report.moderateRiskDiseases.isNotEmpty) {
+                    final first = report.moderateRiskDiseases.first;
                     subtitleText =
-                        'Moderate Risk: ${report.moderateRiskDiseases.first}';
+                        'Moderate Risk: ${first['disease'] ?? 'Unknown'}';
                     riskColor = Colors.orange;
                   }
 

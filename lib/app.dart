@@ -24,6 +24,7 @@ import 'screens/womens_health_screen.dart';
 import 'screens/ocr_scanner_screen.dart';
 import 'screens/ocr_review_screen.dart';
 import 'screens/ocr_action_screen.dart';
+import 'screens/gemma_settings_screen.dart';
 import 'models/report.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -178,6 +179,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/ocr-action',
         builder: (context, state) => const OcrActionScreen(),
+      ),
+      GoRoute(
+        path: '/ai-settings',
+        builder: (context, state) => const GemmaSettingsScreen(),
       ),
     ],
   );

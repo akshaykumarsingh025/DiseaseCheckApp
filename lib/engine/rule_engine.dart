@@ -1576,6 +1576,7 @@ class RuleEngine {
     // --- ALCOHOLIC LIVER DISEASE ---
     if (v('ast') != null &&
         v('alt') != null &&
+        v('alt')! > 0 &&
         (v('ast')! / v('alt')!) >= 1.5) {
       reports.add(checkAlcoholicLiverDisease(
         ast: v('ast'),
