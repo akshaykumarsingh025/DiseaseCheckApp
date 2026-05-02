@@ -74,7 +74,7 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
 
         try {
           final rawText = GemmaService.buildRawReportText(newReport.toJson());
-          final refined = await GemmaService.refineReport(rawText);
+          final refined = await GemmaService.refineReport(rawText, language: gemmaState.language);
           if (refined.success && refined.text != null) {
             newReport.aiRefinedText = refined.text;
             await ref.read(reportProvider.notifier).addReport(newReport);

@@ -13,6 +13,7 @@ class GemmaState {
   final double refineProgress;
   final String? refinedText;
   final String? refineError;
+  final String language;
 
   const GemmaState({
     this.isEnabled = false,
@@ -26,6 +27,7 @@ class GemmaState {
     this.refineProgress = 0,
     this.refinedText,
     this.refineError,
+    this.language = 'english',
   });
 
   String get downloadProgressText {
@@ -50,6 +52,7 @@ class GemmaState {
     double? refineProgress,
     String? refinedText,
     String? refineError,
+    String? language,
   }) {
     return GemmaState(
       isEnabled: isEnabled ?? this.isEnabled,
@@ -63,6 +66,7 @@ class GemmaState {
       refineProgress: refineProgress ?? this.refineProgress,
       refinedText: refinedText,
       refineError: refineError,
+      language: language ?? this.language,
     );
   }
 }
@@ -73,7 +77,8 @@ class GemmaNotifier extends StateNotifier<GemmaState> {
   Future<void> loadState() async {
     final enabled = await GemmaService.isEnabled();
     final downloaded = await GemmaService.isModelDownloaded();
-    state = state.copyWith(isEnabled: enabled, isDownloaded: downloaded);
+    final lang = await GemmaService.getLanguage();
+    state = state.copyWith(isEnabled: enabled, isDownloaded: downloaded, language: lang);
 
     if (downloaded) {
       final ok = await GemmaService.initializeModel();
@@ -81,6 +86,11 @@ class GemmaNotifier extends StateNotifier<GemmaState> {
         state = state.copyWith(isEnabled: false);
       }
     }
+  }
+
+  Future<void> setLanguage(String lang) async {
+    await GemmaService.setLanguage(lang);
+    state = state.copyWith(language: lang, refinedText: null);
   }
 
   Future<void> startDownload() async {
@@ -138,7 +148,7 @@ class GemmaNotifier extends StateNotifier<GemmaState> {
     await Future.delayed(const Duration(milliseconds: 300));
     state = state.copyWith(refineProgress: 0.3);
 
-    final result = await GemmaService.refineReport(rawText);
+    final result = await GemmaService.refineReport(rawText, language: state.language);
 
     if (result.success && result.text != null) {
       state = state.copyWith(

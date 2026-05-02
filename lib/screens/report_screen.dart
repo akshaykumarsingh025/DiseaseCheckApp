@@ -57,7 +57,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
       setState(() => _refineProgress = 0.3);
 
-      final result = await GemmaService.refineReport(rawText);
+      final result = await GemmaService.refineReport(rawText, language: gemmaState.language);
 
       setState(() {
         _refineProgress = 0.9;

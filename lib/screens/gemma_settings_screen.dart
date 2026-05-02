@@ -27,6 +27,8 @@ class _GemmaSettingsScreenState extends ConsumerState<GemmaSettingsScreen> {
           children: [
             _buildHeaderCard(isDark),
             const SizedBox(height: 20),
+            _buildLanguageSection(gemmaState, isDark),
+            const SizedBox(height: 20),
             _buildDownloadSection(gemmaState, isDark),
             const SizedBox(height: 20),
             if (gemmaState.isDownloaded) _buildDeleteSection(),
@@ -68,6 +70,124 @@ class _GemmaSettingsScreenState extends ConsumerState<GemmaSettingsScreen> {
                 color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageSection(GemmaState gemmaState, bool isDark) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.translate, color: Colors.indigo.shade700, size: 20),
+                const SizedBox(width: 8),
+                const Text('Report Language',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Choose the language for your AI health report',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 12),
+            _buildLanguageOption(
+              value: 'english',
+              label: 'English',
+              subtitle: 'Report in simple, easy-to-understand English',
+              icon: Icons.language,
+              gemmaState: gemmaState,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 8),
+            _buildLanguageOption(
+              value: 'hindi',
+              label: 'हिन्दी (Hindi)',
+              subtitle: 'शुद्ध हिन्दी देवनागरी लिपि में रिपोर्ट',
+              icon: Icons.translate,
+              gemmaState: gemmaState,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 8),
+            _buildLanguageOption(
+              value: 'hinglish',
+              label: 'Hinglish',
+              subtitle: 'Hindi-English mix, the way we naturally speak',
+              icon: Icons.chat_bubble_outline,
+              gemmaState: gemmaState,
+              isDark: isDark,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLanguageOption({
+    required String value,
+    required String label,
+    required String subtitle,
+    required IconData icon,
+    required GemmaState gemmaState,
+    required bool isDark,
+  }) {
+    final isSelected = gemmaState.language == value;
+    return InkWell(
+      onTap: () => ref.read(gemmaProvider.notifier).setLanguage(value),
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? (isDark ? Colors.indigo.shade900.withValues(alpha: 0.3) : Colors.indigo.shade50)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isSelected ? Colors.indigo.shade400 : (isDark ? Colors.grey.shade700 : Colors.grey.shade300),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Radio<String>(
+              value: value,
+              groupValue: gemmaState.language,
+              onChanged: (v) {
+                if (v != null) ref.read(gemmaProvider.notifier).setLanguage(v);
+              },
+              activeColor: Colors.indigo,
+            ),
+            const SizedBox(width: 4),
+            Icon(icon, size: 20, color: isSelected ? Colors.indigo.shade600 : Colors.grey),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 15,
+                      color: isSelected ? Colors.indigo.shade700 : (isDark ? Colors.white : Colors.black87),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+            ),
+            if (isSelected)
+              Icon(Icons.check_circle, color: Colors.indigo.shade500, size: 20),
           ],
         ),
       ),

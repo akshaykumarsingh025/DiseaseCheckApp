@@ -20,6 +20,7 @@ class GemmaRefineResult {
 class GemmaService {
   static const String _modelReadyPref = 'gemma_model_ready';
   static const String _enabledPref = 'gemma_enabled';
+  static const String _langPref = 'gemma_language';
   static const String _modelFileName = 'gemma-4-E2B-it.litertlm';
   static const String _downloadUrl =
       'https://huggingface.co/litert-community/gemma-4-E2B-it-litert-lm/resolve/main/gemma-4-E2B-it.litertlm?download=true';
@@ -39,6 +40,27 @@ class GemmaService {
   static Future<void> setEnabled(bool val) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_enabledPref, val);
+  }
+
+  static Future<String> getLanguage() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_langPref) ?? 'english';
+  }
+
+  static Future<void> setLanguage(String lang) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_langPref, lang);
+  }
+
+  static String getLanguageLabel(String code) {
+    switch (code) {
+      case 'hindi':
+        return 'हिन्दी (Hindi)';
+      case 'hinglish':
+        return 'Hinglish';
+      default:
+        return 'English';
+    }
   }
 
   static Future<bool> isModelDownloaded() async {
@@ -170,7 +192,7 @@ class GemmaService {
     }
   }
 
-  static Future<GemmaRefineResult> refineReport(String rawReportText) async {
+  static Future<GemmaRefineResult> refineReport(String rawReportText, {String language = 'english'}) async {
     if (!_engineReady) {
       final ok = await initializeModel();
       if (!ok) {
@@ -179,24 +201,66 @@ class GemmaService {
       }
     }
 
+    String langInstruction;
+    String closingLine;
+
+    switch (language) {
+      case 'hindi':
+        langInstruction = '''पूरी रिपोर्ट शुद्ध हिन्दी (देवनागरी लिपि) में लिखें। आम बोलचाल की हिन्दी का इस्तेमाल करें ताकि मरीज आसानी से समझ सके। मेडिकल शब्दों के साथ ब्रैकेट में हिन्दी अर्थ जरूर दें। उदाहरण: "आपका फास्टिंग ब्लड शुगर (खाली पेट शर्करा) 250 mg/dL है, जो सामान्य (70-100) से बहुत ज्यादा है।"''';
+        closingLine = 'कृपया अपने डॉक्टर से अभी मिलें। यह रिपोर्ट केवल जानकारी के लिए है, चिकित्सा निदान नहीं है।';
+        break;
+      case 'hinglish':
+        langInstruction = '''Write the ENTIRE response in Hinglish — Hindi words written in English script, the way Indians naturally speak. Example: "Aapka fasting blood sugar 250 mg/dL hai, jo normal range (70-100) se bahut zyada hai. Iska matlab hai ki aapko diabetes ho sakta hai." Medical terms can stay in English but explain them in Hinglish. Example: "Creatinine (kidey ka ek test) 2.5 hai, normal 0.6-1.2 hota hai."''';
+        closingLine = 'Please apne doctor se abhi milein. Yeh report sirf jaankari ke liye hai, medical diagnosis nahi hai.';
+        break;
+      default:
+        langInstruction = '''Write the ENTIRE response in simple, clear English. Use short sentences and everyday words that anyone can understand. If you use a medical term, explain it in brackets right after. Example: "Your fasting blood sugar is 250 mg/dL (normal is 70-100 mg/dL), which is very high."''';
+        closingLine = 'Please consult your doctor now for proper diagnosis and treatment. This report is for awareness only, not a medical diagnosis.';
+    }
+
     try {
-      final prompt = '''You are a friendly medical assistant. Rewrite the following clinical health report in simple, easy-to-understand language for a patient.
+      final prompt = '''You are a caring, thorough medical assistant explaining a patient's health report to them. $langInstruction
 
-Rules:
-- Use everyday words, avoid medical jargon
-- If you must use a medical term, explain it in brackets
-- Be warm and reassuring, not alarming
-- Explain what each condition means in simple terms
-- Suggest what the patient should do next
-- Keep the structure organized with bullet points
-- Start with a brief summary of overall health
-- End with encouraging next steps
+You MUST follow this exact structure for the report:
 
-Clinical report to simplify:
+---
+
+**Overall Health Summary** (2-3 sentences about how their health looks overall)
+
+---
+
+Then for EACH disease or risk condition found, create a section with these 5 parts:
+
+**[Disease Name]**
+
+1. **What was found**: Say the condition name in simple words. (1-2 sentences)
+
+2. **Which values are abnormal**: List EVERY abnormal test value that points to this disease. Show the actual value vs the normal range. Examples:
+   - "Fasting Blood Sugar: 250 mg/dL (normal: 70-100 mg/dL) — VERY HIGH"
+   - "Platelets: 80,000 (normal: 1,50,000-4,00,000) — LOW"
+   - "HbA1c: 9.2% (normal: below 5.7%) — VERY HIGH"
+
+3. **How these values connect to this disease**: Explain the medical logic simply. Example: "When blood sugar stays above 200 for a long time, it starts damaging the small blood vessels in your kidneys. That is why your creatinine is also rising — your kidneys are not filtering waste properly anymore."
+
+4. **What this means for your daily life**: How this could affect the patient's day-to-day life. Be honest but not scary.
+
+5. **What you should do**: Clear, specific next steps. Include lifestyle tips AND medical advice.
+
+---
+
+**Abnormal Values Summary**: A quick table or list of ALL values that are outside normal range, with their actual value and normal range side by side.
+
+---
+
+**IMPORTANT**: $closingLine
+
+---
+
+Clinical data from the patient's report:
 
 $rawReportText
 
-Patient-friendly version:''';
+Now write the patient-friendly report:''';
 
       final result = await _channel.invokeMethod<String>('generateText', {
         'prompt': prompt,
