@@ -79,4 +79,5 @@ flutter:
     - assets/ml_models/
     - assets/icons/
     - assets/images/
+    - assets/fonts/
     - lib/data/
