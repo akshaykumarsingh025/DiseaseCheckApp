@@ -29,8 +29,23 @@ class GemmaService {
   static const MethodChannel _channel = MethodChannel('com.healthcheck.gemma');
 
   static bool _engineReady = false;
+  static bool _cancelled = false;
 
   static bool get isReady => _engineReady;
+
+  static void cancelGeneration() {
+    _cancelled = true;
+    _engineReady = false;
+    try {
+      _channel.invokeMethod<void>('closeModel');
+    } catch (_) {}
+  }
+
+  static Future<void> reinitializeIfReady() async {
+    if (await isModelDownloaded()) {
+      await initializeModel();
+    }
+  }
 
   static Future<bool> isEnabled() async {
     final prefs = await SharedPreferences.getInstance();
@@ -116,6 +131,8 @@ class GemmaService {
     required void Function(String error) onError,
   }) async {
     try {
+      await _channel.invokeMethod('startForegroundDownload');
+
       final localPath = await _localModelPath();
       final tempPath = '$localPath.tmp';
 
@@ -130,10 +147,16 @@ class GemmaService {
         onReceiveProgress: (received, total) {
           if (total > 0) {
             onProgress(received / total, received, total);
+            final pct = (received / total * 100).toInt();
+            final receivedMB = (received / (1024 * 1024)).toStringAsFixed(0);
+            final totalMB = (total / (1024 * 1024)).toStringAsFixed(0);
+            _updateForegroundProgress(pct, '$receivedMB / $totalMB MB');
           } else {
             final approxTotal = (modelSizeMB * 1024 * 1024).toInt();
             final progress = (received / approxTotal).clamp(0.0, 0.99);
             onProgress(progress, received, approxTotal);
+            final receivedMB = (received / (1024 * 1024)).toStringAsFixed(0);
+            _updateForegroundProgress((progress * 100).toInt(), '$receivedMB MB / ~2,500 MB');
           }
         },
       );
@@ -165,7 +188,20 @@ class GemmaService {
       onError('Download failed: ${e.message ?? "Network error. Please check your connection and try again."}');
     } catch (e) {
       onError('Download failed: ${e.toString()}');
+    } finally {
+      try {
+        await _channel.invokeMethod('stopForegroundDownload');
+      } catch (_) {}
     }
+  }
+
+  static void _updateForegroundProgress(int progress, String text) {
+    try {
+      _channel.invokeMethod('updateForegroundProgress', {
+        'progress': progress,
+        'text': text,
+      });
+    } catch (_) {}
   }
 
   static Future<bool> initializeModel() async {
@@ -193,6 +229,11 @@ class GemmaService {
   }
 
   static Future<GemmaRefineResult> refineReport(String rawReportText, {String language = 'english'}) async {
+    if (_cancelled) {
+      _cancelled = false;
+      return GemmaRefineResult.failure('Generation cancelled.');
+    }
+
     if (!_engineReady) {
       final ok = await initializeModel();
       if (!ok) {
@@ -265,6 +306,11 @@ Now write the patient-friendly report:''';
       final result = await _channel.invokeMethod<String>('generateText', {
         'prompt': prompt,
       });
+
+      if (_cancelled) {
+        _cancelled = false;
+        return GemmaRefineResult.failure('Generation cancelled.');
+      }
 
       if (result != null && result.trim().isNotEmpty) {
         return GemmaRefineResult.success(result);

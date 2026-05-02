@@ -50,4 +50,5 @@ flutter {
 
 dependencies {
     implementation("com.google.ai.edge.litertlm:litertlm-android:latest.release")
+    implementation("androidx.core:core:1.12.0")
 }

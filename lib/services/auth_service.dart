@@ -62,7 +62,7 @@ class AuthService {
       case 'wrong-password':
         return 'Incorrect password. Please try again.';
       case 'invalid-credential':
-        return 'Invalid email or password. Please check and try again.';
+        return 'No account found with this email, or the password is incorrect. If you don\'t have an account, please sign up first.';
       case 'user-disabled':
         return 'This account has been disabled. Contact support.';
       case 'too-many-requests':

@@ -43,6 +43,20 @@ class MainActivity : FlutterActivity() {
                         closeModel()
                         result.success(null)
                     }
+                    "startForegroundDownload" -> {
+                        DownloadForegroundService.start(this)
+                        result.success(null)
+                    }
+                    "updateForegroundProgress" -> {
+                        val progress = call.argument<Int>("progress") ?: 0
+                        val text = call.argument<String>("text") ?: "Downloading..."
+                        DownloadForegroundService.updateProgress(this, progress, text)
+                        result.success(null)
+                    }
+                    "stopForegroundDownload" -> {
+                        DownloadForegroundService.stop(this)
+                        result.success(null)
+                    }
                     else -> result.notImplemented()
                 }
             }

@@ -53,13 +53,41 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         // Navigation will be handled by the router's redirect logic
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(e.toString()),
-              backgroundColor: Colors.red.shade700,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
+          final msg = e.toString();
+          final mightNotBeRegistered = msg.contains('No account found') ||
+              msg.contains('sign up') ||
+              msg.contains('Sign up');
+          if (mightNotBeRegistered) {
+            showDialog(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                title: const Text('Account Not Found'),
+                content: const Text(
+                    'No account found with this email. Would you like to register?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: const Text('Try Again'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      context.push('/signup');
+                    },
+                    child: const Text('Sign Up'),
+                  ),
+                ],
+              ),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(msg),
+                backgroundColor: Colors.red.shade700,
+                behavior: SnackBarBehavior.floating,
+              ),
+            );
+          }
         }
       } finally {
         if (mounted) setState(() => _isLoading = false);

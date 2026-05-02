@@ -34,6 +34,14 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     _aiRefinedText = widget.report?.aiRefinedText;
   }
 
+  @override
+  void dispose() {
+    if (_isRefining) {
+      GemmaService.cancelGeneration();
+    }
+    super.dispose();
+  }
+
   Future<void> _refineWithAI() async {
     if (widget.report == null) return;
 
@@ -294,15 +302,17 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                    label: const Text('Go to AI Settings'),
                  ),
                ] else ...[
-                ElevatedButton.icon(
-                  onPressed: _refineWithAI,
-                  icon: const Icon(Icons.auto_awesome, size: 18),
-                  label: const Text('Explain in Simple Words'),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                ),
-              ],
+                 _buildLanguagePicker(gemmaState, isDark),
+                 const SizedBox(height: 10),
+                 ElevatedButton.icon(
+                   onPressed: _refineWithAI,
+                   icon: const Icon(Icons.auto_awesome, size: 18),
+                   label: const Text('Explain in Simple Words'),
+                   style: ElevatedButton.styleFrom(
+                     padding: const EdgeInsets.symmetric(vertical: 14),
+                   ),
+                 ),
+               ],
             ],
           ],
         ),
@@ -310,8 +320,75 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     );
   }
 
+  Widget _buildLanguagePicker(GemmaState gemmaState, bool isDark) {
+    final languages = [
+      ('english', 'English', Icons.language),
+      ('hindi', 'हिन्दी (Hindi)', Icons.translate),
+      ('hinglish', 'Hinglish', Icons.chat_bubble_outline),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Report Language',
+          style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14, color: isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          spacing: 8,
+          children: languages.map((lang) {
+            final code = lang.$1;
+            final label = lang.$2;
+            final icon = lang.$3;
+            final isSelected = gemmaState.language == code;
+            return ChoiceChip(
+              avatar: Icon(icon, size: 16, color: isSelected ? Colors.white : Colors.indigo.shade600),
+              label: Text(label, style: TextStyle(fontSize: 13, color: isSelected ? Colors.white : null)),
+              selected: isSelected,
+              selectedColor: Colors.indigo,
+              onSelected: (_) => ref.read(gemmaProvider.notifier).setLanguage(code),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
   Future<void> _downloadPdf(BuildContext context) async {
-    await _sharePdf(context);
+    try {
+      final profile = StorageService.getProfile();
+      final pdfBytes = await PdfReportService.generateReport(
+        report: widget.report!,
+        profile: profile,
+      );
+
+      final fileName = 'health_report_${widget.report!.reportId.substring(0, 8)}.pdf';
+      final downloadDir = Directory('/sdcard/Download');
+      final filePath = '${downloadDir.path}/$fileName';
+      final file = File(filePath);
+      await file.writeAsBytes(pdfBytes);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('PDF saved to Downloads/$fileName'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save PDF: $e'),
+            backgroundColor: Colors.red.shade700,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _sharePdf(BuildContext context) async {
@@ -771,8 +848,12 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
+    try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      try {
+        await launchUrl(uri);
+      } catch (_) {}
     }
   }
 }

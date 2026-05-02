@@ -19,11 +19,19 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
   String? _error;
   double _progress = 0.0;
   String _statusText = 'Initializing analysis...';
+  bool _isProcessing = true;
 
   @override
   void initState() {
     super.initState();
     _processData();
+  }
+
+  @override
+  void dispose() {
+    _isProcessing = false;
+    GemmaService.cancelGeneration();
+    super.dispose();
   }
 
   Future<void> _processData() async {
@@ -66,7 +74,7 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
       session.clearSession();
 
       final gemmaState = ref.read(gemmaProvider);
-      if (gemmaState.isDownloaded && gemmaState.isEnabled) {
+      if (gemmaState.isDownloaded && gemmaState.isEnabled && _isProcessing && mounted) {
         setState(() {
           _progress = 0.75;
           _statusText = 'AI is simplifying your report in easy words...';
@@ -75,6 +83,7 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
         try {
           final rawText = GemmaService.buildRawReportText(newReport.toJson());
           final refined = await GemmaService.refineReport(rawText, language: gemmaState.language);
+          if (!_isProcessing || !mounted) return;
           if (refined.success && refined.text != null) {
             newReport.aiRefinedText = refined.text;
             await ref.read(reportProvider.notifier).addReport(newReport);
@@ -93,11 +102,11 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
 
       await Future.delayed(const Duration(milliseconds: 300));
 
-      if (mounted) {
+      if (_isProcessing && mounted) {
         context.go('/report', extra: newReport);
       }
     } catch (e) {
-      if (mounted) {
+      if (_isProcessing && mounted) {
         setState(() => _error = e.toString());
       }
     }

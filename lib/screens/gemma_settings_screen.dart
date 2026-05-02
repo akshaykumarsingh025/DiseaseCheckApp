@@ -244,7 +244,7 @@ class _GemmaSettingsScreenState extends ConsumerState<GemmaSettingsScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'The model is about 2.5 GB. Please have patience and keep the app open during download.',
+                        'The model is about 2.5 GB. Download runs in background — you can minimize the app or turn off the screen.',
                         style: TextStyle(fontSize: 12, color: Colors.orange.shade900),
                       ),
                     ),
@@ -320,7 +320,7 @@ class _GemmaSettingsScreenState extends ConsumerState<GemmaSettingsScreen> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'The AI model is about 2.5 GB. Have patience during download. Ensure stable internet connection.',
+                            'The AI model is about 2.5 GB. Download runs in background so you can use other apps or turn off the screen.',
                             style: TextStyle(fontSize: 13, color: Colors.orange.shade900),
                           ),
                         ),
@@ -401,8 +401,8 @@ class _GemmaSettingsScreenState extends ConsumerState<GemmaSettingsScreen> {
                   Expanded(
                     child: Text(
                       'The AI model is about 2.5 GB. '
-                      'Please have patience during the download. '
-                      'Keep the app open and ensure a stable internet connection.',
+                      'Download runs in background — you can minimize the app. '
+                      'Ensure a stable internet connection.',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.orange.shade900,

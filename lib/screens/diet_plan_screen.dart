@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/gemma_provider.dart';
 import '../services/gemma_service.dart';
 import '../models/report.dart';
@@ -18,19 +19,53 @@ class DietPlanScreen extends ConsumerStatefulWidget {
 class _DietPlanScreenState extends ConsumerState<DietPlanScreen> {
   String? _plan;
   bool _isLoading = false;
+  bool _isCancelled = false;
   String? _error;
 
   @override
   void initState() {
     super.initState();
-    _generatePlan();
+    _loadSavedPlan();
+  }
+
+  @override
+  void dispose() {
+    if (_isLoading) {
+      _isCancelled = true;
+      GemmaService.cancelGeneration();
+    }
+    super.dispose();
+  }
+
+  Future<void> _loadSavedPlan() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getString('diet_plan_${widget.report.reportId}');
+    if (saved != null && mounted) {
+      setState(() => _plan = saved);
+    } else {
+      _generatePlan();
+    }
+  }
+
+  Future<void> _savePlan() async {
+    if (_plan == null) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('diet_plan_${widget.report.reportId}', _plan!);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Diet plan saved!'), backgroundColor: Colors.green),
+      );
+    }
   }
 
   Future<void> _generatePlan() async {
     setState(() {
       _isLoading = true;
+      _isCancelled = false;
       _error = null;
     });
+
+    _showLoadingDialog();
 
     final reportContext = GemmaService.buildRawReportText(widget.report.toJson());
     final language = ref.read(gemmaProvider).language;
@@ -54,27 +89,33 @@ $reportContext
 
 Create a detailed plan with these sections:
 
-**🍎 DIET PLAN**
+** DIET PLAN **
 - Foods to EAT (with Indian options - specify dal, sabzi, fruits etc.)
 - Foods to AVOID (explain why for each)
 - Sample 1-day meal plan (breakfast, lunch, snack, dinner)
 
-**🏃 EXERCISE PLAN**
+** EXERCISE PLAN **
 - Safe exercises for this patient's condition
 - Exercises to avoid
 - Daily routine suggestion (morning/evening)
 
-**🏠 HOME REMEDIES**
+** HOME REMEDIES **
 - 3-5 safe, traditional Indian home remedies that can help
 - Remind: these support but don't replace medical treatment
 
-**⚠️ IMPORTANT WARNINGS**
+** IMPORTANT WARNINGS **
 - Lifestyle habits that MUST change
 - Things that could make the condition worse
 
 End with: "This is a general guide based on your report. Please consult ${DoctorInfo.name} for a personalized treatment plan. Book appointment: ${DoctorInfo.phoneDisplay}"''';
 
     final result = await GemmaService.refineReport(prompt, language: language);
+
+    if (_isCancelled || !mounted) return;
+
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
 
     setState(() {
       _isLoading = false;
@@ -84,6 +125,60 @@ End with: "This is a general guide based on your report. Please consult ${Doctor
         _error = result.error ?? 'Could not generate plan. Please try again.';
       }
     });
+
+    if (result.success) {
+      await _savePlan();
+    }
+  }
+
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 8),
+              const CircularProgressIndicator(),
+              const SizedBox(height: 20),
+              const Text(
+                'Generating your personalized diet & lifestyle plan...',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'This may take 1-2 minutes. Please wait...',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    _isCancelled = true;
+                    GemmaService.cancelGeneration();
+                    Navigator.pop(ctx);
+                    setState(() {
+                      _isLoading = false;
+                      _error = 'Plan generation was cancelled.';
+                    });
+                    GemmaService.reinitializeIfReady();
+                  },
+                  icon: const Icon(Icons.close, size: 18),
+                  label: const Text('Cancel'),
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -152,13 +247,32 @@ End with: "This is a general guide based on your report. Please consult ${Doctor
                         ),
                       ),
                       const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _savePlan,
+                              icon: const Icon(Icons.save),
+                              label: const Text('Save Plan'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.green,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: ElevatedButton.icon(
+                              onPressed: _generatePlan,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('Regenerate'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
                       _buildDoctorCard(isDark),
                       const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: _generatePlan,
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Regenerate Plan'),
-                      ),
                     ],
                   ),
                 ),
@@ -214,8 +328,12 @@ End with: "This is a general guide based on your report. Please consult ${Doctor
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
-    if (await canLaunchUrl(uri)) {
+    try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      try {
+        await launchUrl(uri);
+      } catch (_) {}
     }
   }
 }

@@ -30,6 +30,9 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
 
   @override
   void dispose() {
+    if (_isGenerating) {
+      GemmaService.cancelGeneration();
+    }
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();

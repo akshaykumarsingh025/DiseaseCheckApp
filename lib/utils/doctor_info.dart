@@ -8,7 +8,7 @@ class DoctorInfo {
   static const String phone = '+918595954095';
   static const String phoneDisplay = '+91 85959 54095';
   static const String whatsapp = '918595954095';
-  static const String whatsappUrl = 'https://wa.me/918595954095';
+  static const String whatsappUrl = 'https://wa.me/918595954095?text=Hi';
   static const String website = 'https://drdeepikagyno.in/';
   static const String email = 'drdipikasingh2026@gmail.com';
   static const String address = 'F-11, South Extension Part 1, New Delhi - 110049';
