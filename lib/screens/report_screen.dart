@@ -205,6 +205,9 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
             ),
             const SizedBox(height: 12),
 
+            if (gemmaState.isDownloaded) _buildLanguagePicker(gemmaState, isDark),
+            if (gemmaState.isDownloaded) const SizedBox(height: 12),
+
             if (_isRefining) ...[
               LinearProgressIndicator(
                 value: _refineProgress,
@@ -269,10 +272,10 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              OutlinedButton.icon(
+              ElevatedButton.icon(
                 onPressed: _refineWithAI,
                 icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Regenerate'),
+                label: Text('Regenerate in ${GemmaService.getLanguageLabel(gemmaState.language)}'),
               ),
             ] else ...[
               if (!gemmaState.isDownloaded) ...[
@@ -302,23 +305,21 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                    label: const Text('Go to AI Settings'),
                  ),
                ] else ...[
-                 _buildLanguagePicker(gemmaState, isDark),
-                 const SizedBox(height: 10),
                  ElevatedButton.icon(
                    onPressed: _refineWithAI,
                    icon: const Icon(Icons.auto_awesome, size: 18),
-                   label: const Text('Explain in Simple Words'),
+                   label: Text('Explain in ${GemmaService.getLanguageLabel(gemmaState.language)}'),
                    style: ElevatedButton.styleFrom(
                      padding: const EdgeInsets.symmetric(vertical: 14),
                    ),
                  ),
                ],
-            ],
-          ],
-        ),
-      ),
-    );
-  }
+             ],
+           ],
+         ),
+       ),
+     );
+   }
 
   Widget _buildLanguagePicker(GemmaState gemmaState, bool isDark) {
     final languages = [
