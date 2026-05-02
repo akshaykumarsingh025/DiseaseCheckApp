@@ -102,13 +102,18 @@ class GemmaNotifier extends StateNotifier<GemmaState> {
       downloadError: null,
     );
 
+    double lastReportedProgress = -1.0;
+
     await GemmaService.downloadModel(
       onProgress: (p, received, total) {
-        state = state.copyWith(
-          downloadProgress: p,
-          downloadedBytes: received,
-          totalBytes: total,
-        );
+        if ((p - lastReportedProgress).abs() >= 0.005 || p >= 1.0) {
+          lastReportedProgress = p;
+          state = state.copyWith(
+            downloadProgress: p,
+            downloadedBytes: received,
+            totalBytes: total,
+          );
+        }
       },
       onComplete: () {
         state = state.copyWith(
@@ -124,6 +129,15 @@ class GemmaNotifier extends StateNotifier<GemmaState> {
           downloadError: e,
         );
       },
+    );
+  }
+
+  Future<void> cancelDownload() async {
+    GemmaService.cancelDownload();
+    state = state.copyWith(
+      isDownloading: false,
+      downloadProgress: 0,
+      downloadError: 'Download cancelled by user.',
     );
   }
 

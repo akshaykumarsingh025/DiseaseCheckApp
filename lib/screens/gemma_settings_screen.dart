@@ -231,6 +231,16 @@ class _GemmaSettingsScreenState extends ConsumerState<GemmaSettingsScreen> {
                 gemmaState.downloadProgressText,
                 style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
               ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => ref.read(gemmaProvider.notifier).cancelDownload(),
+                  icon: const Icon(Icons.cancel, size: 18),
+                  label: const Text('Cancel Download'),
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                ),
+              ),
               const SizedBox(height: 8),
               Container(
                 padding: const EdgeInsets.all(10),
@@ -255,19 +265,38 @@ class _GemmaSettingsScreenState extends ConsumerState<GemmaSettingsScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.red.shade50,
+                  color: gemmaState.downloadError!.contains('cancelled')
+                      ? Colors.orange.shade50
+                      : Colors.red.shade50,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.red.shade200),
+                  border: Border.all(
+                    color: gemmaState.downloadError!.contains('cancelled')
+                        ? Colors.orange.shade200
+                        : Colors.red.shade200,
+                  ),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                    Icon(
+                      gemmaState.downloadError!.contains('cancelled')
+                          ? Icons.warning_amber
+                          : Icons.error_outline,
+                      color: gemmaState.downloadError!.contains('cancelled')
+                          ? Colors.orange.shade700
+                          : Colors.red.shade700,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         gemmaState.downloadError!,
-                        style: TextStyle(fontSize: 13, color: Colors.red.shade900),
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: gemmaState.downloadError!.contains('cancelled')
+                              ? Colors.orange.shade900
+                              : Colors.red.shade900,
+                        ),
                       ),
                     ),
                   ],
@@ -279,7 +308,9 @@ class _GemmaSettingsScreenState extends ConsumerState<GemmaSettingsScreen> {
                 child: ElevatedButton.icon(
                   onPressed: () => ref.read(gemmaProvider.notifier).startDownload(),
                   icon: const Icon(Icons.refresh, size: 18),
-                  label: const Text('Retry Download'),
+                  label: gemmaState.downloadError!.contains('cancelled')
+                      ? const Text('Resume Download')
+                      : const Text('Retry Download'),
                 ),
               ),
             ] else if (gemmaState.isDownloaded) ...[

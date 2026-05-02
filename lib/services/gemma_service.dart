@@ -30,6 +30,7 @@ class GemmaService {
 
   static bool _engineReady = false;
   static bool _cancelled = false;
+  static CancelToken? _downloadCancelToken;
 
   static bool get isReady => _engineReady;
 
@@ -130,33 +131,68 @@ class GemmaService {
     required void Function() onComplete,
     required void Function(String error) onError,
   }) async {
+    _downloadCancelToken = CancelToken();
+
     try {
       await _channel.invokeMethod('startForegroundDownload');
 
       final localPath = await _localModelPath();
       final tempPath = '$localPath.tmp';
 
+      int existingBytes = 0;
       final existingTmp = File(tempPath);
       if (await existingTmp.exists()) {
-        await existingTmp.delete();
+        existingBytes = await existingTmp.length();
+        if (existingBytes < 1000000) {
+          await existingTmp.delete();
+          existingBytes = 0;
+        }
       }
+
+      int lastReportedPercent = -1;
+      int lastForegroundPercent = -1;
 
       await Dio().download(
         _downloadUrl,
         tempPath,
+        cancelToken: _downloadCancelToken,
+        options: existingBytes > 0
+            ? Options(headers: {'Range': 'bytes=$existingBytes-'})
+            : null,
         onReceiveProgress: (received, total) {
-          if (total > 0) {
-            onProgress(received / total, received, total);
-            final pct = (received / total * 100).toInt();
-            final receivedMB = (received / (1024 * 1024)).toStringAsFixed(0);
-            final totalMB = (total / (1024 * 1024)).toStringAsFixed(0);
-            _updateForegroundProgress(pct, '$receivedMB / $totalMB MB');
+          final actualReceived = existingBytes + received;
+          final actualTotal = total > 0 ? existingBytes + total : 0;
+
+          if (actualTotal > 0) {
+            final progress = actualReceived / actualTotal;
+            onProgress(progress, actualReceived, actualTotal);
+
+            final pct = (progress * 100).toInt();
+            if (pct != lastReportedPercent) {
+              lastReportedPercent = pct;
+              final receivedMB = (actualReceived / (1024 * 1024)).toStringAsFixed(0);
+              final totalMB = (actualTotal / (1024 * 1024)).toStringAsFixed(0);
+
+              if ((pct % 2 == 0 || pct >= 99) && pct != lastForegroundPercent) {
+                lastForegroundPercent = pct;
+                _updateForegroundProgress(pct, '$receivedMB / $totalMB MB');
+              }
+            }
           } else {
             final approxTotal = (modelSizeMB * 1024 * 1024).toInt();
-            final progress = (received / approxTotal).clamp(0.0, 0.99);
-            onProgress(progress, received, approxTotal);
-            final receivedMB = (received / (1024 * 1024)).toStringAsFixed(0);
-            _updateForegroundProgress((progress * 100).toInt(), '$receivedMB MB / ~2,500 MB');
+            final progress = (actualReceived / approxTotal).clamp(0.0, 0.99);
+            onProgress(progress, actualReceived, approxTotal);
+
+            final pct = (progress * 100).toInt();
+            if (pct != lastReportedPercent) {
+              lastReportedPercent = pct;
+              final receivedMB = (actualReceived / (1024 * 1024)).toStringAsFixed(0);
+
+              if (pct % 2 == 0 && pct != lastForegroundPercent) {
+                lastForegroundPercent = pct;
+                _updateForegroundProgress(pct, '$receivedMB MB / ~2,500 MB');
+              }
+            }
           }
         },
       );
@@ -181,18 +217,24 @@ class GemmaService {
 
       onComplete();
     } on DioException catch (e) {
-      final tmpFile = File(await _localModelPath().then((p) => '$p.tmp'));
-      if (await tmpFile.exists()) {
-        await tmpFile.delete();
+      if (CancelToken.isCancel(e)) {
+        onError('Download cancelled.');
+      } else {
+        onError('Download failed: ${e.message ?? "Network error. Please check your connection and try again."}');
       }
-      onError('Download failed: ${e.message ?? "Network error. Please check your connection and try again."}');
     } catch (e) {
       onError('Download failed: ${e.toString()}');
     } finally {
+      _downloadCancelToken = null;
       try {
         await _channel.invokeMethod('stopForegroundDownload');
       } catch (_) {}
     }
+  }
+
+  static void cancelDownload() {
+    _downloadCancelToken?.cancel('User cancelled the download');
+    _downloadCancelToken = null;
   }
 
   static void _updateForegroundProgress(int progress, String text) {
