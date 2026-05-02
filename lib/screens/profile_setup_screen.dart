@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/user_profile.dart';
 import '../providers/profile_provider.dart';
+import '../services/storage_service.dart';
 
 class ProfileSetupScreen extends ConsumerStatefulWidget {
   const ProfileSetupScreen({super.key});
@@ -264,10 +265,55 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       }
                     }
                   },
-                  child: Text(existing != null
-                      ? 'Update Profile'
-                      : 'Save Profile & Continue'),
-                ),
+                   child: Text(existing != null
+                       ? 'Update Profile'
+                       : 'Save Profile & Continue'),
+                 ),
+                 if (existing != null) ...[
+                   const SizedBox(height: 32),
+                   const Divider(),
+                   const SizedBox(height: 8),
+                   Text('Danger Zone', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold, fontSize: 14)),
+                   const SizedBox(height: 8),
+                   SizedBox(
+                     width: double.infinity,
+                     child: OutlinedButton.icon(
+                       onPressed: () {
+                         showDialog(
+                           context: context,
+                           builder: (ctx) => AlertDialog(
+                             title: const Text('Delete Account?'),
+                             content: const Text('This will permanently delete your account, all reports, and health data. This cannot be undone.'),
+                             actions: [
+                               TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+                               TextButton(
+                                 onPressed: () async {
+                                   Navigator.pop(ctx);
+                                   try {
+                                     await StorageService.deleteAccount();
+                                     ref.invalidate(profileProvider);
+                                     if (context.mounted) context.go('/login');
+                                   } catch (e) {
+                                     if (context.mounted) {
+                                       ScaffoldMessenger.of(context).showSnackBar(
+                                         SnackBar(content: Text('Failed to delete account: $e'), backgroundColor: Colors.red),
+                                       );
+                                     }
+                                   }
+                                 },
+                                 style: TextButton.styleFrom(foregroundColor: Colors.red),
+                                 child: const Text('Delete Forever'),
+                               ),
+                             ],
+                           ),
+                         );
+                       },
+                       icon: const Icon(Icons.delete_forever, size: 18),
+                       label: const Text('Delete Account'),
+                       style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                     ),
+                   ),
+                 ],
               ],
             ),
           ),

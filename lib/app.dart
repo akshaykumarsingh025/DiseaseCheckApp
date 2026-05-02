@@ -28,6 +28,7 @@ import 'screens/gemma_settings_screen.dart';
 import 'screens/book_appointment_screen.dart';
 import 'screens/ai_chat_screen.dart';
 import 'screens/diet_plan_screen.dart';
+import 'screens/compare_reports_screen.dart';
 import 'models/report.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -203,6 +204,16 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) {
           final report = state.extra as HealthReport?;
           return DietPlanScreen(report: report ?? HealthReport(reportId: '', date: DateTime.now(), highRiskDiseases: [], moderateRiskDiseases: [], lowRiskDiseases: [], abnormalValues: []));
+        },
+      ),
+      GoRoute(
+        path: '/compare-reports',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          return CompareReportsScreen(
+            report1: extra?['report1'] as HealthReport,
+            report2: extra?['report2'] as HealthReport,
+          );
         },
       ),
     ],

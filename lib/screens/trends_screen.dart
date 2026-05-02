@@ -4,13 +4,45 @@ import 'package:fl_chart/fl_chart.dart';
 import 'package:intl/intl.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/health_data_provider.dart';
+import '../services/storage_service.dart';
 import '../models/health_data.dart';
 
-class TrendsScreen extends ConsumerWidget {
+class TrendsScreen extends ConsumerStatefulWidget {
   const TrendsScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TrendsScreen> createState() => _TrendsScreenState();
+}
+
+class _TrendsScreenState extends ConsumerState<TrendsScreen> {
+
+  void _showDeleteDialog(String testName, List<HealthData> dataPoints) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text('Delete $testName data?'),
+        content: Text('This will remove all ${dataPoints.length} data point(s) for $testName. This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              for (var dp in dataPoints) {
+                final key = dp.key;
+                if (key != null) await StorageService.deleteHealthData(key);
+              }
+              ref.invalidate(healthDataProvider);
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final healthData = ref.watch(healthDataProvider);
 
     // Group data by testName for charting
@@ -137,6 +169,17 @@ class TrendsScreen extends ConsumerWidget {
                   child: Text(category,
                       style:
                           TextStyle(fontSize: 11, color: Colors.blue.shade700)),
+                ),
+                const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    if (value == 'delete') {
+                      _showDeleteDialog(testName, dataPoints);
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(value: 'delete', child: Text('Delete this data', style: TextStyle(color: Colors.red))),
+                  ],
                 ),
               ],
             ),

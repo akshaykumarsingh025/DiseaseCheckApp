@@ -7,6 +7,7 @@ import '../providers/gemma_provider.dart';
 import '../engine/rule_engine.dart';
 import '../engine/report_generator.dart';
 import '../services/gemma_service.dart';
+import '../services/storage_service.dart';
 
 class ProcessingScreen extends ConsumerStatefulWidget {
   const ProcessingScreen({super.key});
@@ -63,6 +64,20 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
       await Future.delayed(const Duration(milliseconds: 500));
 
       final newReport = ReportGenerator.generate(analysisResults);
+
+      if (StorageService.isDuplicateReport(newReport)) {
+        if (_isProcessing && mounted) {
+          setState(() {
+            _progress = 1.0;
+            _statusText = 'Similar report already exists!';
+          });
+          await Future.delayed(const Duration(milliseconds: 500));
+          if (_isProcessing && mounted) {
+            context.go('/report', extra: StorageService.getAllReports().first);
+          }
+        }
+        return;
+      }
 
       setState(() {
         _progress = 0.65;

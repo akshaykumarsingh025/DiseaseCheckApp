@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/profile_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
@@ -10,11 +12,60 @@ import '../utils/bmi_calculator.dart';
 import '../utils/doctor_info.dart';
 import '../widgets/disclaimer_banner.dart';
 
-class DashboardScreen extends ConsumerWidget {
+class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends ConsumerState<DashboardScreen> {
+  bool _isOffline = false;
+  String _lastSynced = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _checkConnectivity();
+    _loadLastSynced();
+  }
+
+  Future<void> _checkConnectivity() async {
+    try {
+      final result = await Connectivity().checkConnectivity();
+      setState(() => _isOffline = result.contains(ConnectivityResult.none));
+      Connectivity().onConnectivityChanged.listen((results) {
+        if (mounted) {
+          setState(() => _isOffline = results.contains(ConnectivityResult.none));
+        }
+      });
+    } catch (_) {}
+  }
+
+  Future<void> _loadLastSynced() async {
+    final prefs = await SharedPreferences.getInstance();
+    final lastSync = prefs.getString('last_synced');
+    if (lastSync != null && mounted) {
+      setState(() => _lastSynced = lastSync);
+    }
+  }
+
+  Future<void> _refreshData() async {
+    final user = ref.read(authServiceProvider).currentUser;
+    if (user != null) {
+      try {
+        await StorageService.fetchAllFromCloud(user.uid);
+        ref.invalidate(profileProvider);
+        final prefs = await SharedPreferences.getInstance();
+        final now = DateTime.now().toString().split('.')[0];
+        await prefs.setString('last_synced', now);
+        setState(() => _lastSynced = now);
+      } catch (_) {}
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final profile = ref.watch(profileProvider);
     final themeState = ref.watch(themeProvider);
     final isDark = themeState.valueOrNull ?? false;
@@ -45,86 +96,124 @@ class DashboardScreen extends ConsumerWidget {
       body: SafeArea(
         child: Column(
           children: [
+            if (_isOffline)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                color: Colors.orange.shade100,
+                child: Row(
+                  children: [
+                    Icon(Icons.cloud_off, size: 16, color: Colors.orange.shade700),
+                    const SizedBox(width: 8),
+                    Text('Offline — changes will sync when connected', style: TextStyle(fontSize: 12, color: Colors.orange.shade900)),
+                  ],
+                ),
+              ),
+            if (_lastSynced.isNotEmpty && !_isOffline)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                color: Colors.green.shade50,
+                child: Row(
+                  children: [
+                    Icon(Icons.cloud_done, size: 14, color: Colors.green.shade600),
+                    const SizedBox(width: 6),
+                    Text('Last synced: $_lastSynced', style: TextStyle(fontSize: 11, color: Colors.green.shade700)),
+                  ],
+                ),
+              ),
             const DisclaimerBanner(),
             Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    if (profile != null) ...[
-                      Text(
-                        'Welcome, ${profile.name}',
-                        style: Theme.of(context)
-                            .textTheme
-                            .headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 8),
-                      if (profile.height != null && profile.weight != null) ...[
-                        _buildBmiCard(
-                            context, profile.weight!, profile.height!),
-                      ],
-                      const SizedBox(height: 24),
-                      if (profile.gender == 'Female') ...[
-                        _buildDashboardCard(
-                          context,
-                          'Women\'s Health Hub',
-                          'PCOS, Pregnancy, Menopause & More',
-                          Icons.female,
-                          Colors.pinkAccent,
-                          () => context.push('/womens-health'),
+              child: RefreshIndicator(
+                onRefresh: _refreshData,
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (profile != null) ...[
+                        Text(
+                          'Welcome, ${profile.name}',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 8),
+                        if (profile.height != null && profile.weight != null) ...[
+                          _buildBmiCard(
+                              context, profile.weight!, profile.height!),
+                        ],
+                        const SizedBox(height: 24),
+                        if (profile.gender == 'Female') ...[
+                          _buildDashboardCard(
+                            context,
+                            'Women\'s Health Hub',
+                            'PCOS, Pregnancy, Menopause & More',
+                            Icons.female,
+                            Colors.pinkAccent,
+                            () => context.push('/womens-health'),
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                       ],
+                      _buildDashboardCard(
+                        context,
+                        'Enter New Data',
+                        'Input lab reports and vitals manually',
+                        Icons.edit_document,
+                        Colors.blueAccent,
+                        () => context.push('/data-category'),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDashboardCard(
+                        context,
+                        'Scan Medical Report',
+                        'Auto-extract data from your X-Ray or Ultrasound via Camera',
+                        Icons.document_scanner,
+                        Colors.deepPurpleAccent,
+                        () => context.push('/ocr-scanner'),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDashboardCard(
+                        context,
+                        'Health Trends',
+                        'Track your vitals over time',
+                        Icons.show_chart,
+                        Colors.teal,
+                        () => context.push('/trends'),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDashboardCard(
+                        context,
+                        'View Past Reports',
+                        'Check your wellness history',
+                        Icons.history,
+                        Colors.green,
+                        () => context.push('/report-history'),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDashboardCard(
+                        context,
+                        'AI Report Assistant',
+                        'Download AI to explain reports in simple words',
+                        Icons.auto_awesome,
+                        Colors.purple,
+                        () => context.push('/ai-settings'),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDashboardCard(
+                        context,
+                        'Blood Donation Check',
+                        'Check if you\'re eligible to donate blood',
+                        Icons.bloodtype,
+                        Colors.redAccent,
+                        () => _showBloodDonationCheck(),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDoctorDashboardCard(context),
                     ],
-                    _buildDashboardCard(
-                      context,
-                      'Enter New Data',
-                      'Input lab reports and vitals manually',
-                      Icons.edit_document,
-                      Colors.blueAccent,
-                      () => context.push('/data-category'),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDashboardCard(
-                      context,
-                      'Scan Medical Report',
-                      'Auto-extract data from your X-Ray or Ultrasound via Camera',
-                      Icons.document_scanner,
-                      Colors.deepPurpleAccent,
-                      () => context.push('/ocr-scanner'),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDashboardCard(
-                      context,
-                      'Health Trends',
-                      'Track your vitals over time',
-                      Icons.show_chart,
-                      Colors.teal,
-                      () => context.push('/trends'),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDashboardCard(
-                      context,
-                      'View Past Reports',
-                      'Check your wellness history',
-                      Icons.history,
-                      Colors.green,
-                      () => context.push('/report-history'),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDashboardCard(
-                      context,
-                      'AI Report Assistant',
-                      'Download AI to explain reports in simple words',
-                      Icons.auto_awesome,
-                      Colors.purple,
-                      () => context.push('/ai-settings'),
-                    ),
-                    const SizedBox(height: 16),
-                    _buildDoctorDashboardCard(context),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -280,11 +369,116 @@ class DashboardScreen extends ConsumerWidget {
                     icon: const Icon(Icons.chat, color: Colors.white),
                     style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.2)),
                   ),
+                  const SizedBox(height: 4),
+                  IconButton(
+                    onPressed: () => _launchUrl(DoctorInfo.emailUrl),
+                    icon: const Icon(Icons.email, color: Colors.white),
+                    style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.2)),
+                  ),
                 ],
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showBloodDonationCheck() {
+    final profile = ref.read(profileProvider);
+    final healthData = StorageService.getAllHealthData();
+    final latestVals = <String, double>{};
+    for (var entry in healthData) {
+      latestVals[entry.testName] = entry.value;
+    }
+
+    final issues = <String>[];
+    final checks = <String>[];
+
+    final age = profile?.age ?? 0;
+    final weight = profile?.weight ?? 0;
+    final gender = profile?.gender ?? '';
+
+    if (age > 0) {
+      if (age >= 18 && age <= 65) {
+        checks.add('Age ($age): Eligible');
+      } else {
+        issues.add('Age ($age): Must be 18-65 years');
+      }
+    } else {
+      checks.add('Age: Not set in profile');
+    }
+
+    if (weight > 0) {
+      if (weight >= 50) {
+        checks.add('Weight (${weight}kg): Eligible');
+      } else {
+        issues.add('Weight (${weight}kg): Must be at least 50kg');
+      }
+    } else {
+      checks.add('Weight: Not set in profile');
+    }
+
+    final hb = latestVals['Hemoglobin'];
+    if (hb != null) {
+      final minHb = gender == 'Female' ? 12.0 : 13.0;
+      if (hb >= minHb) {
+        checks.add('Hemoglobin (${hb} g/dL): Eligible');
+      } else {
+        issues.add('Hemoglobin (${hb} g/dL): Must be ${minHb.toStringAsFixed(0)}+ g/dL');
+      }
+    } else {
+      checks.add('Hemoglobin: Not tested yet');
+    }
+
+    final fbg = latestVals['Fasting Blood Glucose'];
+    if (fbg != null) {
+      if (fbg < 126) {
+        checks.add('Fasting Sugar (${fbg} mg/dL): Eligible');
+      } else {
+        issues.add('Fasting Sugar (${fbg} mg/dL): Too high for donation');
+      }
+    }
+
+    final bpSys = latestVals['Systolic BP'];
+    if (bpSys != null) {
+      if (bpSys >= 100 && bpSys <= 180) {
+        checks.add('Systolic BP (${bpSys} mmHg): Eligible');
+      } else {
+        issues.add('Systolic BP (${bpSys} mmHg): Outside eligible range (100-180)');
+      }
+    }
+
+    final eligible = issues.isEmpty;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Row(children: [
+          Icon(eligible ? Icons.check_circle : Icons.warning, color: eligible ? Colors.green : Colors.orange),
+          const SizedBox(width: 8),
+          Text(eligible ? 'Eligible!' : 'Not Eligible'),
+        ]),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (checks.isNotEmpty) ...[
+              const Text('Checks:', style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 4),
+              ...checks.map((c) => Padding(padding: const EdgeInsets.only(bottom: 2), child: Row(children: [Icon(Icons.check, size: 14, color: Colors.green), const SizedBox(width: 6), Expanded(child: Text(c, style: const TextStyle(fontSize: 13)))]))),
+            ],
+            if (issues.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              const Text('Issues:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red)),
+              const SizedBox(height: 4),
+              ...issues.map((i) => Padding(padding: const EdgeInsets.only(bottom: 2), child: Row(children: [Icon(Icons.close, size: 14, color: Colors.red), const SizedBox(width: 6), Expanded(child: Text(i, style: const TextStyle(fontSize: 13)))]))),
+            ],
+            const SizedBox(height: 8),
+            Text('Based on latest lab data in your profile. Consult a doctor for final clearance.', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+          ],
+        ),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('OK'))],
       ),
     );
   }

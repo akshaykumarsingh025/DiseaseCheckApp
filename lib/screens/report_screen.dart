@@ -438,6 +438,19 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
 
   Widget _buildRiskSection(
       String title, Color color, List<Map<String, dynamic>> items) {
+    final previousReports = StorageService.getAllReports();
+    Map<String, int> prevScores = {};
+    if (previousReports.length > 1) {
+      for (var r in previousReports) {
+        if (r.reportId != widget.report!.reportId) {
+          for (var d in [...r.highRiskDiseases, ...r.moderateRiskDiseases, ...r.lowRiskDiseases]) {
+            prevScores[d['disease']?.toString() ?? ''] = d['riskScore'] as int? ?? 0;
+          }
+          break;
+        }
+      }
+    }
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(
@@ -458,6 +471,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               final icdCode = e['icdCode'] as String? ?? '';
               final score = e['riskScore'] as int? ?? 0;
               final findings = e['findings'] as List? ?? [];
+              final prevScore = prevScores[diseaseName];
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: Column(
@@ -475,6 +489,7 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                                 fontSize: 16, fontWeight: FontWeight.w600),
                           ),
                         ),
+                        if (prevScore != null) _buildTrendBadge(score, prevScore),
                       ],
                     ),
                     if (findings.isNotEmpty)
@@ -813,37 +828,66 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               'Need expert medical advice? Book an appointment for proper diagnosis and treatment.',
               style: TextStyle(fontSize: 13, color: isDark ? Colors.grey.shade300 : Colors.grey.shade700),
             ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _launchUrl('tel:${DoctorInfo.phone}'),
-                    icon: const Icon(Icons.phone, size: 16),
-                    label: Text(DoctorInfo.phoneDisplay, style: const TextStyle(fontSize: 11)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => _launchUrl(DoctorInfo.whatsappUrl),
-                    icon: const Icon(Icons.chat, size: 16),
-                    label: const Text('WhatsApp', style: TextStyle(fontSize: 11)),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => context.push('/book-appointment'),
-                    icon: const Icon(Icons.calendar_today, size: 16),
-                    label: const Text('Book', style: TextStyle(fontSize: 11)),
-                  ),
-                ),
-              ],
-            ),
+             const SizedBox(height: 10),
+             Row(
+               children: [
+                 Expanded(
+                   child: OutlinedButton.icon(
+                     onPressed: () => _launchUrl('tel:${DoctorInfo.phone}'),
+                     icon: const Icon(Icons.phone, size: 16),
+                     label: Text(DoctorInfo.phoneDisplay, style: const TextStyle(fontSize: 11)),
+                   ),
+                 ),
+                 const SizedBox(width: 8),
+                 Expanded(
+                   child: OutlinedButton.icon(
+                     onPressed: () => _launchUrl(DoctorInfo.whatsappUrl),
+                     icon: const Icon(Icons.chat, size: 16),
+                     label: const Text('WhatsApp', style: TextStyle(fontSize: 11)),
+                   ),
+                 ),
+               ],
+             ),
+             const SizedBox(height: 6),
+             Row(
+               children: [
+                 Expanded(
+                   child: OutlinedButton.icon(
+                     onPressed: () => _launchUrl(DoctorInfo.emailUrl),
+                     icon: const Icon(Icons.email, size: 16),
+                     label: const Text('Email', style: TextStyle(fontSize: 11)),
+                   ),
+                 ),
+                 const SizedBox(width: 8),
+                 Expanded(
+                   child: OutlinedButton.icon(
+                     onPressed: () => context.push('/book-appointment'),
+                     icon: const Icon(Icons.calendar_today, size: 16),
+                     label: const Text('Book', style: TextStyle(fontSize: 11)),
+                   ),
+                 ),
+               ],
+             ),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTrendBadge(int current, int previous) {
+    if (current == previous) {
+      return Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: Colors.grey.shade100, borderRadius: BorderRadius.circular(4)), child: const Text('No change', style: TextStyle(fontSize: 10, color: Colors.grey)));
+    }
+    final up = current > previous;
+    final diff = (current - previous).abs();
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(color: up ? Colors.red.shade50 : Colors.green.shade50, borderRadius: BorderRadius.circular(4)),
+      child: Row(mainAxisSize: MainAxisSize.min, children: [
+        Icon(up ? Icons.trending_up : Icons.trending_down, size: 12, color: up ? Colors.red : Colors.green),
+        const SizedBox(width: 2),
+        Text('${up ? '+' : '-'}$diff%', style: TextStyle(fontSize: 10, color: up ? Colors.red : Colors.green, fontWeight: FontWeight.w600)),
+      ]),
     );
   }
 

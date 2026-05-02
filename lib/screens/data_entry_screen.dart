@@ -1,7 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/health_data.dart';
 import '../providers/health_data_provider.dart';
 import '../providers/session_provider.dart';
@@ -28,6 +30,41 @@ class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
   bool _isSubmitting = false;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadDraft());
+  }
+
+  Future<void> _loadDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+    final draftJson = prefs.getString('draft_data_entry');
+    if (draftJson != null && mounted) {
+      final draft = Map<String, dynamic>.from(
+        (jsonDecode(draftJson) as Map).map((k, v) => MapEntry(k.toString(), v.toString())),
+      );
+      _formKey.currentState?.patchValue(draft);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Restored unsaved draft'), duration: Duration(seconds: 2)),
+      );
+    }
+  }
+
+  Future<void> _saveDraft() async {
+    _formKey.currentState?.save();
+    final data = _formKey.currentState?.value;
+    if (data != null && data.isNotEmpty) {
+      final cleaned = data.map((k, v) => MapEntry(k, v?.toString() ?? ''));
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('draft_data_entry', jsonEncode(cleaned));
+    }
+  }
+
+  Future<void> _clearDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('draft_data_entry');
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Enter Lab Data & Vitals')),
@@ -35,6 +72,7 @@ class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
         padding: const EdgeInsets.all(16.0),
         child: FormBuilder(
           key: _formKey,
+          onChanged: () => _saveDraft(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -191,6 +229,7 @@ class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
           }
 
           if (context.mounted) {
+            await _clearDraft();
             context.go('/processing');
           }
         } else {

@@ -11,6 +11,7 @@ class DoctorInfo {
   static const String whatsappUrl = 'https://wa.me/918595954095?text=Hi';
   static const String website = 'https://drdeepikagyno.in/';
   static const String email = 'drdipikasingh2026@gmail.com';
+  static const String emailUrl = 'mailto:drdipikasingh2026@gmail.com?subject=Health Report Inquiry';
   static const String address = 'F-11, South Extension Part 1, New Delhi - 110049';
   static const String clinicHoursWeekday = 'Mon-Sat: 10 AM - 8 PM';
   static const String clinicHoursSunday = 'Sun: 10 AM - 6 PM';

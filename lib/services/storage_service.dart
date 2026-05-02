@@ -85,6 +85,56 @@ class StorageService {
 
   static int get reportCount => historyBox.length;
 
+  static bool isDuplicateReport(HealthReport report) {
+    final recent = getAllReports();
+    if (recent.isEmpty) return false;
+    final latest = recent.first;
+    final timeDiff = latest.date.difference(report.date).inMinutes.abs();
+    if (timeDiff > 5) return false;
+    final latestHigh = latest.highRiskDiseases.map((e) => e['disease']).toList()..sort();
+    final newHigh = report.highRiskDiseases.map((e) => e['disease']).toList()..sort();
+    final latestMod = latest.moderateRiskDiseases.map((e) => e['disease']).toList()..sort();
+    final newMod = report.moderateRiskDiseases.map((e) => e['disease']).toList()..sort();
+    if (latestHigh.length == newHigh.length &&
+        latestMod.length == newMod.length &&
+        latestHigh.toString() == newHigh.toString() &&
+        latestMod.toString() == newMod.toString() &&
+        latest.abnormalValues.length == report.abnormalValues.length) {
+      return true;
+    }
+    return false;
+  }
+
+  static Future<void> deleteReport(String reportId) async {
+    await historyBox.delete(reportId);
+    final user = _auth.currentUser;
+    if (user != null) {
+      try {
+        await _firestore
+            .collection('users')
+            .doc(user.uid)
+            .collection('reports')
+            .doc(reportId)
+            .delete();
+      } catch (_) {}
+    }
+  }
+
+  static Future<void> deleteHealthData(int key) async {
+    await healthDataBox.delete(key);
+  }
+
+  static Future<void> deleteAccount() async {
+    final user = _auth.currentUser;
+    if (user != null) {
+      try {
+        await _firestore.collection('users').doc(user.uid).delete();
+      } catch (_) {}
+      await clearAllLocalData();
+      await user.delete();
+    }
+  }
+
   static Future<void> saveHealthData(HealthData data) async {
     // Save locally
     await healthDataBox.add(data);
