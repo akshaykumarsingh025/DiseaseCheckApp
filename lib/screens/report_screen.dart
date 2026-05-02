@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import '../models/report.dart';
 import '../services/pdf_report_service.dart';
 import '../services/storage_service.dart';
 import '../services/gemma_service.dart';
 import '../providers/gemma_provider.dart';
+import '../utils/doctor_info.dart';
 import '../widgets/disclaimer_banner.dart';
 
 class ReportScreen extends ConsumerStatefulWidget {
@@ -123,6 +125,10 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
               const DisclaimerBanner(),
               const SizedBox(height: 16),
               if (widget.report!.highRiskDiseases.isNotEmpty)
+                _buildEmergencyAlert(context),
+              if (widget.report!.highRiskDiseases.isNotEmpty)
+                const SizedBox(height: 12),
+              if (widget.report!.highRiskDiseases.isNotEmpty)
                 _buildRiskSection('High / Critical Risk', Colors.red,
                     widget.report!.highRiskDiseases),
               const SizedBox(height: 8),
@@ -145,6 +151,10 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
                 _buildEmptyState(),
               const SizedBox(height: 16),
               _buildAIRefinementSection(context),
+              const SizedBox(height: 16),
+              _buildActionButtons(context),
+              const SizedBox(height: 16),
+              _buildDoctorCard(context),
               const SizedBox(height: 32),
             ],
           ),
@@ -541,5 +551,228 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildEmergencyAlert(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.red.shade50,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.red.shade300, width: 2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.warning_amber_rounded, color: Colors.red.shade700, size: 28),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'URGENT: Critical values detected!',
+                  style: TextStyle(
+                    color: Colors.red.shade900,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Your report shows high-risk conditions that need immediate medical attention. Please consult a doctor as soon as possible.',
+            style: TextStyle(color: Colors.red.shade800, fontSize: 14),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _launchUrl('tel:${DoctorInfo.phone}'),
+                  icon: const Icon(Icons.phone, size: 18),
+                  label: const Text('Call Doctor'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _launchUrl(DoctorInfo.whatsappUrl),
+                  icon: const Icon(Icons.chat, size: 18),
+                  label: const Text('WhatsApp'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF25D366),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(
+          'What would you like to do?',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _buildActionCard(
+                context,
+                Icons.chat_bubble_outline,
+                'Ask AI',
+                'Chat about\nyour report',
+                Colors.purple,
+                () => context.push('/ai-chat', extra: widget.report),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildActionCard(
+                context,
+                Icons.restaurant_menu,
+                'Diet Plan',
+                'Get personalized\ndiet & exercise',
+                Colors.green,
+                () => context.push('/diet-plan', extra: widget.report),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildActionCard(
+                context,
+                Icons.local_hospital,
+                'Book Doctor',
+                'Appointment with\nDr. Deepika',
+                Colors.pink,
+                () => context.push('/book-appointment'),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionCard(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String subtitle,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 28),
+              const SizedBox(height: 6),
+              Text(title, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: color)),
+              const SizedBox(height: 2),
+              Text(subtitle, textAlign: TextAlign.center, style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDoctorCard(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Card(
+      color: isDark ? Colors.pink.shade900.withValues(alpha: 0.2) : Colors.pink.shade50,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Colors.pink.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 24,
+                  backgroundColor: Colors.pink.shade100,
+                  child: Icon(Icons.local_hospital, color: Colors.pink.shade700, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(DoctorInfo.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      Text(DoctorInfo.qualification, style: TextStyle(fontSize: 11, color: Colors.pink.shade700)),
+                      Text('${DoctorInfo.experience} Exp | ${DoctorInfo.patients} Patients',
+                          style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Need expert medical advice? Book an appointment for proper diagnosis and treatment.',
+              style: TextStyle(fontSize: 13, color: isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _launchUrl('tel:${DoctorInfo.phone}'),
+                    icon: const Icon(Icons.phone, size: 16),
+                    label: Text(DoctorInfo.phoneDisplay, style: const TextStyle(fontSize: 11)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => _launchUrl(DoctorInfo.whatsappUrl),
+                    icon: const Icon(Icons.chat, size: 16),
+                    label: const Text('WhatsApp', style: TextStyle(fontSize: 11)),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => context.push('/book-appointment'),
+                    icon: const Icon(Icons.calendar_today, size: 16),
+                    label: const Text('Book', style: TextStyle(fontSize: 11)),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 }

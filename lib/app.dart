@@ -25,6 +25,9 @@ import 'screens/ocr_scanner_screen.dart';
 import 'screens/ocr_review_screen.dart';
 import 'screens/ocr_action_screen.dart';
 import 'screens/gemma_settings_screen.dart';
+import 'screens/book_appointment_screen.dart';
+import 'screens/ai_chat_screen.dart';
+import 'screens/diet_plan_screen.dart';
 import 'models/report.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
@@ -183,6 +186,24 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/ai-settings',
         builder: (context, state) => const GemmaSettingsScreen(),
+      ),
+      GoRoute(
+        path: '/book-appointment',
+        builder: (context, state) => const BookAppointmentScreen(),
+      ),
+      GoRoute(
+        path: '/ai-chat',
+        builder: (context, state) {
+          final report = state.extra as HealthReport?;
+          return AiChatScreen(report: report ?? HealthReport(reportId: '', date: DateTime.now(), highRiskDiseases: [], moderateRiskDiseases: [], lowRiskDiseases: [], abnormalValues: []));
+        },
+      ),
+      GoRoute(
+        path: '/diet-plan',
+        builder: (context, state) {
+          final report = state.extra as HealthReport?;
+          return DietPlanScreen(report: report ?? HealthReport(reportId: '', date: DateTime.now(), highRiskDiseases: [], moderateRiskDiseases: [], lowRiskDiseases: [], abnormalValues: []));
+        },
       ),
     ],
   );

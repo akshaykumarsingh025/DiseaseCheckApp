@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/profile_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/storage_service.dart';
 import '../utils/bmi_calculator.dart';
+import '../utils/doctor_info.dart';
 import '../widgets/disclaimer_banner.dart';
 
 class DashboardScreen extends ConsumerWidget {
@@ -120,6 +122,8 @@ class DashboardScreen extends ConsumerWidget {
                       Colors.purple,
                       () => context.push('/ai-settings'),
                     ),
+                    const SizedBox(height: 16),
+                    _buildDoctorDashboardCard(context),
                   ],
                 ),
               ),
@@ -221,5 +225,74 @@ class DashboardScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  Widget _buildDoctorDashboardCard(BuildContext context) {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: InkWell(
+        onTap: () => context.push('/book-appointment'),
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            gradient: LinearGradient(
+              colors: [Colors.pink.shade400, Colors.pink.shade600],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 28,
+                backgroundColor: Colors.white.withValues(alpha: 0.3),
+                child: const Icon(Icons.local_hospital, size: 28, color: Colors.white),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(DoctorInfo.name,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+                    const SizedBox(height: 2),
+                    Text(DoctorInfo.qualification,
+                        style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.9))),
+                    const SizedBox(height: 4),
+                    Text('${DoctorInfo.experience} Exp | ${DoctorInfo.phoneDisplay}',
+                        style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.8))),
+                  ],
+                ),
+              ),
+              Column(
+                children: [
+                  IconButton(
+                    onPressed: () => _launchUrl('tel:${DoctorInfo.phone}'),
+                    icon: const Icon(Icons.phone, color: Colors.white),
+                    style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                  const SizedBox(height: 4),
+                  IconButton(
+                    onPressed: () => _launchUrl(DoctorInfo.whatsappUrl),
+                    icon: const Icon(Icons.chat, color: Colors.white),
+                    style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 }
