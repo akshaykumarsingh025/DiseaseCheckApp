@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/feature_flags.dart';
 import '../providers/profile_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
@@ -211,6 +212,35 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         () => _showBloodDonationCheck(),
                       ),
                       const SizedBox(height: 16),
+                      _buildDashboardCard(
+                        context,
+                        'Online OPD - ₹199',
+                        'Video consultation with Dr. Deepika',
+                        Icons.videocam,
+                        const Color(0xFF0F3460),
+                        () => context.push('/online-opd'),
+                      ),
+                      const SizedBox(height: 16),
+                      if (FeatureFlags.healthCoursesEnabled) ...[
+                        _buildDashboardCard(
+                          context,
+                          'Health Courses',
+                          'Free & premium health education',
+                          Icons.school,
+                          Colors.indigo,
+                          () => context.push('/courses'),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                      _buildDashboardCard(
+                        context,
+                        'Diet Plans - ₹299',
+                        'Customized diet plans for your health issues',
+                        Icons.restaurant_menu,
+                        Colors.orange,
+                        () => context.push('/diet-plans'),
+                      ),
+                      const SizedBox(height: 16),
                       _buildDoctorDashboardCard(context),
                     ],
                   ),
@@ -321,7 +351,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
-        onTap: () => context.push('/book-appointment'),
+        onTap: () => context.push('/online-opd'),
         borderRadius: BorderRadius.circular(16),
         child: Container(
           padding: const EdgeInsets.all(20),
@@ -351,13 +381,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     Text(DoctorInfo.qualification,
                         style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.9))),
                     const SizedBox(height: 4),
-                    Text('${DoctorInfo.experience} Exp | ${DoctorInfo.phoneDisplay}',
+                    Text('Online OPD ₹199 | ${DoctorInfo.phoneDisplay}',
                         style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.8))),
                   ],
                 ),
               ),
               Column(
                 children: [
+                  IconButton(
+                    onPressed: () => context.push('/online-opd'),
+                    icon: const Icon(Icons.videocam, color: Colors.white),
+                    tooltip: 'Video Consultation',
+                    style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.2)),
+                  ),
+                  const SizedBox(height: 4),
                   IconButton(
                     onPressed: () => _launchUrl('tel:${DoctorInfo.phone}'),
                     icon: const Icon(Icons.phone, color: Colors.white),
@@ -367,12 +404,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   IconButton(
                     onPressed: () => _launchUrl(DoctorInfo.whatsappUrl),
                     icon: const Icon(Icons.chat, color: Colors.white),
-                    style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.2)),
-                  ),
-                  const SizedBox(height: 4),
-                  IconButton(
-                    onPressed: () => _launchUrl(DoctorInfo.emailUrl),
-                    icon: const Icon(Icons.email, color: Colors.white),
                     style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.2)),
                   ),
                 ],

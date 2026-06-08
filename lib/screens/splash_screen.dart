@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/feature_flags.dart';
 import '../providers/profile_provider.dart';
 import '../services/storage_service.dart';
 
@@ -40,7 +41,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     }
 
     // If email not verified, send to verify-email info page (user stays authenticated)
-    if (!user.emailVerified) {
+    if (!user.emailVerified &&
+        !FeatureFlags.canBypassEmailVerification(user.email)) {
       context.go('/verify-email');
       return;
     }

@@ -22,6 +22,70 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // User enrollments for courses
+    match /users/{userId}/enrolled_courses/{courseId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // User purchased diet plans
+    match /users/{userId}/purchased_diet_plans/{planId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // User profile sub-collection
+    match /users/{userId}/profile/{profileId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Appointments - users can read their own, doctors can read theirs
+    match /appointments/{appointmentId} {
+      allow read: if request.auth != null
+        && (resource.data.patientId == request.auth.uid
+            || resource.data.doctorId == request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.patientId == request.auth.uid;
+      allow update: if request.auth != null
+        && (resource.data.patientId == request.auth.uid
+            || resource.data.doctorId == request.auth.uid);
+      allow delete: if false;
+    }
+
+    // Courses - anyone authenticated can read, only admins can write
+    match /courses/{courseId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Diet Plans - anyone authenticated can read, only admins can write
+    match /diet_plans/{planId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    // Video call signaling - participants can read/write
+    match /video_calls/{meetingId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if request.auth != null;
+    }
+
+    match /video_calls/{meetingId}/signals/{signalId} {
+      allow read, write: if request.auth != null;
+    }
+
+    match /video_calls/{meetingId}/candidates/{candidateId} {
+      allow read, write: if request.auth != null;
+    }
+
+    // Payments - users can read their own
+    match /payments/{paymentId} {
+      allow read: if request.auth != null
+        && resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
     // Deny all other access
     match /{document=**} {
       allow read, write: if false;

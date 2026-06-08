@@ -1,0 +1,25 @@
+online opd for 199 only booking anywhere in world booking booking page add system where user can book appointment and on booked time the video call link will get active create a connection and video call page where user can connect to doctor Deepika account so user account and dr Deepika doctor account all online consultation will connectto doctor Deepika booking periods will in time of 20 mins each make sure it creates stable connection between android app to app no server, free and paid cources section, multiple diet plans for cheap plan for 299 for different issues,
+
+Online OPD & Appointment Booking
+
+Global Access: Online OPD booking available to users anywhere in the world for a flat rate of ₹199.
+
+Dedicated Booking Page: A built-in scheduling system where users can browse and book available appointment slots.
+
+20-Minute Intervals: All booking periods are strictly segmented into 20-minute consultation windows.
+
+Video Calling & Account Routing
+
+Role-Based Accounts: Standard user accounts for patients and a dedicated, central "Doctor Account" for Dr. Deepika.
+
+Direct Routing: All booked online consultations automatically connect directly to Dr. Deepika’s account.
+
+Time-Locked Links: Video call links that only become active and clickable when the scheduled appointment time arrives.
+
+Serverless App-to-App Calling: A stable, peer-to-peer video connection built for Android that connects the patient and doctor directly without routing the video feed through a centralized server.
+
+Health Content & Wellness Packages
+
+Course Library: A dedicated section hosting both free and paid educational courses.
+
+Targeted Diet Plans: A selection of budget-friendly diet plans customized for different health issues, available for ₹299.

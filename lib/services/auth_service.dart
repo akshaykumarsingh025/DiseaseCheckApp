@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import '../config/feature_flags.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -43,7 +44,11 @@ class AuthService {
     await _auth.currentUser?.sendEmailVerification();
   }
 
-  bool get isEmailVerified => _auth.currentUser?.emailVerified ?? false;
+  bool get isEmailVerified {
+    final user = _auth.currentUser;
+    return user?.emailVerified == true ||
+        FeatureFlags.canBypassEmailVerification(user?.email);
+  }
 
   Future<void> signOut() async {
     await _auth.signOut();

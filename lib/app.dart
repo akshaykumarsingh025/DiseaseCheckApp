@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import 'config/feature_flags.dart';
 import 'providers/auth_provider.dart';
 import 'providers/theme_provider.dart';
 import 'services/storage_service.dart';
@@ -29,7 +30,15 @@ import 'screens/book_appointment_screen.dart';
 import 'screens/ai_chat_screen.dart';
 import 'screens/diet_plan_screen.dart';
 import 'screens/compare_reports_screen.dart';
+import 'screens/online_opd_screen.dart';
+import 'screens/doctor_opd_screen.dart';
+import 'screens/video_call_screen.dart';
+import 'screens/courses_screen.dart';
+import 'screens/course_detail_screen.dart';
+import 'screens/diet_plans_screen.dart';
+import 'screens/diet_plan_detail_screen.dart';
 import 'models/report.dart';
+import 'models/appointment.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -39,8 +48,10 @@ final routerProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       if (authState.isLoading) return null;
 
-      final isAuth = authState.valueOrNull != null;
-      final isEmailVerified = authState.valueOrNull?.emailVerified ?? false;
+      final user = authState.valueOrNull;
+      final isAuth = user != null;
+      final isEmailVerified = user?.emailVerified == true ||
+          FeatureFlags.canBypassEmailVerification(user?.email);
       final isLoggingIn = state.matchedLocation == '/login' ||
           state.matchedLocation == '/signup' ||
           state.matchedLocation == '/forgot-password' ||
@@ -64,10 +75,11 @@ final routerProvider = Provider<GoRouter>((ref) {
           return hasProfile ? '/dashboard' : '/profile-setup';
         }
 
-        // Authenticated + verified + no profile → profile-setup
+        // Authenticated + verified + no profile → profile-setup (skip for doctor)
         if (isAuth && isEmailVerified) {
+          final isDoctor = FeatureFlags.isDoctor;
           final hasProfile = StorageService.getProfile() != null;
-          if (!hasProfile && state.matchedLocation != '/profile-setup') {
+          if (!isDoctor && !hasProfile && state.matchedLocation != '/profile-setup') {
             return '/profile-setup';
           }
         }
@@ -196,14 +208,30 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/ai-chat',
         builder: (context, state) {
           final report = state.extra as HealthReport?;
-          return AiChatScreen(report: report ?? HealthReport(reportId: '', date: DateTime.now(), highRiskDiseases: [], moderateRiskDiseases: [], lowRiskDiseases: [], abnormalValues: []));
+          return AiChatScreen(
+              report: report ??
+                  HealthReport(
+                      reportId: '',
+                      date: DateTime.now(),
+                      highRiskDiseases: [],
+                      moderateRiskDiseases: [],
+                      lowRiskDiseases: [],
+                      abnormalValues: []));
         },
       ),
       GoRoute(
         path: '/diet-plan',
         builder: (context, state) {
           final report = state.extra as HealthReport?;
-          return DietPlanScreen(report: report ?? HealthReport(reportId: '', date: DateTime.now(), highRiskDiseases: [], moderateRiskDiseases: [], lowRiskDiseases: [], abnormalValues: []));
+          return DietPlanScreen(
+              report: report ??
+                  HealthReport(
+                      reportId: '',
+                      date: DateTime.now(),
+                      highRiskDiseases: [],
+                      moderateRiskDiseases: [],
+                      lowRiskDiseases: [],
+                      abnormalValues: []));
         },
       ),
       GoRoute(
@@ -214,6 +242,54 @@ final routerProvider = Provider<GoRouter>((ref) {
             report1: extra?['report1'] as HealthReport,
             report2: extra?['report2'] as HealthReport,
           );
+        },
+      ),
+      GoRoute(
+        path: '/online-opd',
+        builder: (context, state) =>
+            FeatureFlags.isDoctor ? const DoctorOpdScreen() : const OnlineOpdScreen(),
+      ),
+      GoRoute(
+        path: '/video-call',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final appointment = extra?['appointment'] as Appointment?;
+          if (appointment == null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Video Call')),
+              body: const Center(child: Text('No appointment data found.')),
+            );
+          }
+          return VideoCallScreen(appointment: appointment);
+        },
+      ),
+      GoRoute(
+        path: '/courses',
+        builder: (context, state) => FeatureFlags.healthCoursesEnabled
+            ? const CoursesScreen()
+            : const _DisabledFeatureScreen(title: 'Health Courses'),
+      ),
+      GoRoute(
+        path: '/course-detail',
+        builder: (context, state) {
+          if (!FeatureFlags.healthCoursesEnabled) {
+            return const _DisabledFeatureScreen(title: 'Health Courses');
+          }
+          final extra = state.extra as Map<String, dynamic>?;
+          final courseId = extra?['courseId'] as String? ?? '';
+          return CourseDetailScreen(courseId: courseId);
+        },
+      ),
+      GoRoute(
+        path: '/diet-plans',
+        builder: (context, state) => const DietPlansScreen(),
+      ),
+      GoRoute(
+        path: '/diet-plan-detail',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final planId = extra?['planId'] as String? ?? '';
+          return DietPlanDetailScreen(planId: planId);
         },
       ),
     ],
@@ -266,6 +342,28 @@ class DiseaseCheckApp extends ConsumerWidget {
         ),
       ),
       routerConfig: router,
+    );
+  }
+}
+
+class _DisabledFeatureScreen extends StatelessWidget {
+  final String title;
+
+  const _DisabledFeatureScreen({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Text(
+            'This section is temporarily unavailable.',
+            textAlign: TextAlign.center,
+          ),
+        ),
+      ),
     );
   }
 }

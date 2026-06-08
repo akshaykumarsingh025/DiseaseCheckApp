@@ -3,6 +3,7 @@ import 'package:flutter_form_builder/flutter_form_builder.dart';
 import 'package:form_builder_validators/form_builder_validators.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../config/feature_flags.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
 import '../services/storage_service.dart';
@@ -31,7 +32,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             );
 
         // Check if email is verified before proceeding
-        if (credential.user != null && !credential.user!.emailVerified) {
+        if (credential.user != null &&
+            !credential.user!.emailVerified &&
+            !FeatureFlags.canBypassEmailVerification(credential.user!.email)) {
           if (mounted) {
             context.go('/verify-email', extra: {'email': email});
           }
