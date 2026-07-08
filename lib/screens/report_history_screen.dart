@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../models/report.dart';
 import '../services/storage_service.dart';
 import '../models/user_profile.dart';
+import '../widgets/banner_ad_widget.dart';
 
 class ReportHistoryScreen extends ConsumerStatefulWidget {
   const ReportHistoryScreen({super.key});
@@ -172,6 +173,7 @@ class _ReportHistoryScreenState extends ConsumerState<ReportHistoryScreen> {
               )
             : null,
       ),
+      bottomNavigationBar: const SafeArea(child: BannerAdWidget()),
       body: _displayedReports.isEmpty
           ? Center(
               child: Column(

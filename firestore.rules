@@ -2,14 +2,15 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can only read/write their own top-level document
     match /users/{userId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null && request.auth.uid == userId
+      allow create: if request.auth != null && request.auth.uid == userId
         && request.resource.data.keys().hasAll(['createdAt']);
+      allow update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.keys().hasAll(['createdAt']);
+      allow delete: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Users can only access their own sub-collections (reports, health_data, medications)
     match /users/{userId}/reports/{reportId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
@@ -22,22 +23,28 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // User enrollments for courses
     match /users/{userId}/enrolled_courses/{courseId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // User purchased diet plans
     match /users/{userId}/purchased_diet_plans/{planId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // User profile sub-collection
     match /users/{userId}/profile/{profileId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
-    // Appointments - users can read their own, doctors can read theirs
+    match /users/{userId}/profiles/{profileId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId}/purchases/{purchaseId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update, delete: if false;
+    }
+
     match /appointments/{appointmentId} {
       allow read: if request.auth != null
         && (resource.data.patientId == request.auth.uid
@@ -50,24 +57,25 @@ service cloud.firestore {
       allow delete: if false;
     }
 
-    // Courses - anyone authenticated can read, only admins can write
     match /courses/{courseId} {
       allow read: if request.auth != null;
       allow write: if false;
     }
 
-    // Diet Plans - anyone authenticated can read, only admins can write
     match /diet_plans/{planId} {
       allow read: if request.auth != null;
       allow write: if false;
     }
 
-    // Video call signaling - participants can read/write
     match /video_calls/{meetingId} {
-      allow read: if request.auth != null;
+      allow read: if request.auth != null
+        && (resource.data.patientId == request.auth.uid
+            || resource.data.doctorId == request.auth.uid);
       allow create: if request.auth != null;
-      allow update: if request.auth != null;
-      allow delete: if request.auth != null;
+      allow update: if request.auth != null
+        && (resource.data.patientId == request.auth.uid
+            || resource.data.doctorId == request.auth.uid);
+      allow delete: if false;
     }
 
     match /video_calls/{meetingId}/signals/{signalId} {
@@ -78,7 +86,18 @@ service cloud.firestore {
       allow read, write: if request.auth != null;
     }
 
-    // Payments - users can read their own
+    match /prescriptions/{prescriptionId} {
+      allow read: if request.auth != null
+        && (resource.data.patientId == request.auth.uid
+            || resource.data.doctorId == request.auth.uid);
+      allow create: if request.auth != null
+        && request.resource.data.doctorId == request.auth.uid;
+      allow update: if request.auth != null
+        && resource.data.doctorId == request.auth.uid
+        && request.resource.data.doctorId == request.auth.uid;
+      allow delete: if false;
+    }
+
     match /payments/{paymentId} {
       allow read: if request.auth != null
         && resource.data.userId == request.auth.uid;
@@ -86,7 +105,24 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Deny all other access
+    match /config/{configId} {
+      allow read: if request.auth != null;
+      allow write: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if request.auth != null
+        && (resource.data.userId == request.auth.uid
+            || resource.data.doctorId == request.auth.uid
+            || resource.data.patientId == request.auth.uid);
+      allow create: if request.auth != null;
+      allow update: if request.auth != null
+        && (resource.data.userId == request.auth.uid
+            || resource.data.doctorId == request.auth.uid
+            || resource.data.patientId == request.auth.uid);
+      allow delete: if false;
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

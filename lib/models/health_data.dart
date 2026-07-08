@@ -3,7 +3,7 @@ import 'package:hive/hive.dart';
 part 'health_data.g.dart';
 
 @HiveType(typeId: 2)
-class HealthData extends HiveObject {
+class HealthData {
   @HiveField(0)
   final String category;
 
@@ -19,12 +19,16 @@ class HealthData extends HiveObject {
   @HiveField(4)
   final DateTime date;
 
+  @HiveField(5)
+  int? hiveKey;
+
   HealthData({
     required this.category,
     required this.testName,
     required this.value,
     required this.unit,
     required this.date,
+    this.hiveKey,
   });
 
   factory HealthData.fromJson(Map<String, dynamic> json) {
@@ -34,6 +38,7 @@ class HealthData extends HiveObject {
       value: (json['value'] as num).toDouble(),
       unit: json['unit'] as String,
       date: DateTime.parse(json['date'] as String),
+      hiveKey: json['hiveKey'] as int?,
     );
   }
 
@@ -44,6 +49,7 @@ class HealthData extends HiveObject {
       'value': value,
       'unit': unit,
       'date': date.toIso8601String(),
+      'hiveKey': hiveKey,
     };
   }
 }

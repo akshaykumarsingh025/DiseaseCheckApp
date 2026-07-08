@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/gemma_provider.dart';
+import '../services/ai_api_service.dart';
+import '../services/storage_service.dart';
+import '../models/report.dart';
 
 class GemmaSettingsScreen extends ConsumerStatefulWidget {
   const GemmaSettingsScreen({super.key});
@@ -11,6 +14,25 @@ class GemmaSettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _GemmaSettingsScreenState extends ConsumerState<GemmaSettingsScreen> {
+  AiMode _aiMode = AiMode.online;
+
+  bool _isGenerating = false;
+  double _generateProgress = 0;
+  String? _generateError;
+  String? _generatedReport;
+  AiApiSource? _usedSource;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAiMode();
+  }
+
+  Future<void> _loadAiMode() async {
+    final mode = await AiApiService.getAiMode();
+    if (mounted) setState(() => _aiMode = mode);
+  }
+
   @override
   Widget build(BuildContext context) {
     final gemmaState = ref.watch(gemmaProvider);
@@ -20,20 +42,26 @@ class _GemmaSettingsScreenState extends ConsumerState<GemmaSettingsScreen> {
       appBar: AppBar(
         title: const Text('AI Report Assistant'),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildHeaderCard(isDark),
-            const SizedBox(height: 20),
-            _buildLanguageSection(gemmaState, isDark),
-            const SizedBox(height: 20),
-            _buildDownloadSection(gemmaState, isDark),
-            const SizedBox(height: 20),
-            if (gemmaState.isDownloaded) _buildDeleteSection(),
-            const SizedBox(height: 40),
-          ],
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildHeaderCard(isDark),
+              const SizedBox(height: 16),
+              _buildAiModeSection(isDark),
+              const SizedBox(height: 16),
+              _buildGenerateReportSection(isDark),
+              const SizedBox(height: 16),
+              _buildLanguageSection(gemmaState, isDark),
+              const SizedBox(height: 16),
+              _buildDownloadSection(gemmaState, isDark),
+              const SizedBox(height: 16),
+              if (gemmaState.isDownloaded) _buildDeleteSection(),
+              const SizedBox(height: 32),
+            ],
+          ),
         ),
       ),
     );
@@ -44,32 +72,122 @@ class _GemmaSettingsScreenState extends ConsumerState<GemmaSettingsScreen> {
       elevation: 0,
       color: isDark ? Colors.purple.shade900.withValues(alpha: 0.3) : Colors.purple.shade50,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: isDark ? Colors.purple.shade700 : Colors.purple.shade200,
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(14),
         child: Column(
           children: [
-            Icon(Icons.auto_awesome, size: 48, color: Colors.purple.shade600),
-            const SizedBox(height: 12),
+            Icon(Icons.auto_awesome, size: 36, color: Colors.purple.shade600),
+            const SizedBox(height: 8),
             const Text(
               'AI-Powered Report',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
-              'Get your health report explained in simple, '
-              'easy-to-understand language so you know exactly '
-              'what your results mean.',
+              'Get your health report explained in simple language. '
+              'Use online AI (no download needed) or local AI (works offline).',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: isDark ? Colors.grey.shade300 : Colors.grey.shade700,
+              style: TextStyle(fontSize: 12, color: isDark ? Colors.grey.shade300 : Colors.grey.shade700),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAiModeSection(bool isDark) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.smart_toy, color: Colors.blue.shade700, size: 20),
+                const SizedBox(width: 8),
+                const Text('AI Mode', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text('Choose how AI generates your reports', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+            const SizedBox(height: 10),
+            _buildModeOption(
+              mode: AiMode.online,
+              icon: Icons.cloud,
+              title: 'Online AI (Recommended)',
+              subtitle: 'Uses cloud AI — no download needed, works instantly',
+              color: Colors.blue,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 6),
+            _buildModeOption(
+              mode: AiMode.auto,
+              icon: Icons.sync,
+              title: 'Auto (Online + Local Fallback)',
+              subtitle: 'Online first, falls back to local model if offline',
+              color: Colors.teal,
+              isDark: isDark,
+            ),
+            const SizedBox(height: 6),
+            _buildModeOption(
+              mode: AiMode.local,
+              icon: Icons.phone_android,
+              title: 'Local AI Only',
+              subtitle: 'Uses downloaded model — works offline, ~2.5 GB',
+              color: Colors.orange,
+              isDark: isDark,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModeOption({
+    required AiMode mode,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required bool isDark,
+  }) {
+    final isSelected = _aiMode == mode;
+    return InkWell(
+      onTap: () async {
+        await AiApiService.setAiMode(mode);
+        setState(() => _aiMode = mode);
+      },
+      borderRadius: BorderRadius.circular(8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? color : (isDark ? Colors.grey.shade700 : Colors.grey.shade300),
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: isSelected ? color : Colors.grey),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: isSelected ? color : null)),
+                  Text(subtitle, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+                ],
               ),
             ),
+            if (isSelected) Icon(Icons.check_circle, color: color, size: 18),
           ],
         ),
       ),
@@ -192,6 +310,249 @@ class _GemmaSettingsScreenState extends ConsumerState<GemmaSettingsScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildGenerateReportSection(bool isDark) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.auto_awesome, color: Colors.purple.shade600, size: 20),
+                const SizedBox(width: 8),
+                const Text('Generate AI Report', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Generate an AI-powered explanation of your latest health report in simple language',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            ),
+            const SizedBox(height: 10),
+            if (_isGenerating) ...[
+              LinearProgressIndicator(
+                value: _generateProgress,
+                minHeight: 6,
+                borderRadius: BorderRadius.circular(3),
+                backgroundColor: isDark ? Colors.purple.shade900 : Colors.purple.shade50,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Generating your AI report... ${(_generateProgress * 100).toStringAsFixed(0)}%',
+                style: TextStyle(fontSize: 12, color: Colors.purple.shade700, fontWeight: FontWeight.w500),
+              ),
+            ] else if (_generateError != null) ...[
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.error_outline, color: Colors.red.shade700, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(child: Text(_generateError!, style: TextStyle(fontSize: 12, color: Colors.red.shade900))),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _generateReport,
+                      icon: const Icon(Icons.refresh, size: 16),
+                      label: const Text('Retry', style: TextStyle(fontSize: 13)),
+                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 8)),
+                    ),
+                  ),
+                ],
+              ),
+            ] else if (_generatedReport != null) ...[
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.purple.shade900.withValues(alpha: 0.2) : Colors.purple.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.check_circle, color: Colors.green.shade600, size: 16),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Report Generated${_usedSource != null ? ' via ${AiApiService.getSourceLabel(_usedSource!)}' : ''}',
+                          style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.green.shade700),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      _generatedReport!,
+                      style: TextStyle(fontSize: 13, height: 1.6, color: isDark ? Colors.grey.shade200 : Colors.black87),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _generateReport,
+                      icon: const Icon(Icons.refresh, size: 16),
+                      label: const Text('Regenerate', style: TextStyle(fontSize: 13)),
+                      style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 8)),
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _generateReport,
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: const Text('Generate Report'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.purple.shade600,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _generateReport() async {
+    final reports = StorageService.getAllReports();
+    if (reports.isEmpty) {
+      setState(() => _generateError = 'No reports found. Please complete a health check first.');
+      return;
+    }
+
+    final latestReport = reports.first;
+    final gemmaState = ref.read(gemmaProvider);
+    final language = gemmaState.language;
+
+    setState(() {
+      _isGenerating = true;
+      _generateProgress = 0.1;
+      _generateError = null;
+      _generatedReport = null;
+    });
+
+    try {
+      final rawText = _buildRawReportText(latestReport);
+
+      setState(() => _generateProgress = 0.3);
+
+      String langInstruction;
+      switch (language) {
+        case 'hindi':
+          langInstruction = 'पूरी रिपोर्ट शुद्ध हिन्दी (देवनागरी लिपि) में लिखें। मेडिकल शब्दों के साथ ब्रैकेट में हिन्दी अर्थ दें।';
+          break;
+        case 'hinglish':
+          langInstruction = 'Write the ENTIRE response in Hinglish — Hindi words in English script. Medical terms stay English but explain in Hinglish.';
+          break;
+        default:
+          langInstruction = 'Write the ENTIRE response in simple, clear English. Short sentences, everyday words. Explain medical terms in brackets.';
+      }
+
+      final prompt = '''You are a caring medical assistant explaining a patient's health report. $langInstruction
+
+Follow this structure:
+
+**Overall Health Summary** (2-3 sentences about how their health looks)
+
+Then for EACH disease found:
+**[Disease Name]**
+1. **What was found**: Simple explanation (1-2 sentences)
+2. **Which values are abnormal**: Show actual value vs normal range
+3. **How these values connect**: Medical logic simply explained
+4. **What this means for daily life**: Honest but not scary
+5. **What you should do**: Specific next steps
+
+**Abnormal Values Summary**: All out-of-range values listed
+
+**IMPORTANT**: Please consult your doctor for proper diagnosis and treatment. This report is for awareness only, not a medical diagnosis.
+
+Clinical data:
+$rawText
+
+Now write the patient-friendly report:''';
+
+      final result = await AiApiService.generateText(prompt, language: language);
+
+      setState(() => _generateProgress = 0.9);
+
+      if (result.success && result.text != null) {
+        latestReport.aiRefinedText = result.text;
+        await StorageService.saveReport(latestReport);
+        setState(() {
+          _generatedReport = result.text;
+          _usedSource = result.source;
+          _generateProgress = 1.0;
+          _isGenerating = false;
+        });
+      } else {
+        setState(() {
+          _generateError = result.error ?? 'Could not generate AI report. Please try again.';
+          _isGenerating = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _generateError = e.toString().replaceAll('Exception: ', '');
+        _isGenerating = false;
+      });
+    }
+  }
+
+  String _buildRawReportText(HealthReport report) {
+    final buffer = StringBuffer();
+    if (report.highRiskDiseases.isNotEmpty) {
+      buffer.writeln('HIGH RISK:');
+      for (var d in report.highRiskDiseases) {
+        buffer.writeln('- ${d['disease']} (${d['icdCode']}, Risk: ${d['riskScore']}%)');
+        for (var f in (d['findings'] as List?) ?? []) {
+          buffer.writeln('  Finding: $f');
+        }
+      }
+    }
+    if (report.moderateRiskDiseases.isNotEmpty) {
+      buffer.writeln('MODERATE RISK:');
+      for (var d in report.moderateRiskDiseases) {
+        buffer.writeln('- ${d['disease']} (${d['icdCode']}, Risk: ${d['riskScore']}%)');
+      }
+    }
+    if (report.lowRiskDiseases.isNotEmpty) {
+      buffer.writeln('LOW RISK:');
+      for (var d in report.lowRiskDiseases) {
+        buffer.writeln('- ${d['disease']} (${d['icdCode']}, Risk: ${d['riskScore']}%)');
+      }
+    }
+    if (report.abnormalValues.isNotEmpty) {
+      buffer.writeln('ABNORMAL VALUES:');
+      for (var a in report.abnormalValues) {
+        buffer.writeln('- $a');
+      }
+    }
+    if (report.highRiskDiseases.isEmpty && report.moderateRiskDiseases.isEmpty && report.lowRiskDiseases.isEmpty && report.abnormalValues.isEmpty) {
+      buffer.writeln('All values within normal range.');
+    }
+    return buffer.toString();
   }
 
   Widget _buildDownloadSection(GemmaState gemmaState, bool isDark) {

@@ -71,6 +71,14 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     border: OutlineInputBorder(),
                   ),
                   keyboardType: TextInputType.phone,
+                  validator: (val) {
+                    if (val == null || val.trim().isEmpty) return null;
+                    final digits = val.replaceAll(RegExp(r'\D'), '');
+                    if (digits.length < 10 || digits.length > 13) {
+                      return 'Enter a valid phone number';
+                    }
+                    return null;
+                  },
                 ),
                 const SizedBox(height: 16),
                 FormBuilderTextField(
@@ -119,10 +127,17 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     labelText: 'Height (cm)',
                     prefixIcon: Icon(Icons.height),
                     border: OutlineInputBorder(),
+                    helperText: 'Range: 50 – 250 cm',
                   ),
                   keyboardType: TextInputType.number,
                   validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.numeric(),
+                    (val) {
+                      if (val == null || val.trim().isEmpty) return null;
+                      final n = double.tryParse(val);
+                      if (n == null) return 'Enter a valid number';
+                      if (n < 50 || n > 250) return 'Height must be 50–250 cm';
+                      return null;
+                    },
                   ]),
                 ),
                 const SizedBox(height: 16),
@@ -133,11 +148,36 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                     labelText: 'Weight (kg)',
                     prefixIcon: Icon(Icons.monitor_weight),
                     border: OutlineInputBorder(),
+                    helperText: 'Range: 2 – 400 kg',
                   ),
                   keyboardType: TextInputType.number,
                   validator: FormBuilderValidators.compose([
-                    FormBuilderValidators.numeric(),
+                    (val) {
+                      if (val == null || val.trim().isEmpty) return null;
+                      final n = double.tryParse(val);
+                      if (n == null) return 'Enter a valid number';
+                      if (n < 2 || n > 400) return 'Weight must be 2–400 kg';
+                      return null;
+                    },
                   ]),
+                ),
+                const SizedBox(height: 16),
+                FormBuilderDropdown<String>(
+                  name: 'relation',
+                  initialValue: existing?.relation,
+                  decoration: const InputDecoration(
+                    labelText: 'Relationship (for family members)',
+                    prefixIcon: Icon(Icons.family_restroom),
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: null, child: Text('Self (default)')),
+                    DropdownMenuItem(value: 'Spouse', child: Text('Spouse')),
+                    DropdownMenuItem(value: 'Parent', child: Text('Parent')),
+                    DropdownMenuItem(value: 'Child', child: Text('Child')),
+                    DropdownMenuItem(value: 'Sibling', child: Text('Sibling')),
+                    DropdownMenuItem(value: 'Other', child: Text('Other')),
+                  ],
                 ),
                 if (_selectedGender == 'Female') ...[
                   const SizedBox(height: 32),
@@ -155,9 +195,16 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                       labelText: 'Average Menstrual Cycle Length (Days)',
                       prefixIcon: Icon(Icons.calendar_month),
                       border: OutlineInputBorder(),
+                      helperText: 'Typical range: 15 – 90 days',
                     ),
                     keyboardType: TextInputType.number,
-                    validator: FormBuilderValidators.numeric(),
+                    validator: (val) {
+                      if (val == null || val.trim().isEmpty) return null;
+                      final n = int.tryParse(val);
+                      if (n == null) return 'Enter a valid whole number';
+                      if (n < 15 || n > 90) return 'Cycle length must be 15–90 days';
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 16),
                   FormBuilderDropdown<String>(
@@ -247,6 +294,8 @@ class _ProfileSetupScreenState extends ConsumerState<ProfileSetupScreen> {
                             ? (data['periodPainScore'] as double).toInt()
                             : null,
                         reproductiveHistory: data['reproductiveHistory'],
+                        profileId: existing?.profileId,
+                        relation: data['relation'],
                       );
 
                       await ref

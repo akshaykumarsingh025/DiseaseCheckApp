@@ -22,13 +22,14 @@ class HealthDataAdapter extends TypeAdapter<HealthData> {
       value: fields[2] as double,
       unit: fields[3] as String,
       date: fields[4] as DateTime,
+      hiveKey: fields[5] as int?,
     );
   }
 
   @override
   void write(BinaryWriter writer, HealthData obj) {
     writer
-      ..writeByte(5)
+      ..writeByte(6)
       ..writeByte(0)
       ..write(obj.category)
       ..writeByte(1)
@@ -38,7 +39,9 @@ class HealthDataAdapter extends TypeAdapter<HealthData> {
       ..writeByte(3)
       ..write(obj.unit)
       ..writeByte(4)
-      ..write(obj.date);
+      ..write(obj.date)
+      ..writeByte(5)
+      ..write(obj.hiveKey);
   }
 
   @override

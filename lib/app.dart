@@ -25,7 +25,6 @@ import 'screens/womens_health_screen.dart';
 import 'screens/ocr_scanner_screen.dart';
 import 'screens/ocr_review_screen.dart';
 import 'screens/ocr_action_screen.dart';
-import 'screens/gemma_settings_screen.dart';
 import 'screens/book_appointment_screen.dart';
 import 'screens/ai_chat_screen.dart';
 import 'screens/diet_plan_screen.dart';
@@ -37,6 +36,16 @@ import 'screens/courses_screen.dart';
 import 'screens/course_detail_screen.dart';
 import 'screens/diet_plans_screen.dart';
 import 'screens/diet_plan_detail_screen.dart';
+import 'screens/profile_switcher_screen.dart';
+import 'screens/app_lock_setup_screen.dart';
+import 'screens/lock_screen.dart';
+import 'screens/pcos_screener_screen.dart';
+import 'screens/due_date_calculator_screen.dart';
+import 'screens/period_tracker_screen.dart';
+import 'screens/bmi_pcos_risk_screen.dart';
+import 'screens/fertility_score_screen.dart';
+import 'screens/write_prescription_screen.dart';
+import 'screens/my_prescriptions_screen.dart';
 import 'models/report.dart';
 import 'models/appointment.dart';
 
@@ -197,10 +206,6 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const OcrActionScreen(),
       ),
       GoRoute(
-        path: '/ai-settings',
-        builder: (context, state) => const GemmaSettingsScreen(),
-      ),
-      GoRoute(
         path: '/book-appointment',
         builder: (context, state) => const BookAppointmentScreen(),
       ),
@@ -285,12 +290,58 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const DietPlansScreen(),
       ),
       GoRoute(
+        path: '/profile-switcher',
+        builder: (context, state) => const ProfileSwitcherScreen(),
+      ),
+      GoRoute(
+        path: '/app-lock-setup',
+        builder: (context, state) => const AppLockSetupScreen(),
+      ),
+      GoRoute(
         path: '/diet-plan-detail',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
           final planId = extra?['planId'] as String? ?? '';
           return DietPlanDetailScreen(planId: planId);
         },
+      ),
+      GoRoute(
+        path: '/pcos-screener',
+        builder: (context, state) => const PcosScreenerScreen(),
+      ),
+      GoRoute(
+        path: '/due-date-calculator',
+        builder: (context, state) => const DueDateCalculatorScreen(),
+      ),
+      GoRoute(
+        path: '/period-tracker',
+        builder: (context, state) => const PeriodTrackerScreen(),
+      ),
+      GoRoute(
+        path: '/bmi-pcos-risk',
+        builder: (context, state) => const BmiPcosRiskScreen(),
+      ),
+      GoRoute(
+        path: '/fertility-score',
+        builder: (context, state) => const FertilityScoreScreen(),
+      ),
+      GoRoute(
+        path: '/write-prescription',
+        builder: (context, state) {
+          final extra = state.extra as Map<String, dynamic>?;
+          final appointment = extra?['appointment'] as Appointment?;
+          if (appointment == null) {
+            return Scaffold(
+              appBar: AppBar(title: const Text('Write Prescription')),
+              body: const Center(child: Text('No appointment data found.')),
+            );
+          }
+          return WritePrescriptionScreen(appointment: appointment);
+        },
+      ),
+      GoRoute(
+        path: '/my-prescriptions',
+        builder: (context, state) => const MyPrescriptionsScreen(),
       ),
     ],
   );
@@ -312,10 +363,11 @@ class DiseaseCheckApp extends ConsumerWidget {
       error: (_, __) => false,
     );
 
-    return MaterialApp.router(
-      title: 'Health Check',
-      debugShowCheckedModeBanner: false,
-      themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
+    return LockScreen(
+      child: MaterialApp.router(
+        title: 'Health Check',
+        debugShowCheckedModeBanner: false,
+        themeMode: isDark ? ThemeMode.dark : ThemeMode.light,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF0F3460),
@@ -342,6 +394,7 @@ class DiseaseCheckApp extends ConsumerWidget {
         ),
       ),
       routerConfig: router,
+    ),
     );
   }
 }

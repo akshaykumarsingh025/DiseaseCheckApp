@@ -9,6 +9,8 @@ import '../providers/profile_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/theme_provider.dart';
 import '../services/storage_service.dart';
+import '../services/payment_service.dart';
+import '../services/ad_service.dart';
 import '../utils/bmi_calculator.dart';
 import '../utils/doctor_info.dart';
 import '../widgets/disclaimer_banner.dart';
@@ -23,12 +25,22 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool _isOffline = false;
   String _lastSynced = '';
+  bool _adFree = true;
 
   @override
   void initState() {
     super.initState();
     _checkConnectivity();
     _loadLastSynced();
+    _initAds();
+  }
+
+  Future<void> _initAds() async {
+    // Preload an interstitial for the first ad slot and learn ad-free status
+    // so we can show/hide the "Remove Ads" upsell.
+    final adFree = await PaymentService.isAdFree();
+    if (mounted) setState(() => _adFree = adFree);
+    AdService.loadInterstitial();
   }
 
   Future<void> _checkConnectivity() async {
@@ -79,6 +91,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
             tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
             onPressed: () => ref.read(themeProvider.notifier).toggle(),
+          ),
+          IconButton(
+            icon: const Icon(Icons.people),
+            onPressed: () => context.push('/profile-switcher'),
           ),
           IconButton(
             icon: const Icon(Icons.person),
@@ -155,8 +171,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             Colors.pinkAccent,
                             () => context.push('/womens-health'),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: 10),
                         ],
+                        const Text('Health Tools', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 10),
+                        _buildToolCard(context, 'PCOS Risk Screener', '10-question assessment based on Rotterdam criteria', Icons.quiz, Colors.purple, () => context.push('/pcos-screener')),
+                        const SizedBox(height: 8),
+                        _buildToolCard(context, 'Due Date Calculator', 'Calculate EDD, current week & milestones', Icons.pregnant_woman, Colors.pink, () => context.push('/due-date-calculator')),
+                        const SizedBox(height: 8),
+                        _buildToolCard(context, 'Period & Ovulation Tracker', 'Next period, fertile window & ovulation day', Icons.calendar_month, Colors.teal, () => context.push('/period-tracker')),
+                        const SizedBox(height: 8),
+                        _buildToolCard(context, 'BMI & PCOS Weight Risk', 'BMI with PCOS metabolic risk scoring', Icons.monitor_weight, Colors.deepPurple, () => context.push('/bmi-pcos-risk')),
+                        const SizedBox(height: 8),
+                        _buildToolCard(context, 'Fertility Score', 'Comprehensive fertility wellness assessment', Icons.favorite, Colors.pinkAccent, () => context.push('/fertility-score')),
+                        const SizedBox(height: 16),
                       ],
                       _buildDashboardCard(
                         context,
@@ -166,7 +194,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         Colors.blueAccent,
                         () => context.push('/data-category'),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       _buildDashboardCard(
                         context,
                         'Scan Medical Report',
@@ -175,7 +203,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         Colors.deepPurpleAccent,
                         () => context.push('/ocr-scanner'),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       _buildDashboardCard(
                         context,
                         'Health Trends',
@@ -184,7 +212,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         Colors.teal,
                         () => context.push('/trends'),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       _buildDashboardCard(
                         context,
                         'View Past Reports',
@@ -193,16 +221,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         Colors.green,
                         () => context.push('/report-history'),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       _buildDashboardCard(
                         context,
-                        'AI Report Assistant',
-                        'Download AI to explain reports in simple words',
-                        Icons.auto_awesome,
-                        Colors.purple,
-                        () => context.push('/ai-settings'),
+                        'AI Diet Plan',
+                        'AI-generated personalized diet plans',
+                        Icons.restaurant_menu,
+                        Colors.orange,
+                        () {
+                          final reports = StorageService.getAllReports();
+                          if (reports.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('No reports found. Please complete a health check first.'),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                            return;
+                          }
+                          context.push('/diet-plan', extra: reports.first);
+                        },
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       _buildDashboardCard(
                         context,
                         'Blood Donation Check',
@@ -211,16 +251,38 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         Colors.redAccent,
                         () => _showBloodDonationCheck(),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
                       _buildDashboardCard(
                         context,
-                        'Online OPD - ₹199',
+                        'Online OPD',
                         'Video consultation with Dr. Deepika',
                         Icons.videocam,
                         const Color(0xFF0F3460),
                         () => context.push('/online-opd'),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 10),
+                      _buildDashboardCard(
+                        context,
+                        'My Prescriptions',
+                        'Download prescriptions from your consultations',
+                        Icons.medical_information,
+                        Colors.teal.shade700,
+                        () => context.push('/my-prescriptions'),
+                      ),
+                      const SizedBox(height: 10),
+                      _buildDashboardCard(
+                        context,
+                        'App Lock',
+                        'Secure app with PIN or biometric',
+                        Icons.lock_outline,
+                        Colors.indigo,
+                        () => context.push('/app-lock-setup'),
+                      ),
+                      const SizedBox(height: 10),
+                      if (!_adFree) ...[
+                        _buildRemoveAdsCard(context),
+                        const SizedBox(height: 10),
+                      ],
                       if (FeatureFlags.healthCoursesEnabled) ...[
                         _buildDashboardCard(
                           context,
@@ -230,18 +292,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           Colors.indigo,
                           () => context.push('/courses'),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 10),
                       ],
-                      _buildDashboardCard(
-                        context,
-                        'Diet Plans - ₹299',
-                        'Customized diet plans for your health issues',
-                        Icons.restaurant_menu,
-                        Colors.orange,
-                        () => context.push('/diet-plans'),
-                      ),
-                      const SizedBox(height: 16),
-                      _buildDoctorDashboardCard(context),
+                       _buildDoctorDashboardCard(context),
                     ],
                   ),
                 ),
@@ -306,31 +359,32 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   Widget _buildDashboardCard(BuildContext context, String title,
       String subtitle, IconData icon, Color color, VoidCallback onTap) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Row(
             children: [
               CircleAvatar(
-                radius: 30,
-                backgroundColor: color.withValues(alpha: 0.2),
-                child: Icon(icon, size: 30, color: color),
+                radius: 22,
+                backgroundColor: color.withValues(alpha: 0.15),
+                child: Icon(icon, size: 22, color: color),
               ),
-              const SizedBox(width: 20),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title,
                         style: const TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
+                            fontSize: 15, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
                     Text(subtitle,
                         style: TextStyle(
+                          fontSize: 12,
                           color: Theme.of(context).brightness == Brightness.dark
                               ? Colors.grey.shade400
                               : Colors.grey.shade600,
@@ -338,7 +392,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.grey),
+              Icon(Icons.chevron_right, size: 20, color: Colors.grey.shade400),
             ],
           ),
         ),
@@ -346,17 +400,132 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
+  Widget _buildToolCard(BuildContext context, String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Card(
+      elevation: 1,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: LinearGradient(
+              colors: [color.withValues(alpha: 0.08), color.withValues(alpha: 0.02)],
+              begin: Alignment.centerLeft,
+              end: Alignment.centerRight,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, size: 22, color: color),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 1),
+                    Text(subtitle, style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600)),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text('Start', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRemoveAdsCard(BuildContext context) {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: InkWell(
+        onTap: _buyRemoveAds,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            gradient: LinearGradient(
+              colors: [Colors.amber.shade600, Colors.orange.shade700],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: Colors.white.withValues(alpha: 0.25),
+                child: const Icon(Icons.block, size: 22, color: Colors.white),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Remove Ads',
+                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
+                    SizedBox(height: 2),
+                    Text('Enjoy an ad-free experience — one-time ₹149',
+                        style: TextStyle(fontSize: 12, color: Colors.white)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, size: 20, color: Colors.white),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _buyRemoveAds() async {
+    final result = await PaymentService.openCheckout(context, PaymentFeature.removeAds);
+    if (!mounted) return;
+    if (result.success) {
+      setState(() => _adFree = true);
+      AdService.dispose();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Ads removed. Thank you!'), backgroundColor: Colors.green),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.error ?? 'Purchase failed.'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   Widget _buildDoctorDashboardCard(BuildContext context) {
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () => context.push('/online-opd'),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             gradient: LinearGradient(
               colors: [Colors.pink.shade400, Colors.pink.shade600],
               begin: Alignment.topLeft,
@@ -366,45 +535,56 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           child: Row(
             children: [
               CircleAvatar(
-                radius: 28,
+                radius: 20,
                 backgroundColor: Colors.white.withValues(alpha: 0.3),
-                child: const Icon(Icons.local_hospital, size: 28, color: Colors.white),
+                child: const Icon(Icons.local_hospital, size: 20, color: Colors.white),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(DoctorInfo.name,
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
-                    const SizedBox(height: 2),
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
                     Text(DoctorInfo.qualification,
-                        style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.9))),
-                    const SizedBox(height: 4),
-                    Text('Online OPD ₹199 | ${DoctorInfo.phoneDisplay}',
-                        style: TextStyle(fontSize: 12, color: Colors.white.withValues(alpha: 0.8))),
+                        style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.9))),
+                    Text('Online OPD ₹111 | ${DoctorInfo.phoneDisplay}',
+                        style: TextStyle(fontSize: 11, color: Colors.white.withValues(alpha: 0.8))),
                   ],
                 ),
               ),
-              Column(
+              Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
                     onPressed: () => context.push('/online-opd'),
-                    icon: const Icon(Icons.videocam, color: Colors.white),
+                    icon: const Icon(Icons.videocam, color: Colors.white, size: 20),
                     tooltip: 'Video Consultation',
-                    style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.2)),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
+                      minimumSize: const Size(36, 36),
+                      padding: EdgeInsets.zero,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(width: 4),
                   IconButton(
                     onPressed: () => _launchUrl('tel:${DoctorInfo.phone}'),
-                    icon: const Icon(Icons.phone, color: Colors.white),
-                    style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.2)),
+                    icon: const Icon(Icons.phone, color: Colors.white, size: 20),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
+                      minimumSize: const Size(36, 36),
+                      padding: EdgeInsets.zero,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(width: 4),
                   IconButton(
                     onPressed: () => _launchUrl(DoctorInfo.whatsappUrl),
-                    icon: const Icon(Icons.chat, color: Colors.white),
-                    style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.2)),
+                    icon: const Icon(Icons.chat, color: Colors.white, size: 20),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withValues(alpha: 0.2),
+                      minimumSize: const Size(36, 36),
+                      padding: EdgeInsets.zero,
+                    ),
                   ),
                 ],
               ),

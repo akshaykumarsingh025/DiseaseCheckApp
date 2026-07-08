@@ -94,7 +94,7 @@ class Appointment {
     this.status = 'booked',
     this.paymentId,
     this.orderId,
-    this.amount = 199,
+    this.amount = 111,
     required this.meetingId,
     DateTime? createdAt,
   }) : createdAt = createdAt ?? DateTime.now();
@@ -139,7 +139,7 @@ class Appointment {
       status: json['status'] as String? ?? 'booked',
       paymentId: json['paymentId'] as String?,
       orderId: json['orderId'] as String?,
-      amount: json['amount'] as int? ?? 199,
+      amount: json['amount'] as int? ?? 111,
       meetingId: json['meetingId'] as String,
       createdAt: _parseDateTime(json['createdAt']),
     );

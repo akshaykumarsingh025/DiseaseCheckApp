@@ -20,21 +20,19 @@ class HealthReportAdapter extends TypeAdapter<HealthReport> {
       reportId: fields[0] as String,
       date: fields[1] as DateTime,
       highRiskDiseases: (fields[2] as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
+          .map((dynamic e) => (e as Map).cast<String, dynamic>())
           .toList(),
       moderateRiskDiseases: (fields[3] as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
+          .map((dynamic e) => (e as Map).cast<String, dynamic>())
           .toList(),
       lowRiskDiseases: (fields[4] as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
+          .map((dynamic e) => (e as Map).cast<String, dynamic>())
           .toList(),
       abnormalValues: (fields[5] as List).cast<String>(),
-      auditTrail: fields.containsKey(6)
-          ? (fields[6] as List)
-              .map((e) => Map<String, dynamic>.from(e as Map))
-              .toList()
-          : [],
-      aiRefinedText: fields.containsKey(7) ? fields[7] as String? : null,
+      auditTrail: (fields[6] as List)
+          .map((dynamic e) => (e as Map).cast<String, dynamic>())
+          .toList(),
+      aiRefinedText: fields[7] as String?,
     );
   }
 

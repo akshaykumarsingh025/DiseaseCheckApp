@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../providers/health_data_provider.dart';
 import '../services/storage_service.dart';
 import '../models/health_data.dart';
+import '../widgets/banner_ad_widget.dart';
 
 class TrendsScreen extends ConsumerStatefulWidget {
   const TrendsScreen({super.key});
@@ -28,7 +29,7 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
             onPressed: () async {
               Navigator.pop(ctx);
               for (var dp in dataPoints) {
-                final key = dp.key;
+                final key = dp.hiveKey;
                 if (key != null) await StorageService.deleteHealthData(key);
               }
               ref.invalidate(healthDataProvider);
@@ -68,6 +69,7 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
           onPressed: () => context.go('/dashboard'),
         ),
       ),
+      bottomNavigationBar: const SafeArea(child: BannerAdWidget()),
       body: healthData.isEmpty
           ? _buildEmptyState()
           : chartableTests.isEmpty

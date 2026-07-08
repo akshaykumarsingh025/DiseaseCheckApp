@@ -3,11 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../config/feature_flags.dart';
+import '../models/appointment.dart';
 import '../providers/appointment_provider.dart';
 import '../providers/profile_provider.dart';
 import '../services/appointment_service.dart';
 import '../services/payment_service.dart';
-import '../models/appointment.dart';
 import '../utils/doctor_info.dart';
 
 class OnlineOpdScreen extends ConsumerStatefulWidget {
@@ -21,68 +21,11 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
   DateTime? _selectedDate;
   TimeSlot? _selectedSlot;
   bool _isBooking = false;
-  PaymentService? _paymentService;
-  Appointment? _pendingAppointment;
-
-  @override
-  void initState() {
-    super.initState();
-    _paymentService = PaymentService(
-      onSuccess: _onPaymentSuccess,
-      onFailure: _onPaymentFailure,
-    );
-  }
 
   @override
   void dispose() {
-    _paymentService?.dispose();
+    PaymentService.dispose();
     super.dispose();
-  }
-
-  void _onPaymentSuccess(Map<String, dynamic> response) async {
-    if (_pendingAppointment != null) {
-      await AppointmentService.confirmPayment(
-        _pendingAppointment!.appointmentId,
-        paymentId: response['paymentId'] as String?,
-        orderId: response['orderId'] as String?,
-      );
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Appointment booked successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        ref.invalidate(userAppointmentsProvider);
-        setState(() {
-          _isBooking = false;
-          _pendingAppointment = null;
-        });
-      }
-    }
-  }
-
-  void _onPaymentFailure(String error) async {
-    final pendingAppointment = _pendingAppointment;
-    if (pendingAppointment != null) {
-      await AppointmentService.cancelAppointment(
-        pendingAppointment.appointmentId,
-      );
-    }
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Payment failed: $error'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      setState(() {
-        _isBooking = false;
-        _pendingAppointment = null;
-      });
-    }
   }
 
   Future<void> _bookAppointment() async {
@@ -94,28 +37,76 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
     setState(() => _isBooking = true);
 
     try {
-      final appointment = await AppointmentService.createAppointment(
-        date: _selectedDate!,
-        startTime: _selectedSlot!.startTime,
-        endTime: _selectedSlot!.endTime,
-        patientName: profile.name,
+      final result = await PaymentService.openCheckout(
+        context,
+        PaymentFeature.opdConsult,
       );
 
-      _pendingAppointment = appointment;
+      if (!mounted) return;
 
-      _paymentService?.openCheckout(
-        amount: AppointmentService.opdFee,
-        title: 'Online OPD - ${DoctorInfo.name}',
-        description: 'Consultation on ${DateFormat('dd MMM yyyy').format(_selectedDate!)} at ${_selectedSlot!.displayTime}',
-        appointmentId: appointment.appointmentId,
-      );
+      if (result.success) {
+        Appointment? appointment;
+        try {
+          appointment = await AppointmentService.createAppointment(
+            date: _selectedDate!,
+            startTime: _selectedSlot!.startTime,
+            endTime: _selectedSlot!.endTime,
+            patientName: profile.name,
+          );
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Could not create appointment: $e'),
+                backgroundColor: Colors.orange,
+              ),
+            );
+          }
+          setState(() => _isBooking = false);
+          return;
+        }
+
+        try {
+          await AppointmentService.confirmPayment(
+            appointment.appointmentId,
+            paymentId: result.paymentId,
+            orderId: result.orderId,
+          );
+        } catch (_) {
+          // Payment confirmation failed but appointment was created — still show success
+        }
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Appointment booked successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          ref.invalidate(userAppointmentsProvider);
+          setState(() {
+            _isBooking = false;
+            _selectedSlot = null;
+          });
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result.error ?? 'Payment failed. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+          setState(() => _isBooking = false);
+        }
+      }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
         );
+        setState(() => _isBooking = false);
       }
-      setState(() => _isBooking = false);
     }
   }
 
@@ -159,56 +150,58 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
     final datesAsync = ref.watch(availableDatesProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Online OPD - ₹199')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildInfoCard(isDark),
-            if (FeatureFlags.emergencyOpdTestingEnabled) ...[
-              const SizedBox(height: 12),
-              _buildEmergencyOpdButton(),
-            ],
-            const SizedBox(height: 20),
-            _buildActiveAppointmentCard(),
-            const SizedBox(height: 20),
-            Text('Select Date', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            datesAsync.when(
-              data: (dates) => _buildDateSelector(dates, isDark),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Text('Could not load dates'),
-            ),
-            if (_selectedDate != null) ...[
-              const SizedBox(height: 20),
-              Text('Available Slots (20 min each)', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 10),
-              _buildSlotsList(isDark),
-            ],
-            if (_selectedSlot != null) ...[
-              const SizedBox(height: 24),
-              _buildBookingSummary(isDark),
+      appBar: AppBar(title: const Text('Online OPD - ₹111')),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildInfoCard(isDark),
+              if (FeatureFlags.emergencyOpdTestingEnabled) ...[
+                const SizedBox(height: 12),
+                _buildEmergencyOpdButton(),
+              ],
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _isBooking ? null : _bookAppointment,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0F3460),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: _isBooking
-                    ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Text('Pay ₹199 & Book Appointment', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              _buildActiveAppointmentCard(),
+              const SizedBox(height: 16),
+              Text('Select Date', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              datesAsync.when(
+                data: (dates) => _buildDateSelector(dates, isDark),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, __) => const Text('Could not load dates'),
               ),
+              if (_selectedDate != null) ...[
+                const SizedBox(height: 16),
+                Text('Available Slots (20 min each)', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                _buildSlotsList(isDark),
+              ],
+              if (_selectedSlot != null) ...[
+                const SizedBox(height: 20),
+                _buildBookingSummary(isDark),
+                const SizedBox(height: 12),
+                ElevatedButton(
+                  onPressed: _isBooking ? null : _bookAppointment,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0F3460),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                    child: _isBooking
+                        ? const SizedBox(height: 18, width: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                        : const Text('Book Appointment', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                ),
+              ],
+              const SizedBox(height: 20),
+              Text('Upcoming Appointments', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              _buildUpcomingAppointments(),
+              const SizedBox(height: 24),
             ],
-            const SizedBox(height: 24),
-            Text('Upcoming Appointments', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 10),
-            _buildUpcomingAppointments(),
-            const SizedBox(height: 32),
-          ],
+          ),
         ),
       ),
     );
@@ -222,34 +215,34 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
         side: BorderSide(color: Colors.pink.shade200),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         child: Column(
           children: [
             Row(
               children: [
                 CircleAvatar(
-                  radius: 30,
+                  radius: 22,
                   backgroundColor: Colors.pink.shade100,
-                  child: Icon(Icons.local_hospital, size: 28, color: Colors.pink.shade700),
+                  child: Icon(Icons.local_hospital, size: 22, color: Colors.pink.shade700),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(DoctorInfo.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                      Text(DoctorInfo.qualification, style: TextStyle(fontSize: 12, color: Colors.pink.shade700)),
-                      Text('20-min Video Consultation', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                      Text(DoctorInfo.name, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                      Text(DoctorInfo.qualification, style: TextStyle(fontSize: 11, color: Colors.pink.shade700)),
+                      Text('20-min Video Consultation', style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
                     ],
                   ),
                 ),
               ],
             ),
-            const Divider(height: 24),
+            const Divider(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildInfoItem('₹199', 'Per Session', Colors.green),
+                _buildInfoItem('₹111', 'Per Session', Colors.green),
                 _buildInfoItem('20 Min', 'Duration', Colors.blue),
                 _buildInfoItem('P2P', 'Video Call', Colors.purple),
               ],
@@ -263,8 +256,8 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
   Widget _buildInfoItem(String value, String label, Color color) {
     return Column(
       children: [
-        Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: color)),
-        Text(label, style: TextStyle(fontSize: 11, color: Colors.grey.shade600)),
+        Text(value, style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: color)),
+        Text(label, style: TextStyle(fontSize: 10, color: Colors.grey.shade600)),
       ],
     );
   }
@@ -272,13 +265,13 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
   Widget _buildEmergencyOpdButton() {
     return ElevatedButton.icon(
       onPressed: _isBooking ? null : _bookEmergencyAppointment,
-      icon: const Icon(Icons.emergency),
-      label: Text(_isBooking ? 'Starting OPD...' : 'Emergency OPD Test'),
+      icon: const Icon(Icons.emergency, size: 20),
+      label: Text(_isBooking ? 'Starting OPD...' : 'Emergency OPD Test', style: const TextStyle(fontSize: 13)),
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.red.shade700,
         foregroundColor: Colors.white,
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -297,28 +290,28 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
         onTap: () => context.push('/video-call', extra: {'appointment': active}),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   color: Colors.green.shade100,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.videocam, color: Colors.green, size: 28),
+                child: const Icon(Icons.videocam, color: Colors.green, size: 20),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Your consultation is LIVE!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green)),
-                    Text('Tap to join video call with ${DoctorInfo.name}'),
+                    const Text('Your consultation is LIVE!', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 13)),
+                    Text('Tap to join video call with ${DoctorInfo.name}', style: const TextStyle(fontSize: 12)),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right, color: Colors.green),
+              const Icon(Icons.chevron_right, color: Colors.green, size: 20),
             ],
           ),
         ),
@@ -328,7 +321,7 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
 
   Widget _buildDateSelector(List<DateTime> dates, bool isDark) {
     return SizedBox(
-      height: 70,
+      height: 58,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: dates.length,
@@ -342,11 +335,11 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
               _selectedSlot = null;
             }),
             child: Container(
-              width: 70,
-              margin: const EdgeInsets.only(right: 8),
+              width: 58,
+              margin: const EdgeInsets.only(right: 6),
               decoration: BoxDecoration(
                 color: isSelected ? const Color(0xFF0F3460) : (isDark ? Colors.grey.shade800 : Colors.grey.shade100),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(10),
                 border: isSelected ? null : Border.all(color: isDark ? Colors.grey.shade700 : Colors.grey.shade300),
               ),
               child: Column(
@@ -355,16 +348,16 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
                   Text(
                     DateFormat('E').format(date).substring(0, 3).toUpperCase(),
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: 10,
                       color: isSelected ? Colors.white70 : Colors.grey,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     '${date.day}',
                     style: TextStyle(
-                      fontSize: 18,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: isSelected ? Colors.white : null,
                     ),
@@ -372,7 +365,7 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
                   Text(
                     DateFormat('MMM').format(date),
                     style: TextStyle(
-                      fontSize: 10,
+                      fontSize: 9,
                       color: isSelected ? Colors.white70 : Colors.grey,
                     ),
                   ),
@@ -444,7 +437,7 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
             _buildSummaryRow('Time', _selectedSlot!.displayTime),
             _buildSummaryRow('Duration', '20 minutes'),
             const Divider(),
-            _buildSummaryRow('Consultation Fee', '₹199', isBold: true),
+            _buildSummaryRow('Consultation Fee', '₹111', isBold: true),
           ],
         ),
       ),

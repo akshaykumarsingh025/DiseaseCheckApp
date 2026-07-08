@@ -25,7 +25,9 @@ class DoctorOpdScreen extends ConsumerWidget {
         ],
       ),
       body: appointmentsAsync.when(
-        data: (appointments) => _buildBody(context, ref, appointments, isDark),
+        data: (appointments) => SafeArea(
+          child: _buildBody(context, ref, appointments, isDark),
+        ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error loading appointments: $e')),
       ),
@@ -152,9 +154,9 @@ class DoctorOpdScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         child: Column(
           children: [
-            Text(value, style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: color)),
-            const SizedBox(height: 4),
-            Text(label, style: TextStyle(fontSize: 12, color: color.withValues(alpha: 0.8))),
+            Text(value, style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: color)),
+            const SizedBox(height: 2),
+            Text(label, style: TextStyle(fontSize: 11, color: color.withValues(alpha: 0.8))),
           ],
         ),
       ),
@@ -219,19 +221,33 @@ class DoctorOpdScreen extends ConsumerWidget {
               ],
             ),
             const SizedBox(height: 14),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () => context.push('/video-call', extra: {'appointment': appointment}),
-                icon: const Icon(Icons.video_call),
-                label: const Text('Open Consultation', style: TextStyle(fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () => context.push('/video-call', extra: {'appointment': appointment}),
+                    icon: const Icon(Icons.video_call, size: 18),
+                    label: const Text('Open Consultation', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: () => context.push('/write-prescription', extra: {'appointment': appointment}),
+                  icon: const Icon(Icons.edit_note, size: 18),
+                  label: const Text('Rx', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13)),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.green.shade800,
+                    side: BorderSide(color: Colors.green.shade400),
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -299,6 +315,11 @@ class DoctorOpdScreen extends ConsumerWidget {
                 style: TextStyle(fontWeight: FontWeight.w600, color: Colors.blue.shade700),
               );
             }),
+            IconButton(
+              onPressed: () => context.push('/write-prescription', extra: {'appointment': appointment}),
+              icon: Icon(Icons.edit_note, color: Colors.blue.shade700),
+              tooltip: 'Write Prescription',
+            ),
           ],
         ),
       ),
@@ -313,25 +334,44 @@ class DoctorOpdScreen extends ConsumerWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.check_circle, color: Colors.grey.shade500, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(appointment.patientName, style: const TextStyle(fontWeight: FontWeight.w500)),
-                  Text(
-                    '${DateFormat('dd MMM yyyy').format(appointment.date)} • ${appointment.startTime}',
-                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            Row(
+              children: [
+                Icon(Icons.check_circle, color: Colors.grey.shade500, size: 20),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(appointment.patientName, style: const TextStyle(fontWeight: FontWeight.w500)),
+                      Text(
+                        '${DateFormat('dd MMM yyyy').format(appointment.date)} • ${appointment.startTime}',
+                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+                Text(
+                  appointment.status,
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
+                ),
+              ],
             ),
-            Text(
-              appointment.status,
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500, fontStyle: FontStyle.italic),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => context.push('/write-prescription', extra: {'appointment': appointment}),
+                icon: const Icon(Icons.edit_note, size: 18),
+                label: const Text('Write / Edit Prescription'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF0F3460),
+                  side: const BorderSide(color: Color(0xFF0F3460)),
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                ),
+              ),
             ),
           ],
         ),

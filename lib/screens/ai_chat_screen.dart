@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/gemma_provider.dart';
+import '../services/ai_api_service.dart';
 import '../services/gemma_service.dart';
 import '../models/report.dart';
 
@@ -30,9 +31,6 @@ class _AiChatScreenState extends ConsumerState<AiChatScreen> {
 
   @override
   void dispose() {
-    if (_isGenerating) {
-      GemmaService.cancelGeneration();
-    }
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -73,7 +71,7 @@ Patient's question: $text
 
 Give a helpful, simple answer. If the question is about something serious, remind them to consult their doctor. Keep it concise (3-5 sentences max).''';
 
-    final result = await GemmaService.refineReport(prompt, language: language);
+    final result = await AiApiService.generateText(prompt, language: language);
 
     setState(() {
       _isGenerating = false;

@@ -139,6 +139,34 @@ class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
       );
 
       for (var test in tests) {
+        String? Function(String?)? validator;
+        if (test.minValue != null && test.maxValue != null) {
+          validator = (value) {
+            if (value == null || value.trim().isEmpty) return null;
+            final num = double.tryParse(value);
+            if (num == null) return '${test.label}: Enter a valid number';
+            if (num < test.minValue!) return '${test.label}: Min ${test.minValue} ${test.unit}';
+            if (num > test.maxValue!) return '${test.label}: Max ${test.maxValue} ${test.unit}';
+            return null;
+          };
+        } else if (test.minValue != null) {
+          validator = (value) {
+            if (value == null || value.trim().isEmpty) return null;
+            final num = double.tryParse(value);
+            if (num == null) return '${test.label}: Enter a valid number';
+            if (num < test.minValue!) return '${test.label}: Min ${test.minValue} ${test.unit}';
+            return null;
+          };
+        } else if (test.maxValue != null) {
+          validator = (value) {
+            if (value == null || value.trim().isEmpty) return null;
+            final num = double.tryParse(value);
+            if (num == null) return '${test.label}: Enter a valid number';
+            if (num > test.maxValue!) return '${test.label}: Max ${test.maxValue} ${test.unit}';
+            return null;
+          };
+        }
+
         widgets.add(
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -148,9 +176,13 @@ class _DataEntryScreenState extends ConsumerState<DataEntryScreen> {
               decoration: InputDecoration(
                 labelText: test.label,
                 suffixText: test.unit.isNotEmpty ? test.unit : null,
+                helperText: (test.minValue != null && test.maxValue != null)
+                    ? 'Range: ${test.minValue} – ${test.maxValue} ${test.unit}'
+                    : null,
                 border: const OutlineInputBorder(),
               ),
               keyboardType: test.keyboardType,
+              validator: validator,
             ),
           ),
         );

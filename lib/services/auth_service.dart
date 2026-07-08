@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import '../config/feature_flags.dart';
+import '../services/doctor_account_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -46,8 +47,13 @@ class AuthService {
 
   bool get isEmailVerified {
     final user = _auth.currentUser;
-    return user?.emailVerified == true ||
-        FeatureFlags.canBypassEmailVerification(user?.email);
+    if (user == null) return false;
+    if (_isDoctorAccount(user)) return true;
+    return user.emailVerified || FeatureFlags.canBypassEmailVerification(user.email);
+  }
+
+  bool _isDoctorAccount(User user) {
+    return user.email?.toLowerCase() == DoctorAccountService.doctorEmail.toLowerCase();
   }
 
   Future<void> signOut() async {

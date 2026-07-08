@@ -4,14 +4,16 @@ import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../config/feature_flags.dart';
 import '../models/appointment.dart';
+import '../utils/doctor_info.dart';
+import 'notification_service.dart';
 
 class AppointmentService {
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  static const String _doctorId = FeatureFlags.doctorUserId;
+  static String get _doctorId => FeatureFlags.doctorUserId;
   static const int _slotDurationMinutes = 20;
   static const int _startHour = 10;
   static const int _endHour = 20;
-  static const int _opdFee = 199;
+  static const int _opdFee = 111;
   static const Set<String> _activeBookingStatuses = {
     'booked',
     'confirmed',
@@ -229,17 +231,29 @@ class AppointmentService {
     await _saveAppointmentIfSlotAvailable(appointment);
 
     _notifyDoctorOnBooking(appointment).catchError((_) {});
+    _scheduleAppointmentReminder(appointment);
 
     return appointment;
   }
 
   static Future<void> confirmPayment(String appointmentId,
       {String? paymentId, String? orderId}) async {
-    await _firestore.collection('appointments').doc(appointmentId).update({
-      'status': 'booked',
-      'paymentId': paymentId,
-      'orderId': orderId,
-    });
+    for (int attempt = 0; attempt < 3; attempt++) {
+      try {
+        await _firestore.collection('appointments').doc(appointmentId).update({
+          'status': 'booked',
+          'paymentId': paymentId,
+          'orderId': orderId,
+        });
+        return;
+      } catch (e) {
+        if (attempt < 2) {
+          await Future.delayed(Duration(milliseconds: 500 * (attempt + 1)));
+          continue;
+        }
+        debugPrint('AppointmentService: confirmPayment failed after retries: $e');
+      }
+    }
   }
 
   static Future<Appointment> createEmergencyAppointment({
@@ -283,6 +297,7 @@ class AppointmentService {
         .set(appointment.toJson());
 
     _notifyDoctorOnBooking(appointment).catchError((_) {});
+    _scheduleAppointmentReminder(appointment);
 
     return appointment;
   }
@@ -332,6 +347,8 @@ class AppointmentService {
     await _firestore.collection('appointments').doc(appointmentId).update({
       'status': 'cancelled',
     });
+    final id = appointmentId.hashCode & 0x7FFFFFFF;
+    await NotificationService.cancelReminder(id);
   }
 
   static Future<void> completeAppointment(String appointmentId) async {
@@ -359,6 +376,31 @@ class AppointmentService {
       });
     } catch (e) {
       debugPrint('AppointmentService: Failed to notify doctor: $e');
+    }
+  }
+
+  static void _scheduleAppointmentReminder(Appointment appointment) {
+    try {
+      final parts = appointment.startTime.split(':');
+      final hour = int.parse(parts[0]);
+      final minute = int.parse(parts[1]);
+      final appointmentTime = DateTime(
+        appointment.date.year,
+        appointment.date.month,
+        appointment.date.day,
+        hour,
+        minute,
+      );
+
+      final id = appointment.appointmentId.hashCode & 0x7FFFFFFF;
+      NotificationService.scheduleMultiReminders(
+        id: id,
+        title: 'Appointment Reminder',
+        body: 'Your appointment with ${DoctorInfo.name.split(' ').last} is at ${appointment.startTime}',
+        appointmentTime: appointmentTime,
+      );
+    } catch (e) {
+      debugPrint('AppointmentService: Failed to schedule reminder: $e');
     }
   }
 }

@@ -20,20 +20,22 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       name: fields[0] as String,
       age: fields[1] as int,
       gender: fields[2] as String,
-      height: fields.containsKey(3) ? fields[3] as double? : null,
-      weight: fields.containsKey(4) ? fields[4] as double? : null,
-      phone: fields.containsKey(5) ? fields[5] as String? : null,
-      menstrualCycleLength: fields.containsKey(6) ? fields[6] as int? : null,
-      cycleRegularity: fields.containsKey(7) ? fields[7] as String? : null,
-      periodPainScore: fields.containsKey(8) ? fields[8] as int? : null,
-      reproductiveHistory: fields.containsKey(9) ? fields[9] as String? : null,
+      height: fields[3] as double?,
+      weight: fields[4] as double?,
+      phone: fields[5] as String?,
+      menstrualCycleLength: fields[6] as int?,
+      cycleRegularity: fields[7] as String?,
+      periodPainScore: fields[8] as int?,
+      reproductiveHistory: fields[9] as String?,
+      profileId: fields[10] as String?,
+      relation: fields[11] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, UserProfile obj) {
     writer
-      ..writeByte(10)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
@@ -53,7 +55,11 @@ class UserProfileAdapter extends TypeAdapter<UserProfile> {
       ..writeByte(8)
       ..write(obj.periodPainScore)
       ..writeByte(9)
-      ..write(obj.reproductiveHistory);
+      ..write(obj.reproductiveHistory)
+      ..writeByte(10)
+      ..write(obj.profileId)
+      ..writeByte(11)
+      ..write(obj.relation);
   }
 
   @override

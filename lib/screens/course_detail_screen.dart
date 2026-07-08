@@ -14,42 +14,12 @@ class CourseDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
-  PaymentService? _paymentService;
   bool _isEnrolling = false;
 
   @override
-  void initState() {
-    super.initState();
-    _paymentService = PaymentService(
-      onSuccess: _onPaymentSuccess,
-      onFailure: _onPaymentFailure,
-    );
-  }
-
-  @override
   void dispose() {
-    _paymentService?.dispose();
+    PaymentService.dispose();
     super.dispose();
-  }
-
-  Future<void> _onPaymentSuccess(Map<String, dynamic> response) async {
-    await CourseService.enrollPaidCourse(widget.courseId, response['paymentId'] as String? ?? '');
-    ref.invalidate(isEnrolledProvider(widget.courseId));
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enrolled successfully!'), backgroundColor: Colors.green),
-      );
-    }
-    setState(() => _isEnrolling = false);
-  }
-
-  void _onPaymentFailure(String error) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Payment failed: $error'), backgroundColor: Colors.red),
-      );
-    }
-    setState(() => _isEnrolling = false);
   }
 
   Future<void> _enroll() async {
@@ -72,12 +42,28 @@ class _CourseDetailScreenState extends ConsumerState<CourseDetailScreen> {
       }
       setState(() => _isEnrolling = false);
     } else {
-      _paymentService?.openCheckout(
-        amount: course.price,
-        title: course.title,
-        description: 'Course enrollment',
-        appointmentId: widget.courseId,
+      final result = await PaymentService.openCheckout(
+        context,
+        PaymentFeature.dietPlan,
       );
+      if (!mounted) return;
+
+      if (result.success) {
+        await CourseService.enrollPaidCourse(widget.courseId, result.paymentId ?? '');
+        ref.invalidate(isEnrolledProvider(widget.courseId));
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Enrolled successfully!'), backgroundColor: Colors.green),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Payment failed: ${result.error}'), backgroundColor: Colors.red),
+          );
+        }
+      }
+      setState(() => _isEnrolling = false);
     }
   }
 

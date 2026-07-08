@@ -1,9 +1,10 @@
 import 'package:hive/hive.dart';
+import 'package:uuid/uuid.dart';
 
 part 'user_profile.g.dart';
 
 @HiveType(typeId: 0)
-class UserProfile extends HiveObject {
+class UserProfile {
   @HiveField(0)
   String name;
 
@@ -22,7 +23,6 @@ class UserProfile extends HiveObject {
   @HiveField(5)
   String? phone;
 
-  // --- Women's Health Fields ---
   @HiveField(6)
   int? menstrualCycleLength;
 
@@ -35,6 +35,12 @@ class UserProfile extends HiveObject {
   @HiveField(9)
   String? reproductiveHistory;
 
+  @HiveField(10)
+  String profileId;
+
+  @HiveField(11)
+  String? relation;
+
   UserProfile({
     required this.name,
     required this.age,
@@ -46,7 +52,9 @@ class UserProfile extends HiveObject {
     this.cycleRegularity,
     this.periodPainScore,
     this.reproductiveHistory,
-  });
+    String? profileId,
+    this.relation,
+  }) : profileId = profileId ?? const Uuid().v4();
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     return UserProfile(
@@ -60,6 +68,8 @@ class UserProfile extends HiveObject {
       cycleRegularity: json['cycleRegularity'] as String?,
       periodPainScore: json['periodPainScore'] as int?,
       reproductiveHistory: json['reproductiveHistory'] as String?,
+      profileId: json['profileId'] as String? ?? const Uuid().v4(),
+      relation: json['relation'] as String?,
     );
   }
 
@@ -75,6 +85,11 @@ class UserProfile extends HiveObject {
       'cycleRegularity': cycleRegularity,
       'periodPainScore': periodPainScore,
       'reproductiveHistory': reproductiveHistory,
+      'profileId': profileId,
+      'relation': relation,
     };
   }
+
+  String get displayName =>
+      relation != null ? '$name ($relation)' : name;
 }

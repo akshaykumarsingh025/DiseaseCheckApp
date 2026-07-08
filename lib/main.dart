@@ -3,9 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'firebase_options.dart';
 import 'app.dart';
 import 'services/storage_service.dart';
+import 'services/remote_config_service.dart';
+import 'services/notification_service.dart';
+import 'services/doctor_account_service.dart';
 
 void main() {
   runZonedGuarded(() async {
@@ -15,9 +19,8 @@ void main() {
       FlutterError.presentError(details);
     };
 
-    late final FirebaseApp firebaseApp;
     try {
-      firebaseApp = await Firebase.initializeApp(
+      await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       );
     } catch (e) {
@@ -32,6 +35,23 @@ void main() {
       runApp(ErrorApp(error: 'Storage init failed: $e'));
       return;
     }
+
+    try {
+      await RemoteConfigService.load();
+    } catch (_) {}
+
+    try {
+      await DoctorAccountService.ensureDoctorAccount();
+    } catch (_) {}
+
+    try {
+      await NotificationService.init();
+    } catch (_) {}
+
+    // Initialize AdMob. Non-fatal if it fails (e.g. no Play Services).
+    try {
+      await MobileAds.instance.initialize();
+    } catch (_) {}
 
     runApp(
       const ProviderScope(

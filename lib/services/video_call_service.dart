@@ -1,46 +1,70 @@
-import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../config/feature_flags.dart';
+import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
+import '../services/doctor_account_service.dart';
 
 class VideoCallService {
-  static const String _jitsiBaseUrl = 'https://meet.jit.si';
+  static const String _jitsiServerUrl = 'https://meet.jit.si';
 
-  /// Check if the current user is the doctor.
   static bool get isDoctor {
-    final user = FirebaseAuth.instance.currentUser;
-    return user != null && user.uid == FeatureFlags.doctorUserId;
+    return DoctorAccountService.isCurrentUserDoctor;
   }
 
   static String getMeetingUrl(String meetingId) {
-    return '$_jitsiBaseUrl/$meetingId';
+    return '$_jitsiServerUrl/$meetingId';
   }
 
-  static Future<void> openVideoCall(String meetingId, {String displayName = ''}) async {
-    final encodedName = Uri.encodeComponent(displayName);
-    final url = '$_jitsiBaseUrl/$meetingId#config.prejoinPageEnabled=false&config.startWithAudioMuted=false&config.startWithVideoMuted=false&userInfo.displayName=$encodedName';
-    final uri = Uri.parse(url);
-    try {
-      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!launched) {
-        final fallbackLaunched = await launchUrl(uri);
-        if (!fallbackLaunched) {
-          throw Exception('Could not launch video call URL');
-        }
-      }
-    } catch (e) {
-      try {
-        final fallbackLaunched = await launchUrl(uri);
-        if (!fallbackLaunched) {
-          throw Exception('Could not open video call. Please check your browser settings.');
-        }
-      } catch (_) {
-        throw Exception('Could not open video call. Please open this URL manually: ${getMeetingUrl(meetingId)}');
-      }
-    }
+  static JitsiMeetConferenceOptions getDoctorOptions(String meetingId, {String displayName = ''}) {
+    return JitsiMeetConferenceOptions(
+      serverURL: _jitsiServerUrl,
+      room: meetingId,
+      userInfo: JitsiMeetUserInfo(
+        displayName: displayName,
+      ),
+      featureFlags: const {
+        'prejoinpage.enabled': false,
+        'lobby-mode.enabled': false,
+        'welcomepage.enabled': false,
+        'invite.enabled': false,
+        'unsaferoomwarning.enabled': false,
+        'security-options.enabled': false,
+        'chat.enabled': true,
+        'tile-view.enabled': true,
+      },
+      configOverrides: const {
+        'startWithAudioMuted': false,
+        'startWithVideoMuted': false,
+        'requireDisplayName': false,
+        'disableModeratorIndicator': true,
+      },
+    );
   }
 
-  /// Doctor starts the meeting — creates the Jitsi room and marks it as 'started' in Firestore.
+  static JitsiMeetConferenceOptions getPatientOptions(String meetingId, {String displayName = ''}) {
+    return JitsiMeetConferenceOptions(
+      serverURL: _jitsiServerUrl,
+      room: meetingId,
+      userInfo: JitsiMeetUserInfo(
+        displayName: displayName,
+      ),
+      featureFlags: const {
+        'prejoinpage.enabled': false,
+        'lobby-mode.enabled': false,
+        'welcomepage.enabled': false,
+        'invite.enabled': false,
+        'unsaferoomwarning.enabled': false,
+        'security-options.enabled': false,
+        'chat.enabled': true,
+        'tile-view.enabled': true,
+      },
+      configOverrides: const {
+        'startWithAudioMuted': false,
+        'startWithVideoMuted': false,
+        'requireDisplayName': false,
+      },
+    );
+  }
+
   static Future<void> startMeeting(String meetingId, {required String patientId}) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -55,11 +79,8 @@ class VideoCallService {
       'startedAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
-
-    await openVideoCall(meetingId, displayName: 'Dr. Deepika Singh');
   }
 
-  /// Patient joins an already-started meeting.
   static Future<void> joinMeeting(String meetingId, {required String displayName}) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -71,11 +92,8 @@ class VideoCallService {
       'joinedAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
-
-    await openVideoCall(meetingId, displayName: displayName);
   }
 
-  /// Doctor ends the meeting.
   static Future<void> endMeeting(String meetingId) async {
     await FirebaseFirestore.instance.collection('video_calls').doc(meetingId).set({
       'status': 'ended',
@@ -84,7 +102,6 @@ class VideoCallService {
     }, SetOptions(merge: true));
   }
 
-  /// Update call status (generic).
   static Future<void> updateCallStatus(String meetingId, String status) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -97,7 +114,6 @@ class VideoCallService {
     }, SetOptions(merge: true));
   }
 
-  /// Watch the meeting status in real-time.
   static Stream<String> watchCallStatus(String meetingId) {
     return FirebaseFirestore.instance
         .collection('video_calls')

@@ -4,11 +4,13 @@ import 'package:go_router/go_router.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:screenshot/screenshot.dart';
 import 'dart:io';
+import 'dart:typed_data';
 import '../models/report.dart';
 import '../services/pdf_report_service.dart';
 import '../services/storage_service.dart';
-import '../services/gemma_service.dart';
+import '../services/ai_api_service.dart';
 import '../providers/gemma_provider.dart';
 import '../utils/doctor_info.dart';
 import '../widgets/disclaimer_banner.dart';
@@ -28,33 +30,20 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
   double _refineProgress = 0;
   String? _refineError;
 
+  String? _selectedLanguage;
+  final ScreenshotController _screenshotController = ScreenshotController();
+
   @override
   void initState() {
     super.initState();
     _aiRefinedText = widget.report?.aiRefinedText;
+    _selectedLanguage = 'english';
   }
 
-  @override
-  void dispose() {
-    if (_isRefining) {
-      GemmaService.cancelGeneration();
-    }
-    super.dispose();
-  }
-
-  Future<void> _refineWithAI() async {
+  Future<void> _refineWithAI({String? language}) async {
     if (widget.report == null) return;
 
-    final gemmaState = ref.read(gemmaProvider);
-    if (!gemmaState.isDownloaded) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('AI model not downloaded. Go to Settings to download it first.'),
-          duration: Duration(seconds: 3),
-        ),
-      );
-      return;
-    }
+    final lang = language ?? _selectedLanguage ?? 'english';
 
     setState(() {
       _isRefining = true;
@@ -63,15 +52,48 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
     });
 
     try {
-      final rawText = GemmaService.buildRawReportText(widget.report!.toJson());
+      final rawText = _buildRawReportText(widget.report!);
 
       setState(() => _refineProgress = 0.3);
 
-      final result = await GemmaService.refineReport(rawText, language: gemmaState.language);
+      String langInstruction;
+      switch (lang) {
+        case 'hindi':
+          langInstruction = 'पूरी रिपोर्ट शुद्ध हिन्दी (देवनागरी लिपि) में लिखें। मेडिकल शब्दों के साथ ब्रैकेट में हिन्दी अर्थ दें।';
+          break;
+        case 'hinglish':
+          langInstruction = 'Write the ENTIRE response in Hinglish — Hindi words in English script. Medical terms stay English but explain in Hinglish.';
+          break;
+        default:
+          langInstruction = 'Write the ENTIRE response in simple, clear English. Short sentences, everyday words. Explain medical terms in brackets.';
+      }
 
-      setState(() {
-        _refineProgress = 0.9;
-      });
+      final prompt = '''You are a caring medical assistant explaining a patient's health report. $langInstruction
+
+Follow this structure:
+
+**Overall Health Summary** (2-3 sentences about how their health looks)
+
+Then for EACH disease found:
+**[Disease Name]**
+1. **What was found**: Simple explanation (1-2 sentences)
+2. **Which values are abnormal**: Show actual value vs normal range. Example: "Fasting Blood Sugar: 250 mg/dL (normal: 70-100) — VERY HIGH"
+3. **How these values connect**: Medical logic simply explained
+4. **What this means for daily life**: Honest but not scary
+5. **What you should do**: Specific next steps
+
+**Abnormal Values Summary**: All out-of-range values listed
+
+**IMPORTANT**: Please consult your doctor for proper diagnosis and treatment. This report is for awareness only, not a medical diagnosis.
+
+Clinical data:
+$rawText
+
+Now write the patient-friendly report:''';
+
+      final result = await AiApiService.generateText(prompt, language: lang);
+
+      setState(() => _refineProgress = 0.9);
 
       if (result.success && result.text != null) {
         widget.report!.aiRefinedText = result.text;
@@ -93,6 +115,41 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         _isRefining = false;
       });
     }
+  }
+
+  String _buildRawReportText(HealthReport report) {
+    final buffer = StringBuffer();
+    if (report.highRiskDiseases.isNotEmpty) {
+      buffer.writeln('HIGH RISK:');
+      for (var d in report.highRiskDiseases) {
+        buffer.writeln('- ${d['disease']} (${d['icdCode']}, Risk: ${d['riskScore']}%)');
+        for (var f in (d['findings'] as List?) ?? []) {
+          buffer.writeln('  Finding: $f');
+        }
+      }
+    }
+    if (report.moderateRiskDiseases.isNotEmpty) {
+      buffer.writeln('MODERATE RISK:');
+      for (var d in report.moderateRiskDiseases) {
+        buffer.writeln('- ${d['disease']} (${d['icdCode']}, Risk: ${d['riskScore']}%)');
+      }
+    }
+    if (report.lowRiskDiseases.isNotEmpty) {
+      buffer.writeln('LOW RISK:');
+      for (var d in report.lowRiskDiseases) {
+        buffer.writeln('- ${d['disease']} (${d['icdCode']}, Risk: ${d['riskScore']}%)');
+      }
+    }
+    if (report.abnormalValues.isNotEmpty) {
+      buffer.writeln('ABNORMAL VALUES:');
+      for (var a in report.abnormalValues) {
+        buffer.writeln('- $a');
+      }
+    }
+    if (report.highRiskDiseases.isEmpty && report.moderateRiskDiseases.isEmpty && report.lowRiskDiseases.isEmpty && report.abnormalValues.isEmpty) {
+      buffer.writeln('All values within normal range.');
+    }
+    return buffer.toString();
   }
 
   @override
@@ -122,12 +179,19 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
             tooltip: 'Share PDF',
             onPressed: () => _sharePdf(context),
           ),
+          IconButton(
+            icon: const Icon(Icons.image),
+            tooltip: 'Share as Image',
+            onPressed: () => _shareAsImage(context),
+          ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
+      body: Screenshot(
+        controller: _screenshotController,
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const DisclaimerBanner(),
@@ -168,12 +232,17 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
           ),
         ),
       ),
+      ),
     );
   }
 
   Widget _buildAIRefinementSection(BuildContext context) {
-    final gemmaState = ref.watch(gemmaProvider);
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final languages = [
+      ('english', 'English', Icons.language),
+      ('hindi', 'हिन्दी', Icons.translate),
+      ('hinglish', 'Hinglish', Icons.chat_bubble_outline),
+    ];
 
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 8),
@@ -184,142 +253,123 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
               children: [
-                Icon(Icons.auto_awesome, color: Colors.purple.shade600, size: 22),
+                Icon(Icons.auto_awesome, color: Colors.purple.shade600, size: 20),
                 const SizedBox(width: 8),
                 const Text(
                   'AI Simplified Report',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
-              'Get this report explained in simple, patient-friendly language',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+              'Generate this report in simple, patient-friendly language — unlimited times',
+              style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
 
-            if (gemmaState.isDownloaded) _buildLanguagePicker(gemmaState, isDark),
-            if (gemmaState.isDownloaded) const SizedBox(height: 12),
+            Text('Choose Language', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Colors.grey.shade700)),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              children: languages.map((lang) {
+                final code = lang.$1;
+                final label = lang.$2;
+                final icon = lang.$3;
+                final isSelected = (_selectedLanguage ?? 'english') == code;
+                return ChoiceChip(
+                  avatar: Icon(icon, size: 14, color: isSelected ? Colors.white : Colors.indigo.shade600),
+                  label: Text(label, style: TextStyle(fontSize: 12, color: isSelected ? Colors.white : null)),
+                  selected: isSelected,
+                  selectedColor: Colors.indigo,
+                  onSelected: (_) => setState(() => _selectedLanguage = code),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 10),
 
             if (_isRefining) ...[
               LinearProgressIndicator(
                 value: _refineProgress,
-                minHeight: 8,
-                borderRadius: BorderRadius.circular(4),
+                minHeight: 6,
+                borderRadius: BorderRadius.circular(3),
                 backgroundColor: isDark ? Colors.purple.shade900 : Colors.purple.shade50,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 'AI is analyzing your report... ${(_refineProgress * 100).toStringAsFixed(0)}%',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.purple.shade700,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'This may take a moment. Please wait...',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 12, color: Colors.purple.shade700, fontWeight: FontWeight.w500),
               ),
             ] else if (_refineError != null) ...[
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   color: Colors.red.shade50,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                    Icon(Icons.error_outline, color: Colors.red.shade700, size: 18),
                     const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(_refineError!,
-                          style: TextStyle(fontSize: 13, color: Colors.red.shade900)),
-                    ),
+                    Expanded(child: Text(_refineError!, style: TextStyle(fontSize: 12, color: Colors.red.shade900))),
                   ],
                 ),
               ),
               const SizedBox(height: 8),
               ElevatedButton.icon(
-                onPressed: _refineWithAI,
-                icon: const Icon(Icons.refresh, size: 18),
-                label: const Text('Retry'),
+                onPressed: () => _refineWithAI(language: _selectedLanguage),
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Retry', style: TextStyle(fontSize: 13)),
+                style: ElevatedButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 8)),
               ),
             ] else if (_aiRefinedText != null) ...[
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDark
-                      ? Colors.purple.shade900.withValues(alpha: 0.2)
-                      : Colors.purple.shade50,
+                  color: isDark ? Colors.purple.shade900.withValues(alpha: 0.2) : Colors.purple.shade50,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   _aiRefinedText!,
-                  style: TextStyle(
-                    fontSize: 14,
-                    height: 1.6,
-                    color: isDark ? Colors.grey.shade200 : Colors.black87,
-                  ),
+                  style: TextStyle(fontSize: 13, height: 1.6, color: isDark ? Colors.grey.shade200 : Colors.black87),
                 ),
               ),
               const SizedBox(height: 8),
-              ElevatedButton.icon(
-                onPressed: _refineWithAI,
-                icon: const Icon(Icons.refresh, size: 18),
-                label: Text('Regenerate in ${GemmaService.getLanguageLabel(gemmaState.language)}'),
-              ),
-            ] else ...[
-              if (!gemmaState.isDownloaded) ...[
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.orange.shade50,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_outline, color: Colors.orange.shade700, size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Download the AI model from Settings to enable this feature.',
-                          style: TextStyle(fontSize: 13, color: Colors.orange.shade900),
-                        ),
-                      ),
-                    ],
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _refineWithAI(language: _selectedLanguage),
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: Text('Regenerate in ${_selectedLanguage == 'hindi' ? 'हिन्दी' : _selectedLanguage == 'hinglish' ? 'Hinglish' : 'English'}'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
                 ),
-                const SizedBox(height: 8),
-                 OutlinedButton.icon(
-                   onPressed: () => context.push('/ai-settings'),
-                   icon: const Icon(Icons.settings, size: 18),
-                   label: const Text('Go to AI Settings'),
-                 ),
-               ] else ...[
-                 ElevatedButton.icon(
-                   onPressed: _refineWithAI,
-                   icon: const Icon(Icons.auto_awesome, size: 18),
-                   label: Text('Explain in ${GemmaService.getLanguageLabel(gemmaState.language)}'),
-                   style: ElevatedButton.styleFrom(
-                     padding: const EdgeInsets.symmetric(vertical: 14),
-                   ),
-                 ),
-               ],
-             ],
-           ],
-         ),
-       ),
-     );
-   }
+              ),
+            ] else ...[
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _refineWithAI(language: _selectedLanguage),
+                  icon: const Icon(Icons.auto_awesome, size: 18),
+                  label: Text('Explain in ${_selectedLanguage == 'hindi' ? 'हिन्दी' : _selectedLanguage == 'hinglish' ? 'Hinglish' : 'English'}'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildLanguagePicker(GemmaState gemmaState, bool isDark) {
     final languages = [
@@ -408,6 +458,34 @@ class _ReportScreenState extends ConsumerState<ReportScreen> {
       [XFile(file.path)],
       text: 'My Health Assessment Report',
     );
+  }
+
+  Future<void> _shareAsImage(BuildContext context) async {
+    try {
+      final Uint8List? imageBytes = await _screenshotController.capture(
+        pixelRatio: 3.0,
+      );
+      if (imageBytes == null) return;
+
+      final tempDir = await getTemporaryDirectory();
+      final file = File(
+          '${tempDir.path}/health_report_${widget.report!.reportId.substring(0, 8)}.png');
+      await file.writeAsBytes(imageBytes);
+
+      await Share.shareXFiles(
+        [XFile(file.path)],
+        text: 'My Health Assessment Report',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to share image: $e'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildEmptyState() {

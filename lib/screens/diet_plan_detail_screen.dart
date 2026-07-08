@@ -15,55 +15,42 @@ class DietPlanDetailScreen extends ConsumerStatefulWidget {
 }
 
 class _DietPlanDetailScreenState extends ConsumerState<DietPlanDetailScreen> {
-  PaymentService? _paymentService;
   bool _isPurchasing = false;
 
   @override
-  void initState() {
-    super.initState();
-    _paymentService = PaymentService(
-      onSuccess: _onPaymentSuccess,
-      onFailure: _onPaymentFailure,
-    );
-  }
-
-  @override
   void dispose() {
-    _paymentService?.dispose();
+    PaymentService.dispose();
     super.dispose();
-  }
-
-  Future<void> _onPaymentSuccess(Map<String, dynamic> response) async {
-    await DietPlanPackageService.purchasePlan(
-      widget.planId,
-      response['paymentId'] as String? ?? '',
-    );
-    ref.invalidate(isDietPlanPurchasedProvider(widget.planId));
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Diet plan purchased!'), backgroundColor: Colors.green),
-      );
-    }
-    setState(() => _isPurchasing = false);
-  }
-
-  void _onPaymentFailure(String error) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Payment failed: $error'), backgroundColor: Colors.red),
-      );
-    }
-    setState(() => _isPurchasing = false);
   }
 
   Future<void> _purchase() async {
     setState(() => _isPurchasing = true);
-    _paymentService?.openCheckout(
-      amount: 299,
-      title: 'Diet Plan',
-      description: 'Personalized diet plan',
-      appointmentId: widget.planId,
+
+    final result = await PaymentService.openCheckout(
+      context,
+      PaymentFeature.dietPlan,
     );
+    if (!mounted) return;
+
+    if (result.success) {
+      await DietPlanPackageService.purchasePlan(
+        widget.planId,
+        result.paymentId ?? '',
+      );
+      ref.invalidate(isDietPlanPurchasedProvider(widget.planId));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Diet plan purchased!'), backgroundColor: Colors.green),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Payment failed: ${result.error}'), backgroundColor: Colors.red),
+        );
+      }
+    }
+    setState(() => _isPurchasing = false);
   }
 
   @override
@@ -304,7 +291,7 @@ class _DietPlanDetailScreenState extends ConsumerState<DietPlanDetailScreen> {
             const SizedBox(height: 8),
             Text('Need personalized dietary advice?', style: TextStyle(fontWeight: FontWeight.w600, color: Colors.pink.shade700)),
             const SizedBox(height: 4),
-            Text('Book online consultation with ${DoctorInfo.name} for ₹199'),
+            Text('Book online consultation with ${DoctorInfo.name} for ₹111'),
           ],
         ),
       ),

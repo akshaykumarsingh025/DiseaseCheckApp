@@ -49,6 +49,11 @@ app.*.map.json
 .env.*
 *.env
 
+# Android signing
+key.properties
+*.jks
+*.keystore
+
 node_modules/
 Library/
 Logs/
