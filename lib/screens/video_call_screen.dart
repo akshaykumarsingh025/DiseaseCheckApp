@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
+import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/appointment.dart';
@@ -22,59 +22,37 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   String? _errorMessage;
   bool _inCall = false;
   bool _callEnded = false;
+  bool _inMeeting = false;
+  bool _wasOnMeetingPage = false;
+  bool _redirecting = false;
 
-  final JitsiMeet _jitsiMeet = JitsiMeet();
+  InAppWebViewController? _webViewController;
+  HeadlessInAppWebView? _headlessWebView;
 
   bool get _isDoctor => VideoCallService.isDoctor;
 
-  @override
-  void initState() {
-    super.initState();
+  String get _meetingUrl {
+    final meetingId = widget.appointment.meetingId;
+    return 'https://meet.jit.si/$meetingId'
+        '#config.prejoinPageEnabled=false'
+        '&config.requireDisplayName=false'
+        '&config.startWithAudioMuted=false'
+        '&config.startWithVideoMuted=false'
+        '&config.disableModeratorIndicator=true'
+        '&config.lobby.enabled=false'
+        '&interfaceConfig.DISABLE_VIDEO_BACKGROUND=true'
+        '&config.chimneyEnabled=false';
   }
 
-  JitsiMeetEventListener _buildListener() {
-    return JitsiMeetEventListener(
-      conferenceJoined: (url) {
-        if (mounted) {
-          setState(() {
-            _inCall = true;
-            _isStarting = false;
-          });
-        }
-      },
-      conferenceTerminated: (url, error) {
-        if (mounted) {
-          setState(() {
-            _inCall = false;
-            _callEnded = true;
-            _isStarting = false;
-          });
-          if (error != null && error.toString().isNotEmpty) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Call ended: $error'), backgroundColor: Colors.orange),
-            );
-          }
-        }
-      },
-      conferenceWillJoin: (url) {
-        if (mounted) {
-          setState(() => _isStarting = true);
-        }
-      },
-      readyToClose: () {
-        if (mounted) {
-          setState(() {
-            _inCall = false;
-            _callEnded = true;
-          });
-        }
-      },
-    );
+  String get _displayName {
+    return _isDoctor
+        ? 'Dr. Deepika Singh'
+        : widget.appointment.patientName;
   }
 
   @override
   void dispose() {
-    _jitsiMeet.hangUp();
+    _headlessWebView?.dispose();
     super.dispose();
   }
 
@@ -85,9 +63,6 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
       _errorMessage = null;
     });
 
-    // Camera + microphone must be granted BEFORE the native Jitsi SDK starts,
-    // otherwise WebRTC hangs indefinitely on "configuring the meeting" and the
-    // conference never joins.
     final permissionsOk = await _ensureMediaPermissions();
     if (!permissionsOk) {
       if (mounted) {
@@ -103,22 +78,6 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     }
 
     try {
-      final displayName = _isDoctor
-          ? 'Dr. Deepika Singh'
-          : widget.appointment.patientName;
-
-      final options = _isDoctor
-          ? VideoCallService.getDoctorOptions(
-              widget.appointment.meetingId,
-              displayName: displayName,
-            )
-          : VideoCallService.getPatientOptions(
-              widget.appointment.meetingId,
-              displayName: displayName,
-            );
-
-      // Mark the call live in Firestore FIRST so the other party sees the
-      // "ready to join" state even while the native UI is still spinning up.
       if (_isDoctor) {
         await VideoCallService.startMeeting(
           widget.appointment.meetingId,
@@ -127,11 +86,16 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
       } else {
         await VideoCallService.joinMeeting(
           widget.appointment.meetingId,
-          displayName: displayName,
+          displayName: _displayName,
         );
       }
 
-      await _jitsiMeet.join(options, _buildListener());
+      if (mounted) {
+        setState(() {
+          _inMeeting = true;
+          _isStarting = false;
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -139,12 +103,6 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
           _hasError = true;
           _errorMessage = 'Could not join video call: $e';
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Video call error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
       }
     }
   }
@@ -160,7 +118,6 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
       final micOk = statuses[Permission.microphone]?.isGranted ?? false;
       return cameraOk && micOk;
     } catch (_) {
-      // If the permission plugin fails, let Jitsi attempt anyway.
       return true;
     }
   }
@@ -181,39 +138,62 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     }
   }
 
-  Future<void> _endCall() async {
-    try {
-      await _jitsiMeet.hangUp();
-    } catch (_) {}
-
+  void _endCall() async {
     if (_isDoctor) {
       await VideoCallService.endMeeting(widget.appointment.meetingId);
     }
 
     if (mounted) {
       setState(() {
+        _inMeeting = false;
         _inCall = false;
         _callEnded = true;
       });
     }
   }
 
+  void _confirmEndCall() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(_isDoctor ? 'End Consultation?' : 'Leave Call?'),
+        content: Text(_isDoctor
+            ? 'This will end the consultation for both you and the patient.'
+            : 'Are you sure you want to leave the video call?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.pop(ctx);
+              _endCall();
+            },
+            icon: const Icon(Icons.call_end, size: 18),
+            label: Text(_isDoctor ? 'End Consultation' : 'Leave Call'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (_inMeeting) {
+      return _buildMeetingView();
+    }
+
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final appointment = widget.appointment;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(_isDoctor ? 'Doctor Console' : 'Video Consultation'),
-        actions: [
-          if (_inCall)
-            IconButton(
-              onPressed: _endCall,
-              icon: const Icon(Icons.call_end, color: Colors.red),
-              tooltip: 'End Call',
-            ),
-        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -247,6 +227,169 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         ),
       ),
     );
+  }
+
+  Widget _buildMeetingView() {
+    return WillPopScope(
+      onWillPop: () async {
+        _confirmEndCall();
+        return false;
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            InAppWebView(
+              initialUrlRequest: URLRequest(
+                url: WebUri(_meetingUrl),
+              ),
+              initialSettings: InAppWebViewSettings(
+                javaScriptEnabled: true,
+                mediaPlaybackRequiresUserGesture: false,
+                allowsInlineMediaPlayback: true,
+                mixedContentMode: MixedContentMode.MIXED_CONTENT_ALWAYS_ALLOW,
+                domStorageEnabled: true,
+                databaseEnabled: true,
+                cacheEnabled: true,
+                userAgent: 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36',
+                useHybridComposition: true,
+                allowFileAccessFromFileURLs: true,
+                allowUniversalAccessFromFileURLs: true,
+                builtInZoomControls: false,
+                supportZoom: false,
+                javaScriptCanOpenWindowsAutomatically: false,
+              ),
+              onWebViewCreated: (controller) {
+                _webViewController = controller;
+                _injectDisplayName(controller);
+              },
+              onLoadStop: (controller, url) {
+                if (_redirecting) return;
+                final currentUrl = url?.toString() ?? '';
+                final meetingId = widget.appointment.meetingId;
+                final isOnMeetingPage = currentUrl.contains('/$meetingId');
+
+                if (isOnMeetingPage) {
+                  _wasOnMeetingPage = true;
+                  _injectDisplayName(controller);
+                  return;
+                }
+
+                // Only redirect from bare homepage AFTER user was already on the
+                // meeting page — this means OAuth just completed and Jitsi
+                // redirected to its homepage instead of back to the room.
+                // Do NOT redirect during the initial login flow or from
+                // intermediate OAuth URLs (accounts.google.com etc.).
+                final isOnJitsiHome = currentUrl == 'https://meet.jit.si/' ||
+                    currentUrl == 'https://meet.jit.si' ||
+                    currentUrl == 'https://meet.jit.si/welcome';
+
+                if (isOnJitsiHome && _wasOnMeetingPage && !_redirecting) {
+                  _redirecting = true;
+                  Future.delayed(const Duration(seconds: 1), () {
+                    if (mounted) {
+                      controller.loadUrl(
+                        urlRequest: URLRequest(url: WebUri(_meetingUrl)),
+                      );
+                    }
+                    _redirecting = false;
+                  });
+                }
+              },
+              onConsoleMessage: (controller, consoleMessage) {
+                debugPrint('Jitsi WebView: ${consoleMessage.message}');
+              },
+            ),
+            Positioned(
+              bottom: MediaQuery.of(context).padding.bottom + 16,
+              left: 16,
+              right: 16,
+              child: Material(
+                elevation: 6,
+                borderRadius: BorderRadius.circular(28),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.75),
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: _inCall ? Colors.greenAccent : Colors.orangeAccent,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          _isDoctor
+                              ? 'Dr. ${widget.appointment.patientName}'
+                              : 'Dr. ${DoctorInfo.name}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton.icon(
+                        onPressed: _confirmEndCall,
+                        icon: const Icon(Icons.call_end, size: 18),
+                        label: Text(
+                          _isDoctor ? 'End' : 'Leave',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade700,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          minimumSize: Size.zero,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _injectDisplayName(InAppWebViewController controller) {
+    final js = '''
+      (function() {
+        function trySetName() {
+          var inputs = document.querySelectorAll('input');
+          inputs.forEach(function(input) {
+            if (input.placeholder && (input.placeholder.toLowerCase().includes('name') || input.placeholder.toLowerCase().includes('enter'))) {
+              input.value = '$_displayName';
+              input.dispatchEvent(new Event('input', {bubbles: true}));
+              input.dispatchEvent(new Event('change', {bubbles: true}));
+            }
+          });
+          var buttons = document.querySelectorAll('button');
+          buttons.forEach(function(btn) {
+            if (btn.textContent.toLowerCase().includes('join') || btn.textContent.toLowerCase().includes('enter')) {
+              if (document.querySelector('input[value]')) {
+                btn.click();
+              }
+            }
+          });
+        }
+        setTimeout(trySetName, 500);
+        setTimeout(trySetName, 1500);
+        setTimeout(trySetName, 3000);
+      })();
+    ''';
+    controller.evaluateJavascript(source: js);
   }
 
   Widget _buildRoleBanner(bool isDark) {
@@ -319,7 +462,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
             _buildInfoRow(Icons.access_time, 'Time', '${appointment.startTime} - ${appointment.endTime}'),
             _buildInfoRow(Icons.timer, 'Duration', '20 minutes'),
             _buildInfoRow(Icons.videocam, 'Meeting ID', appointment.meetingId.length > 12 ? appointment.meetingId.substring(0, 12) : appointment.meetingId),
-            _buildInfoRow(Icons.phone_android, 'Video', 'Native In-App Call'),
+            _buildInfoRow(Icons.phone_android, 'Video', 'In-App Call'),
             _buildInfoRow(_isDoctor ? Icons.admin_panel_settings : Icons.person, 'Role', _isDoctor ? 'Moderator' : 'Participant'),
           ],
         ),
@@ -476,7 +619,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: _endCall,
+              onPressed: _confirmEndCall,
               icon: const Icon(Icons.call_end, size: 22),
               label: Text(_isDoctor ? 'End Consultation' : 'Leave Call', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
               style: ElevatedButton.styleFrom(
@@ -599,7 +742,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(color: Colors.green.shade50, borderRadius: BorderRadius.circular(4)),
-                  child: const Text('Native', style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold)),
+                  child: const Text('In-App', style: TextStyle(fontSize: 10, color: Colors.green, fontWeight: FontWeight.bold)),
                 ),
               ],
             ),
@@ -609,7 +752,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
               style: TextStyle(fontSize: 12, color: Colors.blue.shade700),
             ),
             const SizedBox(height: 8),
-            const Text('Video calls use the native Jitsi Meet SDK for reliable connections. Make sure camera and microphone permissions are granted.', style: TextStyle(fontSize: 11)),
+            const Text('Video calls run inside the app. Make sure camera and microphone permissions are granted.', style: TextStyle(fontSize: 11)),
           ],
         ),
       ),

@@ -277,7 +277,7 @@ class AppointmentService {
       );
     }
 
-    final appointmentId = _firestore.collection('appointments').doc().id;
+    final appointmentId = _appointmentIdFor(date, startTime);
     final appointment = Appointment(
       appointmentId: appointmentId,
       patientId: user.uid,
@@ -325,7 +325,7 @@ class AppointmentService {
     } on FirebaseException catch (e) {
       if (e.code == 'permission-denied') {
         throw Exception(
-          'This OPD slot is already booked. Please choose another time.',
+          'Unable to confirm slot availability. Please try again.',
         );
       }
       rethrow;

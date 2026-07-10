@@ -30,12 +30,22 @@ class VideoCallService {
         'security-options.enabled': false,
         'chat.enabled': true,
         'tile-view.enabled': true,
+        'deeplinking.enabled': false,
+        'live-streaming.enabled': false,
+        'recording.enabled': false,
+        'toolbox.enabled': true,
+        'filmstrip.enabled': true,
+        'fullscreen.enabled': true,
+        'close-page.enabled': false,
       },
       configOverrides: const {
         'startWithAudioMuted': false,
         'startWithVideoMuted': false,
         'requireDisplayName': false,
         'disableModeratorIndicator': true,
+        'prejoinPageEnabled': false,
+        'lobby.enabled': false,
+        'requirePassword': false,
       },
     );
   }
@@ -56,11 +66,20 @@ class VideoCallService {
         'security-options.enabled': false,
         'chat.enabled': true,
         'tile-view.enabled': true,
+        'deeplinking.enabled': false,
+        'live-streaming.enabled': false,
+        'recording.enabled': false,
+        'toolbox.enabled': true,
+        'filmstrip.enabled': true,
+        'fullscreen.enabled': true,
+        'close-page.enabled': false,
       },
       configOverrides: const {
         'startWithAudioMuted': false,
         'startWithVideoMuted': false,
         'requireDisplayName': false,
+        'prejoinPageEnabled': false,
+        'lobby.enabled': false,
       },
     );
   }
