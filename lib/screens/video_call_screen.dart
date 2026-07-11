@@ -66,7 +66,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
       final identity =
           _isDoctor ? 'doctor_${user?.uid ?? 'doc'}' : 'patient_${user?.uid ?? 'pat'}';
 
-      final token = VideoCallService.generateToken(
+      final token = await VideoCallService.generateToken(
         roomName: widget.appointment.meetingId,
         participantName: _displayName,
         participantIdentity: identity,

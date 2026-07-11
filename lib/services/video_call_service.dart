@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../config/livekit_config.dart';
 import '../services/doctor_account_service.dart';
 
@@ -10,11 +11,42 @@ class VideoCallService {
     return DoctorAccountService.isCurrentUserDoctor;
   }
 
-  static String generateToken({
+  /// Generates a LiveKit access token.
+  ///
+  /// NOTE: This currently signs the JWT on the client using the API secret in
+  /// [LiveKitConfig]. That secret ships inside the app, which is a security
+  /// trade-off made to stay on the Firebase Spark (free) plan. A server-side
+  /// implementation that keeps the secret private already exists in
+  /// `functions/index.js` (the `getLiveKitToken` callable) — switch to it once
+  /// the project is on the Blaze plan by calling that function here instead.
+  static Future<String> generateToken({
     required String roomName,
     required String participantName,
     required String participantIdentity,
     bool isModerator = false,
+  }) async {
+    try {
+      return _createAccessToken(
+        apiKey: LiveKitConfig.apiKey,
+        apiSecret: LiveKitConfig.apiSecret,
+        roomName: roomName,
+        participantIdentity: participantIdentity,
+        participantName: participantName,
+        isModerator: isModerator,
+      );
+    } catch (e) {
+      debugPrint('VideoCallService: Token generation error: $e');
+      rethrow;
+    }
+  }
+
+  static String _createAccessToken({
+    required String apiKey,
+    required String apiSecret,
+    required String roomName,
+    required String participantIdentity,
+    required String participantName,
+    required bool isModerator,
   }) {
     final header = base64Url
         .encode(utf8.encode(jsonEncode({
@@ -27,7 +59,7 @@ class VideoCallService {
     final exp = now + 3600;
 
     final payload = {
-      'iss': LiveKitConfig.apiKey,
+      'iss': apiKey,
       'sub': participantIdentity,
       'iat': now,
       'exp': exp,
@@ -50,7 +82,7 @@ class VideoCallService {
         .replaceAll('=', '');
 
     final signingInput = '$header.$payloadEncoded';
-    final key = utf8.encode(LiveKitConfig.apiSecret);
+    final key = utf8.encode(apiSecret);
     final hmac = Hmac(sha256, key);
     final signature = hmac.convert(utf8.encode(signingInput));
     final signatureEncoded =
