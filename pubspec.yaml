@@ -50,12 +50,12 @@ dependencies:
   # Utility
   intl: any              # Date/number formatting
   path_provider: ^2.1.3       # App documents directory
-  share_plus: ^9.0.0          # Share reports
+  share_plus: ^12.0.2          # Share reports
   permission_handler: ^12.0.1 # Request permissions
   uuid: ^4.4.0                # Unique IDs for reports
-  firebase_core: ^3.4.0
-  firebase_auth: ^5.2.0
-  cloud_firestore: ^5.4.0
+  firebase_core: ^3.15.0
+  firebase_auth: ^5.7.0
+  cloud_firestore: ^5.6.0
   shared_preferences: ^2.3.0
   image_picker: ^1.2.1
   google_mlkit_text_recognition: ^0.15.1
@@ -68,8 +68,8 @@ dependencies:
   timezone: ^0.9.4
   screenshot: ^3.0.0
   local_auth: ^2.3.0
-  jitsi_meet_flutter_sdk: ^13.0.0
-  flutter_inappwebview: ^6.0.0
+  livekit_client: ^2.3.0
+  crypto: ^3.0.3
   google_mobile_ads: ^5.1.0
 
 dev_dependencies:

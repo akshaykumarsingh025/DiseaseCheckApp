@@ -1,87 +1,62 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:crypto/crypto.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:jitsi_meet_flutter_sdk/jitsi_meet_flutter_sdk.dart';
+import '../config/livekit_config.dart';
 import '../services/doctor_account_service.dart';
 
 class VideoCallService {
-  static const String _jitsiServerUrl = 'https://meet.jit.si';
-
   static bool get isDoctor {
     return DoctorAccountService.isCurrentUserDoctor;
   }
 
-  static String getMeetingUrl(String meetingId) {
-    return '$_jitsiServerUrl/$meetingId';
-  }
+  static String generateToken({
+    required String roomName,
+    required String participantName,
+    required String participantIdentity,
+    bool isModerator = false,
+  }) {
+    final header = base64Url
+        .encode(utf8.encode(jsonEncode({
+          'alg': 'HS256',
+          'typ': 'JWT',
+        })))
+        .replaceAll('=', '');
 
-  static JitsiMeetConferenceOptions getDoctorOptions(String meetingId, {String displayName = ''}) {
-    return JitsiMeetConferenceOptions(
-      serverURL: _jitsiServerUrl,
-      room: meetingId,
-      userInfo: JitsiMeetUserInfo(
-        displayName: displayName,
-      ),
-      featureFlags: const {
-        'prejoinpage.enabled': false,
-        'lobby-mode.enabled': false,
-        'welcomepage.enabled': false,
-        'invite.enabled': false,
-        'unsaferoomwarning.enabled': false,
-        'security-options.enabled': false,
-        'chat.enabled': true,
-        'tile-view.enabled': true,
-        'deeplinking.enabled': false,
-        'live-streaming.enabled': false,
-        'recording.enabled': false,
-        'toolbox.enabled': true,
-        'filmstrip.enabled': true,
-        'fullscreen.enabled': true,
-        'close-page.enabled': false,
-      },
-      configOverrides: const {
-        'startWithAudioMuted': false,
-        'startWithVideoMuted': false,
-        'requireDisplayName': false,
-        'disableModeratorIndicator': true,
-        'prejoinPageEnabled': false,
-        'lobby.enabled': false,
-        'requirePassword': false,
-      },
-    );
-  }
+    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
+    final exp = now + 3600;
 
-  static JitsiMeetConferenceOptions getPatientOptions(String meetingId, {String displayName = ''}) {
-    return JitsiMeetConferenceOptions(
-      serverURL: _jitsiServerUrl,
-      room: meetingId,
-      userInfo: JitsiMeetUserInfo(
-        displayName: displayName,
-      ),
-      featureFlags: const {
-        'prejoinpage.enabled': false,
-        'lobby-mode.enabled': false,
-        'welcomepage.enabled': false,
-        'invite.enabled': false,
-        'unsaferoomwarning.enabled': false,
-        'security-options.enabled': false,
-        'chat.enabled': true,
-        'tile-view.enabled': true,
-        'deeplinking.enabled': false,
-        'live-streaming.enabled': false,
-        'recording.enabled': false,
-        'toolbox.enabled': true,
-        'filmstrip.enabled': true,
-        'fullscreen.enabled': true,
-        'close-page.enabled': false,
+    final payload = {
+      'iss': LiveKitConfig.apiKey,
+      'sub': participantIdentity,
+      'iat': now,
+      'exp': exp,
+      'room': roomName,
+      'name': participantName,
+      'video': {
+        'roomJoin': true,
+        'room': roomName,
+        'canPublish': true,
+        'canSubscribe': true,
       },
-      configOverrides: const {
-        'startWithAudioMuted': false,
-        'startWithVideoMuted': false,
-        'requireDisplayName': false,
-        'prejoinPageEnabled': false,
-        'lobby.enabled': false,
-      },
-    );
+      'metadata': jsonEncode({
+        'name': participantName,
+        'isModerator': isModerator,
+      }),
+    };
+
+    final payloadEncoded = base64Url
+        .encode(utf8.encode(jsonEncode(payload)))
+        .replaceAll('=', '');
+
+    final signingInput = '$header.$payloadEncoded';
+    final key = utf8.encode(LiveKitConfig.apiSecret);
+    final hmac = Hmac(sha256, key);
+    final signature = hmac.convert(utf8.encode(signingInput));
+    final signatureEncoded =
+        base64Url.encode(signature.bytes).replaceAll('=', '');
+
+    return '$signingInput.$signatureEncoded';
   }
 
   static Future<void> startMeeting(String meetingId, {required String patientId}) async {
@@ -94,7 +69,6 @@ class VideoCallService {
       'doctorId': user.uid,
       'status': 'started',
       'startedBy': user.uid,
-      'meetingUrl': getMeetingUrl(meetingId),
       'startedAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
@@ -128,7 +102,6 @@ class VideoCallService {
     await FirebaseFirestore.instance.collection('video_calls').doc(meetingId).set({
       'meetingId': meetingId,
       'status': status,
-      'meetingUrl': getMeetingUrl(meetingId),
       'updatedAt': FieldValue.serverTimestamp(),
     }, SetOptions(merge: true));
   }
