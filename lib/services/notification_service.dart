@@ -73,7 +73,7 @@ class NotificationService {
     );
 
     await _plugin.zonedSchedule(
-      id,
+      id & 0x7FFFFFFF,
       title,
       body,
       scheduledTime,
@@ -94,7 +94,9 @@ class NotificationService {
     final reminders = [60, 30, 10];
     for (int i = 0; i < reminders.length; i++) {
       await scheduleAppointmentReminder(
-        id: id * 10 + i,
+        // Mask to a 32-bit int: `id * 10 + i` can otherwise exceed the
+        // platform notification-id limit (2^31 - 1) and crash.
+        id: (id * 10 + i) & 0x7FFFFFFF,
         title: title,
         body: reminders[i] == 60
             ? 'Appointment in 1 hour'
@@ -108,9 +110,9 @@ class NotificationService {
   }
 
   static Future<void> cancelReminder(int id) async {
-    await _plugin.cancel(id);
+    await _plugin.cancel(id & 0x7FFFFFFF);
     for (int i = 0; i < 3; i++) {
-      await _plugin.cancel(id * 10 + i);
+      await _plugin.cancel((id * 10 + i) & 0x7FFFFFFF);
     }
   }
 
@@ -136,6 +138,6 @@ class NotificationService {
       iOS: iosDetails,
     );
 
-    await _plugin.show(id, title, body, details);
+    await _plugin.show(id & 0x7FFFFFFF, title, body, details);
   }
 }

@@ -275,14 +275,17 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                 _buildErrorCard(isDark)
               else if (_inCall)
                 _buildInCallCard(isDark)
-              else if (appointment.isActive)
-                _isDoctor
+              else if (_isDoctor)
+                (appointment.isActive
                     ? _buildDoctorStartCard(isDark)
-                    : _buildPatientJoinCard(isDark)
-              else if (appointment.isUpcoming)
-                _buildWaitingCard(appointment, isDark)
+                    : appointment.isUpcoming
+                        ? _buildWaitingCard(appointment, isDark)
+                        : _buildEndedCard(isDark))
               else
-                _buildEndedCard(isDark),
+                // Patient view is always driven by the live call-status stream
+                // so the Join button appears the moment the doctor starts —
+                // no need to leave and reopen the page.
+                _buildPatientSection(appointment, isDark),
               const SizedBox(height: 16),
               _buildMeetingInfoCard(isDark),
               const SizedBox(height: 24),
@@ -730,71 +733,84 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     );
   }
 
-  Widget _buildPatientJoinCard(bool isDark) {
+  Widget _buildPatientSection(Appointment appointment, bool isDark) {
     return StreamBuilder<String>(
       stream: VideoCallService.watchCallStatus(widget.appointment.meetingId),
       builder: (context, snapshot) {
         final status = snapshot.data ?? 'none';
         final doctorStarted = status == 'started' || status == 'joined';
 
-        if (!doctorStarted) {
-          return _buildPatientWaitingCard(isDark);
+        // The doctor has started -> show the Join button immediately, even if
+        // the scheduled time window hasn't technically opened yet.
+        if (doctorStarted) {
+          return _buildPatientJoinCard(isDark);
         }
 
-        return Card(
-          color: isDark
-              ? Colors.green.shade900.withValues(alpha: 0.2)
-              : Colors.green.shade50,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: BorderSide(color: Colors.green.shade300)),
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                Icon(Icons.videocam,
-                    size: 56, color: Colors.green.shade600),
-                const SizedBox(height: 12),
-                const Text('Dr. Deepika is ready!',
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green)),
-                const SizedBox(height: 6),
-                const Text(
-                    'The doctor has started the consultation. Tap below to join.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13)),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _isStarting ? null : _joinCall,
-                    icon: _isStarting
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(
-                                strokeWidth: 2, color: Colors.white))
-                        : const Icon(Icons.videocam, size: 22),
-                    label: Text(
-                        _isStarting ? 'Connecting...' : 'Join Video Call',
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.w600)),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
+        // Doctor hasn't started. If the appointment slot is already over and
+        // was never started, treat it as ended; otherwise keep waiting live.
+        if (status == 'ended') {
+          return _buildEndedCard(isDark);
+        }
+        if (appointment.isCompleted) {
+          return _buildEndedCard(isDark);
+        }
+        return _buildPatientWaitingCard(isDark);
       },
+    );
+  }
+
+  Widget _buildPatientJoinCard(bool isDark) {
+    return Card(
+      color: isDark
+          ? Colors.green.shade900.withValues(alpha: 0.2)
+          : Colors.green.shade50,
+      shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: Colors.green.shade300)),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Icon(Icons.videocam, size: 56, color: Colors.green.shade600),
+            const SizedBox(height: 12),
+            const Text('Dr. Deepika is ready!',
+                style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green)),
+            const SizedBox(height: 6),
+            const Text(
+                'The doctor has started the consultation. Tap below to join.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 13)),
+            const SizedBox(height: 18),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _isStarting ? null : _joinCall,
+                icon: _isStarting
+                    ? const SizedBox(
+                        height: 18,
+                        width: 18,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.videocam, size: 22),
+                label: Text(
+                    _isStarting ? 'Connecting...' : 'Join Video Call',
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.w600)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
