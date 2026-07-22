@@ -33,6 +33,10 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Built app binaries (too large for git; over GitHub's 100 MB limit)
+*.apk
+*.aab
+
 # Symbolication related
 app.*.symbols
 

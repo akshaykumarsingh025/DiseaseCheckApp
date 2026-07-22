@@ -36,31 +36,26 @@ void main() {
       return;
     }
 
-    try {
-      await RemoteConfigService.load();
-    } catch (_) {}
-
-    try {
-      await DoctorAccountService.ensureDoctorAccount();
-    } catch (_) {}
-
-    try {
-      await NotificationService.init();
-    } catch (_) {}
-
-    // Initialize AdMob. Non-fatal if it fails (e.g. no Play Services).
-    try {
-      await MobileAds.instance.initialize();
-    } catch (_) {}
-
     runApp(
       const ProviderScope(
         child: DiseaseCheckApp(),
       ),
     );
+
+    _initBackgroundServices();
   }, (error, stack) {
     runApp(ErrorApp(error: 'Unhandled: $error'));
   });
+}
+
+Future<void> _initBackgroundServices() async {
+  await RemoteConfigService.load();
+  await DoctorAccountService.ensureDoctorAccount();
+  await NotificationService.init();
+
+  try {
+    await MobileAds.instance.initialize();
+  } catch (_) {}
 }
 
 class ErrorApp extends StatelessWidget {

@@ -1,0 +1,27 @@
+Add DMC number in prescription -- 72594
+
+Add these fields in prescription --
+Menstrual History
+obstratric history
+past history
+surgical history,
+
+Add a section of daily medical new related to Women health Only cerfitied and authentic real news only.
+
+Move women health tools back to women health hub and remove it from Home page.
+
+Add natural remedies for women. but only effective once with no side effects.
+
+Fix-
+The patient side uses a StreamBuilder that watches video_calls/{meetingId}. When the doctor clicks "Start Consultation":
+Doctor calls startMeeting() → writes status: 'started' to Firestore
+Patient's StreamBuilder detects status == 'started' → shows "Join" button
+BUT if the doctor's _joinCall() fails (token error, permissions), the doctor's screen goes to error state
+The Firestore doc still says status: 'started' → so patient sees Join button
+Then if something resets it, the Join button disappears
+The real issue is likely the Firestore PERMISSION_DENIED error I saw earlier. The doctor account can't write to video_calls because of rules.
+
+
+
+
+

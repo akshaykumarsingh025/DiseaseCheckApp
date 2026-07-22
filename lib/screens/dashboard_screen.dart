@@ -11,7 +11,9 @@ import '../providers/theme_provider.dart';
 import '../services/storage_service.dart';
 import '../services/payment_service.dart';
 import '../services/ad_service.dart';
+import '../services/remote_config_service.dart';
 import '../utils/bmi_calculator.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../utils/doctor_info.dart';
 import '../widgets/disclaimer_banner.dart';
 
@@ -26,6 +28,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool _isOffline = false;
   String _lastSynced = '';
   bool _adFree = true;
+  BannerAd? _bannerAd;
+  bool _bannerLoaded = false;
 
   @override
   void initState() {
@@ -36,11 +40,37 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 
   Future<void> _initAds() async {
-    // Preload an interstitial for the first ad slot and learn ad-free status
-    // so we can show/hide the "Remove Ads" upsell.
     final adFree = await PaymentService.isAdFree();
     if (mounted) setState(() => _adFree = adFree);
     AdService.loadInterstitial();
+    _loadBannerAd();
+  }
+
+  Future<void> _loadBannerAd() async {
+    if (_adFree) return;
+    if (!await AdService.adsAreEnabledForUser()) return;
+
+    _bannerAd = BannerAd(
+      adUnitId: RemoteConfigService.admobBannerId,
+      size: AdSize.banner,
+      request: const AdRequest(),
+      listener: BannerAdListener(
+        onAdLoaded: (_) {
+          if (mounted) setState(() => _bannerLoaded = true);
+        },
+        onAdFailedToLoad: (_, __) {
+          _bannerAd = null;
+          _bannerLoaded = false;
+        },
+      ),
+    );
+    await _bannerAd!.load();
+  }
+
+  @override
+  void dispose() {
+    _bannerAd?.dispose();
+    super.dispose();
   }
 
   Future<void> _checkConnectivity() async {
@@ -173,138 +203,137 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           ),
                           const SizedBox(height: 10),
                         ],
-                        const Text('Health Tools', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 10),
-                        _buildToolCard(context, 'PCOS Risk Screener', '10-question assessment based on Rotterdam criteria', Icons.quiz, Colors.purple, () => context.push('/pcos-screener')),
-                        const SizedBox(height: 8),
-                        _buildToolCard(context, 'Due Date Calculator', 'Calculate EDD, current week & milestones', Icons.pregnant_woman, Colors.pink, () => context.push('/due-date-calculator')),
-                        const SizedBox(height: 8),
-                        _buildToolCard(context, 'Period & Ovulation Tracker', 'Next period, fertile window & ovulation day', Icons.calendar_month, Colors.teal, () => context.push('/period-tracker')),
-                        const SizedBox(height: 8),
-                        _buildToolCard(context, 'BMI & PCOS Weight Risk', 'BMI with PCOS metabolic risk scoring', Icons.monitor_weight, Colors.deepPurple, () => context.push('/bmi-pcos-risk')),
-                        const SizedBox(height: 8),
-                        _buildToolCard(context, 'Fertility Score', 'Comprehensive fertility wellness assessment', Icons.favorite, Colors.pinkAccent, () => context.push('/fertility-score')),
-                        const SizedBox(height: 16),
-                      ],
-                      _buildDashboardCard(
-                        context,
-                        'Enter New Data',
-                        'Input lab reports and vitals manually',
-                        Icons.edit_document,
-                        Colors.blueAccent,
-                        () => context.push('/data-category'),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildDashboardCard(
-                        context,
-                        'Scan Medical Report',
-                        'Auto-extract data from your X-Ray or Ultrasound via Camera',
-                        Icons.document_scanner,
-                        Colors.deepPurpleAccent,
-                        () => context.push('/ocr-scanner'),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildDashboardCard(
-                        context,
-                        'Health Trends',
-                        'Track your vitals over time',
-                        Icons.show_chart,
-                        Colors.teal,
-                        () => context.push('/trends'),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildDashboardCard(
-                        context,
-                        'View Past Reports',
-                        'Check your wellness history',
-                        Icons.history,
-                        Colors.green,
-                        () => context.push('/report-history'),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildDashboardCard(
-                        context,
-                        'AI Diet Plan',
-                        'AI-generated personalized diet plans',
-                        Icons.restaurant_menu,
-                        Colors.orange,
-                        () {
-                          final reports = StorageService.getAllReports();
-                          if (reports.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('No reports found. Please complete a health check first.'),
-                                backgroundColor: Colors.orange,
-                              ),
-                            );
-                            return;
-                          }
-                          context.push('/diet-plan', extra: reports.first);
-                        },
-                      ),
-                      const SizedBox(height: 10),
-                      _buildDashboardCard(
-                        context,
-                        'Blood Donation Check',
-                        'Check if you\'re eligible to donate blood',
-                        Icons.bloodtype,
-                        Colors.redAccent,
-                        () => _showBloodDonationCheck(),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildDashboardCard(
-                        context,
-                        'Online OPD',
-                        'Video consultation with Dr. Deepika',
-                        Icons.videocam,
-                        const Color(0xFF0F3460),
-                        () => context.push('/online-opd'),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildDashboardCard(
-                        context,
-                        'My Prescriptions',
-                        'Download prescriptions from your consultations',
-                        Icons.medical_information,
-                        Colors.teal.shade700,
-                        () => context.push('/my-prescriptions'),
-                      ),
-                      const SizedBox(height: 10),
-                      _buildDashboardCard(
-                        context,
-                        'App Lock',
-                        'Secure app with PIN or biometric',
-                        Icons.lock_outline,
-                        Colors.indigo,
-                        () => context.push('/app-lock-setup'),
-                      ),
-                      const SizedBox(height: 10),
-                      if (!_adFree) ...[
-                        _buildRemoveAdsCard(context),
-                        const SizedBox(height: 10),
-                      ],
-                      if (FeatureFlags.healthCoursesEnabled) ...[
                         _buildDashboardCard(
                           context,
-                          'Health Courses',
-                          'Free & premium health education',
-                          Icons.school,
-                          Colors.indigo,
-                          () => context.push('/courses'),
+                          'Enter New Data',
+                          'Input lab reports and vitals manually',
+                          Icons.edit_document,
+                          Colors.blueAccent,
+                          () => context.push('/data-category'),
                         ),
                         const SizedBox(height: 10),
+                        _buildDashboardCard(
+                          context,
+                          'Scan Medical Report',
+                          'Auto-extract data from your X-Ray or Ultrasound via Camera',
+                          Icons.document_scanner,
+                          Colors.deepPurpleAccent,
+                          () => context.push('/ocr-scanner'),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildDashboardCard(
+                          context,
+                          'Health Trends',
+                          'Track your vitals over time',
+                          Icons.show_chart,
+                          Colors.teal,
+                          () => context.push('/trends'),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildDashboardCard(
+                          context,
+                          'View Past Reports',
+                          'Check your wellness history',
+                          Icons.history,
+                          Colors.green,
+                          () => context.push('/report-history'),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildDashboardCard(
+                          context,
+                          'AI Diet Plan',
+                          'AI-generated personalized diet plans',
+                          Icons.restaurant_menu,
+                          Colors.orange,
+                          () {
+                            final reports = StorageService.getAllReports();
+                            if (reports.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('No reports found. Please complete a health check first.'),
+                                  backgroundColor: Colors.orange,
+                                ),
+                              );
+                              return;
+                            }
+                            context.push('/diet-plan', extra: reports.first);
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        _buildDashboardCard(
+                          context,
+                          'Blood Donation Check',
+                          'Check if you\'re eligible to donate blood',
+                          Icons.bloodtype,
+                          Colors.redAccent,
+                          () => _showBloodDonationCheck(),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildDashboardCard(
+                          context,
+                          'Online OPD',
+                          'Video consultation with Dr. Deepika',
+                          Icons.videocam,
+                          const Color(0xFF0F3460),
+                          () => context.push('/online-opd'),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildDashboardCard(
+                          context,
+                          'My Prescriptions',
+                          'Download prescriptions from your consultations',
+                          Icons.medical_information,
+                          Colors.teal.shade700,
+                          () => context.push('/my-prescriptions'),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildDashboardCard(
+                          context,
+                          'App Lock',
+                          'Secure app with PIN or biometric',
+                          Icons.lock_outline,
+                          Colors.indigo,
+                          () => context.push('/app-lock-setup'),
+                        ),
+                        const SizedBox(height: 10),
+                        if (!_adFree) ...[
+                          _buildRemoveAdsCard(context),
+                          const SizedBox(height: 10),
+                        ],
+                        if (FeatureFlags.healthCoursesEnabled) ...[
+                          _buildDashboardCard(
+                            context,
+                            'Health Courses',
+                            'Free & premium health education',
+                            Icons.school,
+                            Colors.indigo,
+                            () => context.push('/courses'),
+                          ),
+                          const SizedBox(height: 10),
+                        ],
+                        _buildDoctorDashboardCard(context),
                       ],
-                       _buildDoctorDashboardCard(context),
                     ],
-                  ),
-                ),
+                   ),
+                 ),
+               ),
+             ),
+            // ── Bottom Banner Ad ──
+            // Uncomment the block below once you have your real AdMob Banner
+            // Ad Unit ID from the SETUP_INSTRUCTIONS.txt checklist.
+            // Currently uses test IDs; will show real ads when production
+            // IDs are set in Firestore config/api_keys doc.
+            if (!_adFree && _bannerLoaded && _bannerAd != null)
+              SizedBox(
+                width: _bannerAd!.size.width.toDouble(),
+                height: _bannerAd!.size.height.toDouble(),
+                child: AdWidget(ad: _bannerAd!),
               ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+           ],
+         ),
+       ),
+     );
+   }
 
   Widget _buildBmiCard(BuildContext context, double weight, double height) {
     double bmi = BmiCalculator.calculateBmi(weight, height);
@@ -393,60 +422,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 ),
               ),
               Icon(Icons.chevron_right, size: 20, color: Colors.grey.shade400),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildToolCard(BuildContext context, String title, String subtitle, IconData icon, Color color, VoidCallback onTap) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Card(
-      elevation: 1,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
-            gradient: LinearGradient(
-              colors: [color.withValues(alpha: 0.08), color.withValues(alpha: 0.02)],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 22, color: color),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 1),
-                    Text(subtitle, style: TextStyle(fontSize: 11, color: isDark ? Colors.grey.shade400 : Colors.grey.shade600)),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text('Start', style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color)),
-              ),
             ],
           ),
         ),

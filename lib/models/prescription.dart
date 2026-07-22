@@ -38,11 +38,16 @@ class Prescription {
   final String patientName;
   final String doctorId;
   final String doctorName;
+  final String? dmcNumber;
   final DateTime appointmentDate;
   final String appointmentTime;
   final List<PrescriptionMedicine> medicines;
   final String chiefComplaint;
   final String diagnosis;
+  final String? menstrualHistory;
+  final String? obstetricHistory;
+  final String? pastHistory;
+  final String? surgicalHistory;
   final String? advice;
   final String? followUpDate;
   final DateTime createdAt;
@@ -53,11 +58,16 @@ class Prescription {
     required this.patientName,
     required this.doctorId,
     required this.doctorName,
+    this.dmcNumber,
     required this.appointmentDate,
     required this.appointmentTime,
     required this.medicines,
     required this.chiefComplaint,
     required this.diagnosis,
+    this.menstrualHistory,
+    this.obstetricHistory,
+    this.pastHistory,
+    this.surgicalHistory,
     this.advice,
     this.followUpDate,
     required this.createdAt,
@@ -69,11 +79,16 @@ class Prescription {
         'patientName': patientName,
         'doctorId': doctorId,
         'doctorName': doctorName,
+        'dmcNumber': dmcNumber,
         'appointmentDate': appointmentDate.toIso8601String(),
         'appointmentTime': appointmentTime,
         'medicines': medicines.map((m) => m.toJson()).toList(),
         'chiefComplaint': chiefComplaint,
         'diagnosis': diagnosis,
+        'menstrualHistory': menstrualHistory,
+        'obstetricHistory': obstetricHistory,
+        'pastHistory': pastHistory,
+        'surgicalHistory': surgicalHistory,
         'advice': advice,
         'followUpDate': followUpDate,
         'createdAt': createdAt.toIso8601String(),
@@ -86,6 +101,7 @@ class Prescription {
       patientName: json['patientName'] as String? ?? '',
       doctorId: json['doctorId'] as String? ?? '',
       doctorName: json['doctorName'] as String? ?? '',
+      dmcNumber: json['dmcNumber'] as String?,
       appointmentDate: _parseDateTime(json['appointmentDate']),
       appointmentTime: json['appointmentTime'] as String? ?? '',
       medicines: (json['medicines'] as List?)
@@ -95,6 +111,10 @@ class Prescription {
           [],
       chiefComplaint: json['chiefComplaint'] as String? ?? '',
       diagnosis: json['diagnosis'] as String? ?? '',
+      menstrualHistory: json['menstrualHistory'] as String?,
+      obstetricHistory: json['obstetricHistory'] as String?,
+      pastHistory: json['pastHistory'] as String?,
+      surgicalHistory: json['surgicalHistory'] as String?,
       advice: json['advice'] as String?,
       followUpDate: json['followUpDate'] as String?,
       createdAt: _parseDateTime(json['createdAt']),

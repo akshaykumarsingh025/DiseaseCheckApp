@@ -55,14 +55,15 @@ class RemoteConfigService {
     } catch (_) {}
   }
 
-  // Hardcoded Groq defaults. These are authoritative: a stale
-  // `openrouter_*` value in the live Firestore `config/api_keys` doc must NOT
-  // override them (an OpenRouter key sent to the Groq endpoint returns 401 and
-  // breaks every AI feature). We only accept a remote key if it is a real Groq
-  // key (prefixed `gsk_`), and only accept a remote base URL if it points at
-  // Groq.
-  static const String _defaultGroqApiKey =
-      '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';
+  // Groq config. The API key is loaded at runtime from Firestore
+  // `config/api_keys` -> `groq_api_key` and must NEVER be hardcoded here
+  // (GitHub secret scanning blocks committed keys, and a committed key is
+  // public). We only accept a remote key if it is a real Groq key (prefixed
+  // `gsk_`); if none is configured, AI features stay disabled until one is set.
+  // The model/base URL keep authoritative non-secret defaults below: a stale
+  // value in Firestore must not send a non-Groq key to Groq (which would 401
+  // and break AI), so a remote base URL is only accepted if it points at Groq.
+  static const String _defaultGroqApiKey = '';
   static const String _defaultGroqModel = 'llama-3.3-70b-versatile';
   static const String _defaultGroqBaseUrl = 'https://api.groq.com/openai/v1';
 
@@ -139,11 +140,11 @@ class RemoteConfigService {
   // your production unit IDs (via config doc or these defaults) before launch.
   static String get admobInterstitialId =>
       _config['admob_interstitial_id'] as String? ??
-      'ca-app-pub-3940256099942544/1033173712';
+      'ca-app-pub-7777713890124852/8971862214';
 
   static String get admobBannerId =>
       _config['admob_banner_id'] as String? ??
-      'ca-app-pub-3940256099942544/6300978111';
+      'ca-app-pub-7777713890124852/8971862214';
 
   static String get doctorUserId =>
       _config['doctor_user_id'] as String? ?? '';

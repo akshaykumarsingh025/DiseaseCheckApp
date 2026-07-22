@@ -1,9 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../config/feature_flags.dart';
 import '../services/doctor_account_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
@@ -28,6 +31,42 @@ class AuthService {
         email: email,
         password: password,
       );
+    } on FirebaseAuthException catch (e) {
+      throw _friendlyError(e.code);
+    }
+  }
+
+  Future<UserCredential> signInWithGoogle() async {
+    try {
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        throw 'Sign in cancelled';
+      }
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      final userCredential = await _auth.signInWithCredential(credential);
+
+      if (userCredential.additionalUserInfo?.isNewUser ?? false) {
+        final user = userCredential.user;
+        if (user != null) {
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .set({
+            'name': user.displayName ?? '',
+            'email': user.email ?? '',
+            'phone': user.phoneNumber ?? '',
+            'photoUrl': user.photoURL ?? '',
+            'createdAt': FieldValue.serverTimestamp(),
+            'signInMethod': 'google',
+          }, SetOptions(merge: true));
+        }
+      }
+
+      return userCredential;
     } on FirebaseAuthException catch (e) {
       throw _friendlyError(e.code);
     }

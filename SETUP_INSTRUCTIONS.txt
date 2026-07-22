@@ -1,0 +1,166 @@
+===============================================================================
+  DISEASECHECK APP - PLAY STORE LAUNCH SETUP GUIDE
+===============================================================================
+
+You need to create 3 accounts and provide keys for each. Follow the steps
+below, then give the keys to the developer (or paste them in the code where
+marked).
+
+===============================================================================
+  1. RAZORPAY - Appointment Booking Payments
+===============================================================================
+
+WHAT IT DOES: Patients pay for OPD consultations (₹111), AI Diet Plans (₹299),
+and Remove Ads (₹149) through Razorpay inside the app.
+
+STEPS:
+  a. Go to https://dashboard.razorpay.com/sign-up
+  b. Sign up with your business email and phone.
+  c. Complete KYC (PAN, bank account, business details).
+     - Business type: Individual / Sole Proprietor (or your clinic type)
+     - Category: Healthcare / Medical
+  d. After KYC is approved, go to Settings > API Keys.
+  e. Generate a new key pair.
+  f. Copy the "Key ID" (starts with "rzp_test_" or "rzp_live_").
+
+KEYS I NEED FROM YOU:
+  [ ] Razorpay Key ID: rzp_test_XXXXX  (for testing)
+  [ ] Razorpay Key ID: rzp_live_XXXXX  (for production - after testing passes)
+
+TESTING FIRST: Use the test key first. When you're ready for real payments,
+switch to the live key. Test cards are available at:
+https://razorpay.com/docs/payments/payment-gateway/test-integration/
+
+IMPORTANT: The "Key Secret" is NOT needed in the app - it stays server-side
+only. Only the "Key ID" goes in the app.
+
+===============================================================================
+  2. GOOGLE PLAY CONSOLE - Play Store Publishing + In-App Purchases
+===============================================================================
+
+WHAT IT DOES: Upload the app to Play Store. Also handles Google Play Billing
+for AI report purchases (if you want to sell through Google Play instead of
+Razorpay for AI reports).
+
+STEPS:
+  a. Go to https://play.google.com/console/signup
+  b. Pay the one-time $25 USD registration fee.
+  c. Complete your developer profile:
+     - Developer name: "Dr. Deepika Singh" or your clinic name
+     - Contact email, phone, website
+  d. Create the app listing:
+     - App name: DiseaseCheck
+     - Package name: com.healthcheck.disease_check_app
+     - Category: Medical
+  e. Go to Monetize > In-app products (if using Google Play Billing for AI reports)
+
+KEYS I NEED FROM YOU:
+  [ ] Google Play Console: Confirm you've created the app entry
+  [ ] If using Google Play Billing for AI reports:
+      - Product IDs for each paid feature
+  [ ] App signing key SHA-1 fingerprint (from Play Console > Setup > App signing)
+
+ALSO NEEDED FOR ADB/DEBUG:
+  - You need to add your test device's email in Play Console > Setup >
+    License testing so in-app purchases work in testing.
+
+===============================================================================
+  3. GOOGLE ADMOB - Banner Ads at Bottom of App
+===============================================================================
+
+WHAT IT DOES: Shows banner ads at the bottom of the app screen. Also shows
+interstitial ads (full-screen) between AI generations. Users can pay ₹149 to
+remove all ads.
+
+STEPS:
+  a. Go to https://apps.admob.com/
+  b. Sign in with your Google account (same as Play Console if possible).
+  c. Click "Add App" > "Android" > enter app name "DiseaseCheck".
+  d. If the app is NOT yet on Play Store, choose "No, the app isn't on
+     Google Play yet". Enter the package name: com.healthcheck.disease_check_app
+  e. Create ad units:
+     i.   Click "Add ad unit" > "Banner"
+          - Name it: "Dashboard Banner"
+          - Copy the Ad Unit ID (format: ca-app-pub-XXXXX/YYYYYY)
+     ii.  Click "Add ad unit" > "Interstitial"
+          - Name it: "AI Generation Interstitial"
+          - Copy the Ad Unit ID
+  f. Wait for AdMob to activate (can take a few hours).
+
+KEYS I NEED FROM YOU:
+  [ ] AdMob App ID:           ca-app-pub-XXXXX~XXXXX
+  [ ] Banner Ad Unit ID:       ca-app-pub-XXXXX/YYYYYY
+  [ ] Interstitial Ad Unit ID: ca-app-pub-XXXXX/YYYYYY
+
+IMPORTANT: Do NOT use the test IDs (ca-app-pub-3940256099942544/*) in
+production - those are only for development testing.
+
+===============================================================================
+  4. LIVEKIT (VIDEO CALL) - Already Set Up, Just Needs Blaze Plan
+===============================================================================
+
+Your LiveKit keys are already stored in Google Secret Manager for the
+server-side Cloud Function. To switch from the current fallback (client-side
+signing) to secure server-side signing:
+
+STEPS:
+  a. Go to https://console.firebase.google.com/
+  b. Select project: diseasecheck-57cc2
+  c. Click "Upgrade" (Spark -> Blaze plan)
+     - Blaze is pay-as-you-go; the free tier covers the same as Spark
+     - Cloud Functions require Blaze to use secrets
+  d. After upgrading, deploy the Cloud Functions:
+     - Run: firebase deploy --only functions
+  e. Verify the function works by testing a video call in the app.
+
+The app already tries the Cloud Function first, then falls back to local
+signing. Once you verify the Cloud Function works, I can remove the local
+fallback and delete the secrets from the client code.
+
+KEYS I NEED FROM YOU:
+  [ ] Confirm: Firebase Blaze plan activated? (Yes/No)
+  [ ] Confirm: Cloud Functions deployed and video call tested? (Yes/No)
+
+===============================================================================
+  5. ANDROID APP SIGNING (for Play Store)
+===============================================================================
+
+To upload to Play Store, you need a signing keystore.
+
+STEPS:
+  a. Generate a keystore (or let Play Console handle it with "App signing
+     by Google Play" - recommended for first upload).
+  b. If generating yourself:
+     keytool -genkey -v -keystore diseasecheck.jks -keyalg RSA \
+       -keysize 2048 -validity 10000 -alias diseasecheck
+  c. Create a file: android/key.properties with:
+     storePassword=YOUR_KEYSTORE_PASSWORD
+     keyPassword=YOUR_KEY_PASSWORD
+     keyAlias=diseasecheck
+     storeFile=diseasecheck.jks
+  d. Place the .jks file in: android/app/diseasecheck.jks
+
+KEYS I NEED FROM YOU:
+  [ ] key.properties file created? (Yes/No)
+  [ ] .jks keystore file placed? (Yes/No)
+
+===============================================================================
+  QUICK CHECKLIST - COPY & FILL IN
+===============================================================================
+
+Paste the filled checklist back to the developer:
+
+Razorpay Key ID (test):    rzp_test______________
+Razorpay Key ID (live):    rzp_live______________
+
+AdMob App ID:              ca-app-pub-_______~_______
+Banner Ad Unit ID:         ca-app-pub-_______/_______
+Interstitial Ad Unit ID:   ca-app-pub-_______/_______
+
+Firebase Blaze plan?       [ ] Yes  [ ] No
+Cloud Functions deployed?  [ ] Yes  [ ] No
+
+key.properties created?    [ ] Yes  [ ] No
+.jks keystore file?       [ ] Yes  [ ] No
+
+===============================================================================

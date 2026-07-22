@@ -18,6 +18,7 @@ class LoginScreen extends ConsumerStatefulWidget {
 class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormBuilderState>();
   bool _isLoading = false;
+  bool _isGoogleLoading = false;
   bool _obscurePassword = true;
 
   Future<void> _login() async {
@@ -31,7 +32,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               data['password'],
             );
 
-        // Check if email is verified before proceeding
         if (credential.user != null &&
             !credential.user!.emailVerified &&
             !FeatureFlags.canBypassEmailVerification(credential.user!.email)) {
@@ -41,7 +41,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           return;
         }
 
-        // Clear stale local data from previous user, fetch new user's data
         await StorageService.clearAllLocalData();
         final user = ref.read(authServiceProvider).currentUser;
         if (user != null) {
@@ -50,10 +49,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           } catch (_) {}
         }
 
-        // Refresh profile provider so it picks up the new user's profile
         ref.invalidate(profileProvider);
-
-        // Navigation will be handled by the router's redirect logic
       } catch (e) {
         if (mounted) {
           final msg = e.toString();
@@ -95,6 +91,38 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    setState(() => _isGoogleLoading = true);
+    try {
+      final credential = await ref.read(authServiceProvider).signInWithGoogle();
+
+      await StorageService.clearAllLocalData();
+      final user = credential.user;
+      if (user != null) {
+        try {
+          await StorageService.fetchAllFromCloud(user.uid);
+        } catch (_) {}
+      }
+
+      ref.invalidate(profileProvider);
+    } catch (e) {
+      if (mounted) {
+        final msg = e.toString();
+        if (!msg.contains('cancelled')) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(msg),
+              backgroundColor: Colors.red.shade700,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
 
@@ -181,6 +209,46 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 color: Colors.white, strokeWidth: 2),
                           )
                         : const Text('Login'),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      const Expanded(child: Divider()),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text('OR',
+                            style: TextStyle(
+                                color: Colors.grey.shade500,
+                                fontWeight: FontWeight.w500)),
+                      ),
+                      const Expanded(child: Divider()),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: _isGoogleLoading ? null : _signInWithGoogle,
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: BorderSide(color: Colors.grey.shade400),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    icon: _isGoogleLoading
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : Image.asset(
+                            'assets/icons/google_logo.png',
+                            width: 20,
+                            height: 20,
+                            errorBuilder: (_, __, ___) =>
+                                const Icon(Icons.login, size: 20),
+                          ),
+                    label: Text(_isGoogleLoading ? 'Signing in...' : 'Continue with Google',
+                        style: const TextStyle(fontSize: 16)),
                   ),
                   const SizedBox(height: 16),
                   TextButton(

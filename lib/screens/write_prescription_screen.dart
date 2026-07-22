@@ -18,6 +18,10 @@ class _WritePrescriptionScreenState extends State<WritePrescriptionScreen> {
   final _formKey = GlobalKey<FormState>();
   final _chiefComplaintCtrl = TextEditingController();
   final _diagnosisCtrl = TextEditingController();
+  final _menstrualHistoryCtrl = TextEditingController();
+  final _obstetricHistoryCtrl = TextEditingController();
+  final _pastHistoryCtrl = TextEditingController();
+  final _surgicalHistoryCtrl = TextEditingController();
   final _adviceCtrl = TextEditingController();
   final _followUpCtrl = TextEditingController();
 
@@ -41,6 +45,10 @@ class _WritePrescriptionScreenState extends State<WritePrescriptionScreen> {
         _isEditing = true;
         _chiefComplaintCtrl.text = rx.chiefComplaint;
         _diagnosisCtrl.text = rx.diagnosis;
+        _menstrualHistoryCtrl.text = rx.menstrualHistory ?? '';
+        _obstetricHistoryCtrl.text = rx.obstetricHistory ?? '';
+        _pastHistoryCtrl.text = rx.pastHistory ?? '';
+        _surgicalHistoryCtrl.text = rx.surgicalHistory ?? '';
         _adviceCtrl.text = rx.advice ?? '';
         _followUpCtrl.text = rx.followUpDate ?? '';
         _medicines.clear();
@@ -61,6 +69,10 @@ class _WritePrescriptionScreenState extends State<WritePrescriptionScreen> {
   void dispose() {
     _chiefComplaintCtrl.dispose();
     _diagnosisCtrl.dispose();
+    _menstrualHistoryCtrl.dispose();
+    _obstetricHistoryCtrl.dispose();
+    _pastHistoryCtrl.dispose();
+    _surgicalHistoryCtrl.dispose();
     _adviceCtrl.dispose();
     _followUpCtrl.dispose();
     for (var m in _medicines) {
@@ -114,6 +126,46 @@ class _WritePrescriptionScreenState extends State<WritePrescriptionScreen> {
                 ),
                 maxLines: 2,
                 validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+              ),
+              const SizedBox(height: 16),
+              _buildSectionTitle('Menstrual History', Icons.female, Colors.pink),
+              TextFormField(
+                controller: _menstrualHistoryCtrl,
+                decoration: const InputDecoration(
+                  hintText: 'e.g. LMP, cycle length, regularity, flow',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 16),
+              _buildSectionTitle('Obstetric History', Icons.pregnant_woman, Colors.teal),
+              TextFormField(
+                controller: _obstetricHistoryCtrl,
+                decoration: const InputDecoration(
+                  hintText: 'e.g. G3P2L1A1, mode of delivery, complications',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 16),
+              _buildSectionTitle('Past History', Icons.history, Colors.orange),
+              TextFormField(
+                controller: _pastHistoryCtrl,
+                decoration: const InputDecoration(
+                  hintText: 'e.g. Diabetes, Hypertension, Thyroid disorder',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 2,
+              ),
+              const SizedBox(height: 16),
+              _buildSectionTitle('Surgical History', Icons.healing, Colors.deepPurple),
+              TextFormField(
+                controller: _surgicalHistoryCtrl,
+                decoration: const InputDecoration(
+                  hintText: 'e.g. LSCS, Laparoscopy, D&C, None',
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 2,
               ),
               const SizedBox(height: 16),
               Row(
@@ -266,6 +318,12 @@ class _WritePrescriptionScreenState extends State<WritePrescriptionScreen> {
                   Text(widget.appointment.patientName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   Text('${DateFormat('dd MMM yyyy').format(widget.appointment.date)} | ${widget.appointment.startTime} - ${widget.appointment.endTime}',
                       style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                  const SizedBox(height: 4),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(color: Colors.blue.shade50, borderRadius: BorderRadius.circular(4)),
+                    child: Text('DMC No: ${DoctorInfo.dmcNumber}', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.blue.shade700)),
+                  ),
                 ],
               ),
             ),
@@ -308,11 +366,16 @@ class _WritePrescriptionScreenState extends State<WritePrescriptionScreen> {
         patientName: widget.appointment.patientName,
         doctorId: widget.appointment.doctorId,
         doctorName: DoctorInfo.name,
+        dmcNumber: DoctorInfo.dmcNumber,
         appointmentDate: widget.appointment.date,
         appointmentTime: '${widget.appointment.startTime} - ${widget.appointment.endTime}',
         medicines: medicines,
         chiefComplaint: _chiefComplaintCtrl.text.trim(),
         diagnosis: _diagnosisCtrl.text.trim(),
+        menstrualHistory: _menstrualHistoryCtrl.text.trim().isEmpty ? null : _menstrualHistoryCtrl.text.trim(),
+        obstetricHistory: _obstetricHistoryCtrl.text.trim().isEmpty ? null : _obstetricHistoryCtrl.text.trim(),
+        pastHistory: _pastHistoryCtrl.text.trim().isEmpty ? null : _pastHistoryCtrl.text.trim(),
+        surgicalHistory: _surgicalHistoryCtrl.text.trim().isEmpty ? null : _surgicalHistoryCtrl.text.trim(),
         advice: _adviceCtrl.text.trim().isEmpty ? null : _adviceCtrl.text.trim(),
         followUpDate: _followUpCtrl.text.trim().isEmpty ? null : _followUpCtrl.text.trim(),
         createdAt: DateTime.now(),

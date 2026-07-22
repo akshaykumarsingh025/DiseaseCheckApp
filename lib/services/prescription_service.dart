@@ -113,6 +113,10 @@ class PrescriptionService {
                     style: const pw.TextStyle(fontSize: 14, color: PdfColor.fromInt(0x93C5FD))),
                 pw.Text(DoctorInfo.qualification,
                     style: const pw.TextStyle(fontSize: 10, color: PdfColor.fromInt(0x93C5FD))),
+                pw.SizedBox(height: 4),
+                if (rx.dmcNumber != null && rx.dmcNumber!.isNotEmpty)
+                  pw.Text('DMC No: ${rx.dmcNumber}',
+                      style: const pw.TextStyle(fontSize: 10, color: PdfColor.fromInt(0x93C5FD))),
                 pw.SizedBox(height: 8),
                 pw.Text('${DoctorInfo.phoneDisplay}  |  ${DoctorInfo.email}',
                     style: const pw.TextStyle(fontSize: 9, color: PdfColor.fromInt(0x93C5FD))),
@@ -203,6 +207,86 @@ class PrescriptionService {
                       fontWeight: pw.FontWeight.bold,
                       color: PdfColor.fromInt(0xDC2626),
                       height: 1.4)),
+            ),
+            pw.SizedBox(height: 14),
+          ],
+          if (rx.menstrualHistory != null && rx.menstrualHistory!.isNotEmpty) ...[
+            pw.Text('MENSTRUAL HISTORY',
+                style: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColor.fromInt(0x6B7280),
+                    letterSpacing: 1.5)),
+            pw.SizedBox(height: 4),
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                color: PdfColor.fromInt(0xFCE7F3),
+                borderRadius: pw.BorderRadius.all(pw.Radius.circular(6)),
+              ),
+              child: pw.Text(rx.menstrualHistory!,
+                  style: const pw.TextStyle(fontSize: 11, height: 1.4)),
+            ),
+            pw.SizedBox(height: 14),
+          ],
+          if (rx.obstetricHistory != null && rx.obstetricHistory!.isNotEmpty) ...[
+            pw.Text('OBSTETRIC HISTORY',
+                style: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColor.fromInt(0x6B7280),
+                    letterSpacing: 1.5)),
+            pw.SizedBox(height: 4),
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                color: PdfColor.fromInt(0xCCFBF1),
+                borderRadius: pw.BorderRadius.all(pw.Radius.circular(6)),
+              ),
+              child: pw.Text(rx.obstetricHistory!,
+                  style: const pw.TextStyle(fontSize: 11, height: 1.4)),
+            ),
+            pw.SizedBox(height: 14),
+          ],
+          if (rx.pastHistory != null && rx.pastHistory!.isNotEmpty) ...[
+            pw.Text('PAST HISTORY',
+                style: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColor.fromInt(0x6B7280),
+                    letterSpacing: 1.5)),
+            pw.SizedBox(height: 4),
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                color: PdfColor.fromInt(0xFFF7ED),
+                borderRadius: pw.BorderRadius.all(pw.Radius.circular(6)),
+              ),
+              child: pw.Text(rx.pastHistory!,
+                  style: const pw.TextStyle(fontSize: 11, height: 1.4)),
+            ),
+            pw.SizedBox(height: 14),
+          ],
+          if (rx.surgicalHistory != null && rx.surgicalHistory!.isNotEmpty) ...[
+            pw.Text('SURGICAL HISTORY',
+                style: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColor.fromInt(0x6B7280),
+                    letterSpacing: 1.5)),
+            pw.SizedBox(height: 4),
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                color: PdfColor.fromInt(0xEDE9FE),
+                borderRadius: pw.BorderRadius.all(pw.Radius.circular(6)),
+              ),
+              child: pw.Text(rx.surgicalHistory!,
+                  style: const pw.TextStyle(fontSize: 11, height: 1.4)),
             ),
             pw.SizedBox(height: 14),
           ],

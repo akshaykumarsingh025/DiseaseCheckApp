@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
@@ -23,6 +24,8 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   String? _errorMessage;
   bool _inCall = false;
   bool _callEnded = false;
+  bool _intentionalEnd = false;
+  Timer? _refreshTimer;
 
   Room? _room;
   EventsListener<RoomEvent>? _listener;
@@ -36,7 +39,16 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted && !_inCall && !_callEnded) setState(() {});
+    });
+  }
+
+  @override
   void dispose() {
+    _refreshTimer?.cancel();
     _listener?.dispose();
     _room?.dispose();
     super.dispose();
@@ -47,6 +59,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
       _isStarting = true;
       _hasError = false;
       _errorMessage = null;
+      _intentionalEnd = false;
     });
 
     final permissionsOk = await _ensureMediaPermissions();
@@ -66,23 +79,23 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
       final identity =
           _isDoctor ? 'doctor_${user?.uid ?? 'doc'}' : 'patient_${user?.uid ?? 'pat'}';
 
-      final token = await VideoCallService.generateToken(
-        roomName: widget.appointment.meetingId,
-        participantName: _displayName,
-        participantIdentity: identity,
-        isModerator: _isDoctor,
-      );
-
-      if (_isDoctor) {
-        await VideoCallService.startMeeting(
-          widget.appointment.meetingId,
-          patientId: widget.appointment.patientId,
+      String token;
+      try {
+        token = await VideoCallService.generateToken(
+          roomName: widget.appointment.meetingId,
+          participantName: _displayName,
+          participantIdentity: identity,
+          isModerator: _isDoctor,
         );
-      } else {
-        await VideoCallService.joinMeeting(
-          widget.appointment.meetingId,
-          displayName: _displayName,
-        );
+      } catch (tokenError) {
+        if (mounted) {
+          setState(() {
+            _isStarting = false;
+            _hasError = true;
+            _errorMessage = 'Token generation failed: $tokenError';
+          });
+        }
+        return;
       }
 
       _room = Room(
@@ -94,14 +107,25 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
       _listener = _room!.createListener();
 
       _listener!.on<RoomDisconnectedEvent>((event) {
-        if (mounted) {
-          if (_isDoctor) {
-            VideoCallService.endMeeting(widget.appointment.meetingId);
+        if (!mounted) return;
+        if (_intentionalEnd) {
+          if (!_callEnded) {
+            if (_isDoctor) {
+              VideoCallService.endMeeting(widget.appointment.meetingId);
+            }
+            setState(() {
+              _inCall = false;
+              _callEnded = true;
+              _isStarting = false;
+            });
           }
+        } else {
+          _cleanupRoom();
           setState(() {
             _inCall = false;
-            _callEnded = true;
             _isStarting = false;
+            _hasError = true;
+            _errorMessage = 'Connection lost. Tap to retry.';
           });
         }
       });
@@ -122,10 +146,39 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         if (mounted) setState(() {});
       });
 
-      await _room!.connect(LiveKitConfig.url, token);
+      try {
+        await _connectToRoom(LiveKitConfig.url, token);
+      } catch (connectError) {
+        debugPrint('VideoCall: connection failed: $connectError');
+        _cleanupRoom();
+        if (mounted) {
+          setState(() {
+            _isStarting = false;
+            _hasError = true;
+            _errorMessage = _connectErrorMessage(connectError);
+          });
+        }
+        return;
+      }
 
-      await _room!.localParticipant!.setCameraEnabled(true);
-      await _room!.localParticipant!.setMicrophoneEnabled(true);
+      try {
+        await _room!.localParticipant!.setCameraEnabled(true);
+        await _room!.localParticipant!.setMicrophoneEnabled(true);
+      } catch (_) {}
+
+      try {
+        if (_isDoctor) {
+          await VideoCallService.startMeeting(
+            widget.appointment.meetingId,
+            patientId: widget.appointment.patientId,
+          );
+        } else {
+          await VideoCallService.joinMeeting(
+            widget.appointment.meetingId,
+            displayName: _displayName,
+          );
+        }
+      } catch (_) {}
 
       if (mounted) {
         setState(() {
@@ -134,6 +187,12 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         });
       }
     } catch (e) {
+      if (_isDoctor) {
+        try {
+          await VideoCallService.updateCallStatus(widget.appointment.meetingId, 'error');
+        } catch (_) {}
+      }
+      _cleanupRoom();
       if (mounted) {
         setState(() {
           _isStarting = false;
@@ -142,6 +201,49 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         });
       }
     }
+  }
+
+  /// Connects to the LiveKit room, capturing *both* synchronous and
+  /// asynchronous failures.
+  ///
+  /// LiveKit can throw a [TimeoutException] from an internal background timer —
+  /// for example when the server accepts the socket but rejects the token and
+  /// closes it, so the client keeps waiting for a join response that never
+  /// arrives. That error is asynchronous and escapes an ordinary try/catch,
+  /// which is why it previously bubbled up to the global zone handler in
+  /// main.dart and replaced the whole app with the "App Error" screen.
+  ///
+  /// Running the connect inside its own guarded zone funnels any failure into
+  /// this completer, so the caller can show a friendly, retryable error instead
+  /// of crashing the app.
+  Future<void> _connectToRoom(String url, String token) {
+    final completer = Completer<void>();
+
+    runZonedGuarded(() async {
+      try {
+        await _room!
+            .connect(url, token)
+            .timeout(const Duration(seconds: 20));
+        if (!completer.isCompleted) completer.complete();
+      } catch (e) {
+        if (!completer.isCompleted) completer.completeError(e);
+      }
+    }, (error, stack) {
+      // Async LiveKit errors (e.g. the background join timeout) land here.
+      debugPrint('VideoCall: async connect error: $error');
+      if (!completer.isCompleted) completer.completeError(error);
+    });
+
+    return completer.future;
+  }
+
+  String _connectErrorMessage(Object error) {
+    final text = error.toString().toLowerCase();
+    if (text.contains('timeout') || text.contains('timed out')) {
+      return 'Could not connect to the video call. The call server did not '
+          'respond in time. Please check your internet and try again.';
+    }
+    return 'Connection failed. Please try again.';
   }
 
   Future<bool> _ensureMediaPermissions() async {
@@ -159,6 +261,7 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
   }
 
   void _endCall() async {
+    _intentionalEnd = true;
     await _room?.disconnect();
     _listener?.dispose();
     _listener = null;
@@ -171,8 +274,16 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
       setState(() {
         _inCall = false;
         _callEnded = true;
+        _isStarting = false;
       });
     }
+  }
+
+  void _cleanupRoom() {
+    _room?.disconnect();
+    _listener?.dispose();
+    _room = null;
+    _listener = null;
   }
 
   void _confirmEndCall() {
@@ -271,8 +382,6 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
               const SizedBox(height: 16),
               if (_callEnded)
                 _buildEndedCard(isDark)
-              else if (_hasError)
-                _buildErrorCard(isDark)
               else if (_inCall)
                 _buildInCallCard(isDark)
               else if (_isDoctor)
@@ -286,8 +395,6 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                 // so the Join button appears the moment the doctor starts —
                 // no need to leave and reopen the page.
                 _buildPatientSection(appointment, isDark),
-              const SizedBox(height: 16),
-              _buildMeetingInfoCard(isDark),
               const SizedBox(height: 24),
             ],
           ),
@@ -702,6 +809,28 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                 'Tap below to start the video consultation. The patient will be able to join once you start.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13)),
+            if (_hasError) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, size: 16, color: Colors.red.shade700),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _errorMessage ?? 'Connection lost. Tap to retry.',
+                        style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
@@ -715,7 +844,11 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                             strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.videocam, size: 22),
                 label: Text(
-                    _isStarting ? 'Connecting...' : 'Start Consultation',
+                    _isStarting
+                        ? 'Connecting...'
+                        : _hasError
+                            ? 'Retry Consultation'
+                            : 'Start Consultation',
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
@@ -740,20 +873,18 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
         final status = snapshot.data ?? 'none';
         final doctorStarted = status == 'started' || status == 'joined';
 
-        // The doctor has started -> show the Join button immediately, even if
-        // the scheduled time window hasn't technically opened yet.
         if (doctorStarted) {
           return _buildPatientJoinCard(isDark);
         }
 
-        // Doctor hasn't started. If the appointment slot is already over and
-        // was never started, treat it as ended; otherwise keep waiting live.
         if (status == 'ended') {
           return _buildEndedCard(isDark);
         }
-        if (appointment.isCompleted) {
+
+        if (snapshot.hasData && appointment.isCompleted) {
           return _buildEndedCard(isDark);
         }
+
         return _buildPatientWaitingCard(isDark);
       },
     );
@@ -783,6 +914,28 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                 'The doctor has started the consultation. Tap below to join.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 13)),
+            if (_hasError) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.red.shade50,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline, size: 16, color: Colors.red.shade700),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _errorMessage ?? 'Connection lost. Tap to retry.',
+                        style: TextStyle(fontSize: 12, color: Colors.red.shade700),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 18),
             SizedBox(
               width: double.infinity,
@@ -796,7 +949,11 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
                             strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.videocam, size: 22),
                 label: Text(
-                    _isStarting ? 'Connecting...' : 'Join Video Call',
+                    _isStarting
+                        ? 'Connecting...'
+                        : _hasError
+                            ? 'Retry Joining'
+                            : 'Join Video Call',
                     style: const TextStyle(
                         fontSize: 16, fontWeight: FontWeight.w600)),
                 style: ElevatedButton.styleFrom(
@@ -1013,40 +1170,4 @@ class _VideoCallScreenState extends State<VideoCallScreen> {
     );
   }
 
-  Widget _buildMeetingInfoCard(bool isDark) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Text('Meeting Info',
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                const SizedBox(width: 8),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(4)),
-                  child: const Text('LiveKit',
-                      style: TextStyle(
-                          fontSize: 10,
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            const Text(
-                'Video calls use LiveKit for encrypted, login-free video. No external app needed.',
-                style: TextStyle(fontSize: 11)),
-          ],
-        ),
-      ),
-    );
-  }
 }

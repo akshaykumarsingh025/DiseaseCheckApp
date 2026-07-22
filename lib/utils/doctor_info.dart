@@ -19,6 +19,8 @@ class DoctorInfo {
   static const String facebook = 'https://www.facebook.com/DrDeepikasingh2/';
   static const String youtube = 'https://www.youtube.com/@DeepikaSingh1/';
 
+  static const String dmcNumber = '72594';
+
   static const List<String> specializations = [
     'PCOS/PCOD Management',
     'Laparoscopic Surgery',

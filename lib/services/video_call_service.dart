@@ -1,94 +1,86 @@
-import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:crypto/crypto.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import '../config/livekit_config.dart';
 import '../services/doctor_account_service.dart';
+
+class VideoCallTokenException implements Exception {
+  const VideoCallTokenException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
+}
 
 class VideoCallService {
   static bool get isDoctor {
     return DoctorAccountService.isCurrentUserDoctor;
   }
 
-  /// Generates a LiveKit access token.
-  ///
-  /// NOTE: This currently signs the JWT on the client using the API secret in
-  /// [LiveKitConfig]. That secret ships inside the app, which is a security
-  /// trade-off made to stay on the Firebase Spark (free) plan. A server-side
-  /// implementation that keeps the secret private already exists in
-  /// `functions/index.js` (the `getLiveKitToken` callable) — switch to it once
-  /// the project is on the Blaze plan by calling that function here instead.
   static Future<String> generateToken({
     required String roomName,
     required String participantName,
     required String participantIdentity,
     bool isModerator = false,
   }) async {
-    try {
-      return _createAccessToken(
-        apiKey: LiveKitConfig.apiKey,
-        apiSecret: LiveKitConfig.apiSecret,
-        roomName: roomName,
-        participantIdentity: participantIdentity,
-        participantName: participantName,
-        isModerator: isModerator,
+    if (FirebaseAuth.instance.currentUser == null) {
+      throw const VideoCallTokenException(
+        'Please sign in again before joining the video call.',
       );
-    } catch (e) {
-      debugPrint('VideoCallService: Token generation error: $e');
+    }
+
+    try {
+      final result = await FirebaseFunctions.instanceFor(region: 'us-central1')
+          .httpsCallable('getLiveKitToken')
+          .call({
+        'roomName': roomName,
+        'participantName': participantName,
+        'participantIdentity': participantIdentity,
+        'isModerator': isModerator,
+      });
+
+      final data = result.data;
+      final token = data is Map ? data['token'] as String? : null;
+      if (token != null && token.isNotEmpty) {
+        return token;
+      }
+
+      throw const VideoCallTokenException(
+        'Unable to create a video call token. Please try again.',
+      );
+    } on FirebaseFunctionsException catch (e) {
+      debugPrint('VideoCallService: Cloud function failed (${e.code}): $e');
+      throw VideoCallTokenException(_tokenErrorMessage(e));
+    } on VideoCallTokenException {
       rethrow;
+    } catch (e) {
+      debugPrint('VideoCallService: Cloud function error: $e');
+      throw const VideoCallTokenException(
+        'Unable to create a video call token. Please check your internet connection and try again.',
+      );
     }
   }
 
-  static String _createAccessToken({
-    required String apiKey,
-    required String apiSecret,
-    required String roomName,
-    required String participantIdentity,
-    required String participantName,
-    required bool isModerator,
-  }) {
-    final header = base64Url
-        .encode(utf8.encode(jsonEncode({
-          'alg': 'HS256',
-          'typ': 'JWT',
-        })))
-        .replaceAll('=', '');
-
-    final now = DateTime.now().millisecondsSinceEpoch ~/ 1000;
-    final exp = now + 3600;
-
-    final payload = {
-      'iss': apiKey,
-      'sub': participantIdentity,
-      'iat': now,
-      'exp': exp,
-      'room': roomName,
-      'name': participantName,
-      'video': {
-        'roomJoin': true,
-        'room': roomName,
-        'canPublish': true,
-        'canSubscribe': true,
-      },
-      'metadata': jsonEncode({
-        'name': participantName,
-        'isModerator': isModerator,
-      }),
-    };
-
-    final payloadEncoded = base64Url
-        .encode(utf8.encode(jsonEncode(payload)))
-        .replaceAll('=', '');
-
-    final signingInput = '$header.$payloadEncoded';
-    final key = utf8.encode(apiSecret);
-    final hmac = Hmac(sha256, key);
-    final signature = hmac.convert(utf8.encode(signingInput));
-    final signatureEncoded =
-        base64Url.encode(signature.bytes).replaceAll('=', '');
-
-    return '$signingInput.$signatureEncoded';
+  static String _tokenErrorMessage(FirebaseFunctionsException error) {
+    switch (error.code) {
+      case 'unauthenticated':
+        return 'Please sign in again before joining the video call.';
+      case 'permission-denied':
+        return 'You do not have permission to join this video call.';
+      case 'unavailable':
+      case 'deadline-exceeded':
+        return 'The video call service is temporarily unavailable. Please try again.';
+      case 'not-found':
+      case 'unimplemented':
+        return 'The video call token service is not deployed. Please deploy the Firebase function and try again.';
+      default:
+        final message = error.message;
+        if (message != null && message.trim().isNotEmpty) {
+          return message;
+        }
+        return 'Unable to create a video call token. Please try again.';
+    }
   }
 
   static Future<void> startMeeting(String meetingId, {required String patientId}) async {

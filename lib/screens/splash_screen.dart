@@ -22,12 +22,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   }
 
   Future<void> _initializeApp() async {
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-
     final prefs = await SharedPreferences.getInstance();
     final disclaimerAccepted = prefs.getBool('disclaimer_accepted') ?? false;
+
+    if (!mounted) return;
 
     if (!disclaimerAccepted) {
       context.go('/disclaimer');
@@ -40,7 +38,6 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       return;
     }
 
-    // If email not verified, send to verify-email info page (user stays authenticated)
     if (!user.emailVerified &&
         !FeatureFlags.canBypassEmailVerification(user.email)) {
       context.go('/verify-email');
@@ -54,15 +51,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       await prefs.setString('last_sync_uid', user.uid);
     }
 
-    try {
-      await StorageService.fetchAllFromCloud(user.uid);
-    } catch (_) {
-      // Ignore fetch errors (offline mode falls back to Hive cache)
-    }
-
     if (!mounted) return;
-
-    // Refresh the profile provider so it reads the newly fetched profile
     ref.invalidate(profileProvider);
 
     final profile = StorageService.getProfile();
@@ -71,6 +60,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     } else {
       context.go('/dashboard');
     }
+
+    _fetchCloudInBackground(user.uid);
+  }
+
+  void _fetchCloudInBackground(String uid) {
+    StorageService.fetchAllFromCloud(uid).catchError((_) {});
   }
 
   @override

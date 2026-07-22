@@ -1,0 +1,1037 @@
+{
+  "D:\\Software\\Projects\\DiseaseCheckApp\\.claude\\settings.local.json": {
+    "mtime": 1784194895.745146,
+    "ast_hash": "e95c16e582a5509b8e512bbeb7b14a53",
+    "semantic_hash": "e95c16e582a5509b8e512bbeb7b14a53"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\android\\app\\build.gradle.kts": {
+    "mtime": 1783755936.7698731,
+    "ast_hash": "50758b45eb5f1bf133bd2cbb3f155364",
+    "semantic_hash": "50758b45eb5f1bf133bd2cbb3f155364"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\android\\app\\google-services.json": {
+    "mtime": 1780903164.6352673,
+    "ast_hash": "54991fd338a786bbb0214288941357b0",
+    "semantic_hash": "54991fd338a786bbb0214288941357b0"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\android\\app\\src\\main\\kotlin\\com\\healthcheck\\disease_check_app\\DownloadForegroundService.kt": {
+    "mtime": 1777718597.7834783,
+    "ast_hash": "dd14df53c349e31b297b0ea65cf24d9d",
+    "semantic_hash": "dd14df53c349e31b297b0ea65cf24d9d"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\android\\app\\src\\main\\kotlin\\com\\healthcheck\\disease_check_app\\MainActivity.kt": {
+    "mtime": 1783755936.7782085,
+    "ast_hash": "d1e4d7d5e1b66d84e257545a0281c89d",
+    "semantic_hash": "d1e4d7d5e1b66d84e257545a0281c89d"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\android\\build.gradle.kts": {
+    "mtime": 1780909161.4481604,
+    "ast_hash": "0b45a0f6ead9e372d0b66014dd290c73",
+    "semantic_hash": "0b45a0f6ead9e372d0b66014dd290c73"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\android\\settings.gradle.kts": {
+    "mtime": 1783755936.779218,
+    "ast_hash": "0fc0669f46047c1bc376f82249fc1854",
+    "semantic_hash": "0fc0669f46047c1bc376f82249fc1854"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\firebase.json": {
+    "mtime": 1783760565.9702559,
+    "ast_hash": "6c6319deacec9102ba554b17b616bdc8",
+    "semantic_hash": "6c6319deacec9102ba554b17b616bdc8"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\functions\\index.js": {
+    "mtime": 1783760520.2950547,
+    "ast_hash": "1dfa3e45adf148d8d62bbfd782ca9fa0",
+    "semantic_hash": "1dfa3e45adf148d8d62bbfd782ca9fa0"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\functions\\package.json": {
+    "mtime": 1783760500.332142,
+    "ast_hash": "9d9a91714ec25ea4fa5e9c2c37e12ca0",
+    "semantic_hash": "9d9a91714ec25ea4fa5e9c2c37e12ca0"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\RunnerTests\\RunnerTests.swift": {
+    "mtime": 1771837305.494402,
+    "ast_hash": "24e5d095048eb86c30423f4e04b6e57b",
+    "semantic_hash": "24e5d095048eb86c30423f4e04b6e57b"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\AppDelegate.swift": {
+    "mtime": 1771836934.8308098,
+    "ast_hash": "9e1de9c329a3fe4931876063de95132b",
+    "semantic_hash": "9e1de9c329a3fe4931876063de95132b"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Contents.json": {
+    "mtime": 1771836934.869846,
+    "ast_hash": "31a08e429403e265cabfb31b3d65f049",
+    "semantic_hash": "31a08e429403e265cabfb31b3d65f049"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\Contents.json": {
+    "mtime": 1771836935.0363023,
+    "ast_hash": "b9e927ac17345f2d5f052fe68a3487f9",
+    "semantic_hash": "b9e927ac17345f2d5f052fe68a3487f9"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Runner-Bridging-Header.h": {
+    "mtime": 1771836934.8410974,
+    "ast_hash": "7ad7b5cea096132de13ba526b2b9efbe",
+    "semantic_hash": "7ad7b5cea096132de13ba526b2b9efbe"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\SceneDelegate.swift": {
+    "mtime": 1771836934.846285,
+    "ast_hash": "0c3e86af131f6a9e547c80b5ed058914",
+    "semantic_hash": "0c3e86af131f6a9e547c80b5ed058914"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\app.dart": {
+    "mtime": 1783526994.4472759,
+    "ast_hash": "88a147d2252c2967f7ccf5d35bd7ceb2",
+    "semantic_hash": "88a147d2252c2967f7ccf5d35bd7ceb2"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\config\\feature_flags.dart": {
+    "mtime": 1783327922.5828178,
+    "ast_hash": "09a4682a470619614a22c00d6ea6bb35",
+    "semantic_hash": "09a4682a470619614a22c00d6ea6bb35"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\config\\livekit_config.dart": {
+    "mtime": 1784206005.5524037,
+    "ast_hash": "30e25845baad396d999c1f3c0a46142a",
+    "semantic_hash": "30e25845baad396d999c1f3c0a46142a"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\data\\diseases.json": {
+    "mtime": 1775843257.3106256,
+    "ast_hash": "918858236ac833e931a494bef8ce43cd",
+    "semantic_hash": "918858236ac833e931a494bef8ce43cd"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\data\\guidelines.json": {
+    "mtime": 1771958734.6191354,
+    "ast_hash": "38fcf7577684f7c88a736ca93c715b37",
+    "semantic_hash": "38fcf7577684f7c88a736ca93c715b37"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\data\\reference_ranges.json": {
+    "mtime": 1775844545.5608926,
+    "ast_hash": "550d8cb8bdfe9b4c264cbdf7cae46222",
+    "semantic_hash": "550d8cb8bdfe9b4c264cbdf7cae46222"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\engine\\critical_value_checker.dart": {
+    "mtime": 1775844784.1907537,
+    "ast_hash": "036e6e0b86cdd20cbe2c65617474a97b",
+    "semantic_hash": "036e6e0b86cdd20cbe2c65617474a97b"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\engine\\ml_engine.dart": {
+    "mtime": 1775153001.1243856,
+    "ast_hash": "ca95d66161092e8ef02f3b1c27e68aa9",
+    "semantic_hash": "ca95d66161092e8ef02f3b1c27e68aa9"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\engine\\ocr_parser.dart": {
+    "mtime": 1772012524.3695354,
+    "ast_hash": "dba7bba2829a95f610dac7438be5d661",
+    "semantic_hash": "dba7bba2829a95f610dac7438be5d661"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\engine\\reference_ranges.dart": {
+    "mtime": 1775844631.3993416,
+    "ast_hash": "e996cfa866a43713c53fb89d561bc474",
+    "semantic_hash": "e996cfa866a43713c53fb89d561bc474"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\engine\\report_generator.dart": {
+    "mtime": 1775845488.330272,
+    "ast_hash": "43d1f8afdc43169ab6108b9984ed4933",
+    "semantic_hash": "43d1f8afdc43169ab6108b9984ed4933"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\engine\\risk_aggregator.dart": {
+    "mtime": 1775154809.058156,
+    "ast_hash": "4a84de8b81bf651b0843a1a3d1b8625b",
+    "semantic_hash": "4a84de8b81bf651b0843a1a3d1b8625b"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\engine\\risk_result.dart": {
+    "mtime": 1775154180.0660985,
+    "ast_hash": "de4e5eb5c93596bc0a9d26b00ae07052",
+    "semantic_hash": "de4e5eb5c93596bc0a9d26b00ae07052"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\engine\\rule_engine.dart": {
+    "mtime": 1777273609.2170682,
+    "ast_hash": "218dadd169c0c6e793a0c417afbe75fc",
+    "semantic_hash": "218dadd169c0c6e793a0c417afbe75fc"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\firebase_options.dart": {
+    "mtime": 1783755936.7823904,
+    "ast_hash": "0d4d5374cc7347c8af9d5ac4c6778dbb",
+    "semantic_hash": "0d4d5374cc7347c8af9d5ac4c6778dbb"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\main.dart": {
+    "mtime": 1784203870.452355,
+    "ast_hash": "9276e1be6cc17adc91d820b515e1cd41",
+    "semantic_hash": "9276e1be6cc17adc91d820b515e1cd41"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\models\\appointment.dart": {
+    "mtime": 1781682099.452629,
+    "ast_hash": "bf7f992da425ca64c1378f025426f755",
+    "semantic_hash": "bf7f992da425ca64c1378f025426f755"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\models\\course.dart": {
+    "mtime": 1780733526.9905162,
+    "ast_hash": "7bfe2cb442e8e2454f1557be6c0f04c4",
+    "semantic_hash": "7bfe2cb442e8e2454f1557be6c0f04c4"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\models\\diet_plan_package.dart": {
+    "mtime": 1780733616.8143754,
+    "ast_hash": "3e7bbb41c7365000083b830926eae320",
+    "semantic_hash": "3e7bbb41c7365000083b830926eae320"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\models\\disease.dart": {
+    "mtime": 1775843299.9256947,
+    "ast_hash": "fdde05ffa39bd6ebb6bc0a1c7da4e3f7",
+    "semantic_hash": "fdde05ffa39bd6ebb6bc0a1c7da4e3f7"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\models\\disease.g.dart": {
+    "mtime": 1781779269.7578623,
+    "ast_hash": "46f0660fbe4a6c8fa69a282f617b570a",
+    "semantic_hash": "46f0660fbe4a6c8fa69a282f617b570a"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\models\\health_data.dart": {
+    "mtime": 1781779801.4792225,
+    "ast_hash": "2900e1eb025e137237e64e6d05824934",
+    "semantic_hash": "2900e1eb025e137237e64e6d05824934"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\models\\health_data.g.dart": {
+    "mtime": 1781780242.5415287,
+    "ast_hash": "4eb535a87be3ff6fe18bde13d88dac4b",
+    "semantic_hash": "4eb535a87be3ff6fe18bde13d88dac4b"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\models\\prescription.dart": {
+    "mtime": 1783513924.0855465,
+    "ast_hash": "e97aeafca0f4c052e73031550dc5b432",
+    "semantic_hash": "e97aeafca0f4c052e73031550dc5b432"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\models\\report.dart": {
+    "mtime": 1781779073.5269365,
+    "ast_hash": "e72ef9f92c63d4e78dc89f941510e848",
+    "semantic_hash": "e72ef9f92c63d4e78dc89f941510e848"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\models\\report.g.dart": {
+    "mtime": 1781779269.7578623,
+    "ast_hash": "48d1d3278f43116b66c87e9641e947bc",
+    "semantic_hash": "48d1d3278f43116b66c87e9641e947bc"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\models\\user_profile.dart": {
+    "mtime": 1781779069.2863483,
+    "ast_hash": "72f599e52103a0250323a2210c64148c",
+    "semantic_hash": "72f599e52103a0250323a2210c64148c"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\models\\user_profile.g.dart": {
+    "mtime": 1781779269.7578623,
+    "ast_hash": "b44a03cb9010987fa78e956460ebc1f4",
+    "semantic_hash": "b44a03cb9010987fa78e956460ebc1f4"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\providers\\appointment_provider.dart": {
+    "mtime": 1780935961.1179347,
+    "ast_hash": "85d492925c5d97adaaab85ae7b5be09e",
+    "semantic_hash": "85d492925c5d97adaaab85ae7b5be09e"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\providers\\auth_provider.dart": {
+    "mtime": 1771864072.6121154,
+    "ast_hash": "f1ab5a51bdeb89c7d9f1cb66988ef87c",
+    "semantic_hash": "f1ab5a51bdeb89c7d9f1cb66988ef87c"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\providers\\course_provider.dart": {
+    "mtime": 1780747616.7117577,
+    "ast_hash": "f0dc341b7fa30ce7dff19d7229ab7919",
+    "semantic_hash": "f0dc341b7fa30ce7dff19d7229ab7919"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\providers\\diet_plan_package_provider.dart": {
+    "mtime": 1780747672.8067603,
+    "ast_hash": "d676ada94e63caa31c40fc60d9776e44",
+    "semantic_hash": "d676ada94e63caa31c40fc60d9776e44"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\providers\\gemma_provider.dart": {
+    "mtime": 1777735900.5262635,
+    "ast_hash": "5d230ce0fe19fd8b678beb498d383cee",
+    "semantic_hash": "5d230ce0fe19fd8b678beb498d383cee"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\providers\\health_data_provider.dart": {
+    "mtime": 1771837910.838696,
+    "ast_hash": "2eecfda7cd82c7724d2c5536869ca394",
+    "semantic_hash": "2eecfda7cd82c7724d2c5536869ca394"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\providers\\profile_provider.dart": {
+    "mtime": 1771837908.6266677,
+    "ast_hash": "e0e696e832c3ea6b3ae71c426d510f87",
+    "semantic_hash": "e0e696e832c3ea6b3ae71c426d510f87"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\providers\\report_provider.dart": {
+    "mtime": 1771837911.6716292,
+    "ast_hash": "98e2e8b272f83d8e3ffb9215ba99e6c8",
+    "semantic_hash": "98e2e8b272f83d8e3ffb9215ba99e6c8"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\providers\\session_provider.dart": {
+    "mtime": 1772012391.3147998,
+    "ast_hash": "ede09f316185aa47bb5024bd907f78ed",
+    "semantic_hash": "ede09f316185aa47bb5024bd907f78ed"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\providers\\theme_provider.dart": {
+    "mtime": 1771874262.5713067,
+    "ast_hash": "d72f1760831927d8d332adf4f2c07b71",
+    "semantic_hash": "d72f1760831927d8d332adf4f2c07b71"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\ai_chat_screen.dart": {
+    "mtime": 1781172808.612592,
+    "ast_hash": "352573ccab8bd6f69c2f18cb21123265",
+    "semantic_hash": "352573ccab8bd6f69c2f18cb21123265"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\app_lock_setup_screen.dart": {
+    "mtime": 1781720289.6625185,
+    "ast_hash": "ad21f05fb4b7393f0d8a2e439e573a65",
+    "semantic_hash": "ad21f05fb4b7393f0d8a2e439e573a65"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\bmi_pcos_risk_screen.dart": {
+    "mtime": 1783527297.408153,
+    "ast_hash": "fa8aa50bc933dd238131f6561575c967",
+    "semantic_hash": "fa8aa50bc933dd238131f6561575c967"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\book_appointment_screen.dart": {
+    "mtime": 1777718026.220032,
+    "ast_hash": "1a76d8a706171bde24aad536b9c87af9",
+    "semantic_hash": "1a76d8a706171bde24aad536b9c87af9"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\compare_reports_screen.dart": {
+    "mtime": 1777738470.0784197,
+    "ast_hash": "729cfe27578ef97be0afb5893cf27f62",
+    "semantic_hash": "729cfe27578ef97be0afb5893cf27f62"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\course_detail_screen.dart": {
+    "mtime": 1781684385.860196,
+    "ast_hash": "bebf8124344e195ad0a0e35bf22de6ae",
+    "semantic_hash": "bebf8124344e195ad0a0e35bf22de6ae"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\courses_screen.dart": {
+    "mtime": 1780749321.0283597,
+    "ast_hash": "1393a5d55af01ed7bf004eabf982c879",
+    "semantic_hash": "1393a5d55af01ed7bf004eabf982c879"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\dashboard_screen.dart": {
+    "mtime": 1784195380.8558807,
+    "ast_hash": "eee3424132cc03d2447e88b5a3b7cea8",
+    "semantic_hash": "eee3424132cc03d2447e88b5a3b7cea8"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\data_category_screen.dart": {
+    "mtime": 1771964238.120798,
+    "ast_hash": "b2b814ae7c1468cdaf5d8aa095f225b6",
+    "semantic_hash": "b2b814ae7c1468cdaf5d8aa095f225b6"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\data_entry_screen.dart": {
+    "mtime": 1783508874.513882,
+    "ast_hash": "88cd26da1cc75efb13b963c2fb342654",
+    "semantic_hash": "88cd26da1cc75efb13b963c2fb342654"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\diet_plan_detail_screen.dart": {
+    "mtime": 1781684661.0769699,
+    "ast_hash": "ce823d7b63dff8e2f5cda05ed167a929",
+    "semantic_hash": "ce823d7b63dff8e2f5cda05ed167a929"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\diet_plan_screen.dart": {
+    "mtime": 1783528426.9650176,
+    "ast_hash": "8b57e648c8b6812c49cdeca787cacfa9",
+    "semantic_hash": "8b57e648c8b6812c49cdeca787cacfa9"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\diet_plans_screen.dart": {
+    "mtime": 1780749875.2403495,
+    "ast_hash": "987df7d8b32de8e0b79ced96b2ac7f8f",
+    "semantic_hash": "987df7d8b32de8e0b79ced96b2ac7f8f"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\disclaimer_screen.dart": {
+    "mtime": 1771869361.8051994,
+    "ast_hash": "e2542a653112b09e4a06329646602aff",
+    "semantic_hash": "e2542a653112b09e4a06329646602aff"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\doctor_opd_screen.dart": {
+    "mtime": 1783529794.2984548,
+    "ast_hash": "a40f8639df3f9eb0d1c633d1cadab818",
+    "semantic_hash": "a40f8639df3f9eb0d1c633d1cadab818"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\due_date_calculator_screen.dart": {
+    "mtime": 1783158046.8569107,
+    "ast_hash": "40538e83d1559de11c2d100bf2745ed0",
+    "semantic_hash": "40538e83d1559de11c2d100bf2745ed0"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\email_verification_screen.dart": {
+    "mtime": 1775852032.027598,
+    "ast_hash": "cb65d6b15dc7f7ad2b77b2df133eb471",
+    "semantic_hash": "cb65d6b15dc7f7ad2b77b2df133eb471"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\fertility_score_screen.dart": {
+    "mtime": 1783158081.81321,
+    "ast_hash": "edc35abcaf4d9e09d33fb77c0b1f1f06",
+    "semantic_hash": "edc35abcaf4d9e09d33fb77c0b1f1f06"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\forgot_password_screen.dart": {
+    "mtime": 1771869332.539636,
+    "ast_hash": "b74ae58abe45824bbdb51f8a3e3feb89",
+    "semantic_hash": "b74ae58abe45824bbdb51f8a3e3feb89"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\gemma_settings_screen.dart": {
+    "mtime": 1781190129.407731,
+    "ast_hash": "c7ad3850b57248a6453f6b6af925c737",
+    "semantic_hash": "c7ad3850b57248a6453f6b6af925c737"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\lock_screen.dart": {
+    "mtime": 1781719192.7757525,
+    "ast_hash": "cdb66becb772bdad230559cb9d5cdc82",
+    "semantic_hash": "cdb66becb772bdad230559cb9d5cdc82"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\login_screen.dart": {
+    "mtime": 1784202903.475811,
+    "ast_hash": "83ef85d03e30b81c76615acef6ac1cd9",
+    "semantic_hash": "83ef85d03e30b81c76615acef6ac1cd9"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\my_prescriptions_screen.dart": {
+    "mtime": 1783528906.6337085,
+    "ast_hash": "eec4e0c2cab2fbb5dd59b3b58d6e8c2e",
+    "semantic_hash": "eec4e0c2cab2fbb5dd59b3b58d6e8c2e"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\ocr_action_screen.dart": {
+    "mtime": 1771965615.9641066,
+    "ast_hash": "a7bb246996bf6af6da9954d9c265c1be",
+    "semantic_hash": "a7bb246996bf6af6da9954d9c265c1be"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\ocr_review_screen.dart": {
+    "mtime": 1775845324.890772,
+    "ast_hash": "8c4b84e6d85ebf4bb032609b92172b48",
+    "semantic_hash": "8c4b84e6d85ebf4bb032609b92172b48"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\ocr_scanner_screen.dart": {
+    "mtime": 1775155147.800807,
+    "ast_hash": "1d2026de65cc9a7e0a740294559cb0c6",
+    "semantic_hash": "1d2026de65cc9a7e0a740294559cb0c6"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\online_opd_screen.dart": {
+    "mtime": 1783755936.7835631,
+    "ast_hash": "e6d32ed0fa0fc6ea4db63d0c3043802f",
+    "semantic_hash": "e6d32ed0fa0fc6ea4db63d0c3043802f"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\pcos_screener_screen.dart": {
+    "mtime": 1783158177.3032176,
+    "ast_hash": "cc417ed5f6412e60857c204477ad2d79",
+    "semantic_hash": "cc417ed5f6412e60857c204477ad2d79"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\period_tracker_screen.dart": {
+    "mtime": 1783158298.731927,
+    "ast_hash": "90d13e7e4922ea0301a23d32ea104cdb",
+    "semantic_hash": "90d13e7e4922ea0301a23d32ea104cdb"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\processing_screen.dart": {
+    "mtime": 1783528487.339256,
+    "ast_hash": "5414ccf754b34a747ea536fdc74c46fd",
+    "semantic_hash": "5414ccf754b34a747ea536fdc74c46fd"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\profile_setup_screen.dart": {
+    "mtime": 1783527203.8117013,
+    "ast_hash": "97872d2b9538d8101af319c3bc4fe286",
+    "semantic_hash": "97872d2b9538d8101af319c3bc4fe286"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\profile_switcher_screen.dart": {
+    "mtime": 1781718004.8869102,
+    "ast_hash": "6b578d3c7903f42d7adf4e368cd18c66",
+    "semantic_hash": "6b578d3c7903f42d7adf4e368cd18c66"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\report_history_screen.dart": {
+    "mtime": 1783528726.780369,
+    "ast_hash": "12c15ae4b53615a182118efe40847d1a",
+    "semantic_hash": "12c15ae4b53615a182118efe40847d1a"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\report_screen.dart": {
+    "mtime": 1781717534.7321582,
+    "ast_hash": "5ff1cf9cf59c16605b51f8d4871eee31",
+    "semantic_hash": "5ff1cf9cf59c16605b51f8d4871eee31"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\signup_screen.dart": {
+    "mtime": 1784203083.2350214,
+    "ast_hash": "a838d61e35f23a255e5298efd0897a00",
+    "semantic_hash": "a838d61e35f23a255e5298efd0897a00"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\splash_screen.dart": {
+    "mtime": 1784203778.7054424,
+    "ast_hash": "3320b1e57f6f1e804fdf4f35003e77ca",
+    "semantic_hash": "3320b1e57f6f1e804fdf4f35003e77ca"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\trends_screen.dart": {
+    "mtime": 1783528711.820209,
+    "ast_hash": "63a655bb0f4928d5ba8a50f61a80d7bb",
+    "semantic_hash": "63a655bb0f4928d5ba8a50f61a80d7bb"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\video_call_screen.dart": {
+    "mtime": 1783762221.8896646,
+    "ast_hash": "49833e8f1314f0904e74a4cad447241b",
+    "semantic_hash": "49833e8f1314f0904e74a4cad447241b"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\womens_health_screen.dart": {
+    "mtime": 1783156608.6166713,
+    "ast_hash": "0df85ba9755180ac7b78ebfe0b18124c",
+    "semantic_hash": "0df85ba9755180ac7b78ebfe0b18124c"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\screens\\write_prescription_screen.dart": {
+    "mtime": 1783514857.7922845,
+    "ast_hash": "0a7a6b8a981d4bbf5f816ea46ab4e95f",
+    "semantic_hash": "0a7a6b8a981d4bbf5f816ea46ab4e95f"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\ad_service.dart": {
+    "mtime": 1783528556.5237124,
+    "ast_hash": "b506dc7c78b02811d5314664a21eecab",
+    "semantic_hash": "b506dc7c78b02811d5314664a21eecab"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\ai_api_service.dart": {
+    "mtime": 1783528029.1668804,
+    "ast_hash": "1ef6c2e2a0c298d3cae238248a0f9a1e",
+    "semantic_hash": "1ef6c2e2a0c298d3cae238248a0f9a1e"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\app_lock_service.dart": {
+    "mtime": 1781720204.8899176,
+    "ast_hash": "ea8119de724f7ea3e015f423f7a83bd2",
+    "semantic_hash": "ea8119de724f7ea3e015f423f7a83bd2"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\appointment_service.dart": {
+    "mtime": 1783755936.7845738,
+    "ast_hash": "37fcea436dd53a5016d75e0da96dd52b",
+    "semantic_hash": "37fcea436dd53a5016d75e0da96dd52b"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\auth_service.dart": {
+    "mtime": 1784203010.5016613,
+    "ast_hash": "700e1f64e6240c6a92d4da6095ce7120",
+    "semantic_hash": "700e1f64e6240c6a92d4da6095ce7120"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\course_service.dart": {
+    "mtime": 1780747021.689693,
+    "ast_hash": "39bd13b360c746f65eb684704e23e045",
+    "semantic_hash": "39bd13b360c746f65eb684704e23e045"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\diet_plan_package_service.dart": {
+    "mtime": 1780747104.8103552,
+    "ast_hash": "bd141c44e409b11aa9976c7ed330b63a",
+    "semantic_hash": "bd141c44e409b11aa9976c7ed330b63a"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\doctor_account_service.dart": {
+    "mtime": 1783327706.0876596,
+    "ast_hash": "3f60f2f9e8010a949f5a39b5bf4d432e",
+    "semantic_hash": "3f60f2f9e8010a949f5a39b5bf4d432e"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\gemma_service.dart": {
+    "mtime": 1777735832.99605,
+    "ast_hash": "a647bc9492a0961af9e8cecd000ca842",
+    "semantic_hash": "a647bc9492a0961af9e8cecd000ca842"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\icd_lookup_service.dart": {
+    "mtime": 1775844205.2112086,
+    "ast_hash": "a6cabe3b8c8518eac4b787cdc2a55583",
+    "semantic_hash": "a6cabe3b8c8518eac4b787cdc2a55583"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\json_cache_service.dart": {
+    "mtime": 1775846299.7001343,
+    "ast_hash": "79cb78d46ee18cbbcf6cd0f31a96c378",
+    "semantic_hash": "79cb78d46ee18cbbcf6cd0f31a96c378"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\notification_service.dart": {
+    "mtime": 1783762165.9740636,
+    "ast_hash": "718befe59d786aec512fe37312a9501a",
+    "semantic_hash": "718befe59d786aec512fe37312a9501a"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\payment_service.dart": {
+    "mtime": 1784195484.7423704,
+    "ast_hash": "2b3d787c2f85c7999b642b166ea07ead",
+    "semantic_hash": "2b3d787c2f85c7999b642b166ea07ead"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\pdf_report_service.dart": {
+    "mtime": 1777753117.7393868,
+    "ast_hash": "0435df39a45262a0ddd716b7bbc010fc",
+    "semantic_hash": "0435df39a45262a0ddd716b7bbc010fc"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\prescription_service.dart": {
+    "mtime": 1783527132.1368034,
+    "ast_hash": "b3ce6cb08e099ff495318e9a02c6a4d3",
+    "semantic_hash": "b3ce6cb08e099ff495318e9a02c6a4d3"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\remote_config_service.dart": {
+    "mtime": 1784202151.3447862,
+    "ast_hash": "88490ccca0671c36b46805b679609aa4",
+    "semantic_hash": "88490ccca0671c36b46805b679609aa4"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\storage_service.dart": {
+    "mtime": 1783158514.8922007,
+    "ast_hash": "77d37e71641f823e8218869f1502c02d",
+    "semantic_hash": "77d37e71641f823e8218869f1502c02d"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\usage_counter_service.dart": {
+    "mtime": 1783528309.845686,
+    "ast_hash": "eb6f2021fd81246ea524ced65e522d0a",
+    "semantic_hash": "eb6f2021fd81246ea524ced65e522d0a"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\services\\video_call_service.dart": {
+    "mtime": 1784205971.639514,
+    "ast_hash": "c36e735702e06bcd651e484a24ad8478",
+    "semantic_hash": "c36e735702e06bcd651e484a24ad8478"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\utils\\bmi_calculator.dart": {
+    "mtime": 1771838265.4386475,
+    "ast_hash": "ca968f33c42ad3ed6b71f2a2214406f4",
+    "semantic_hash": "ca968f33c42ad3ed6b71f2a2214406f4"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\utils\\doctor_info.dart": {
+    "mtime": 1777738592.0242817,
+    "ast_hash": "4ad9baf02f9faa4c9c1fdb8e1156eabd",
+    "semantic_hash": "4ad9baf02f9faa4c9c1fdb8e1156eabd"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\utils\\egfr_calculator.dart": {
+    "mtime": 1775844931.476834,
+    "ast_hash": "a10f7d1ffe5f59be1f49737f3effcc13",
+    "semantic_hash": "a10f7d1ffe5f59be1f49737f3effcc13"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\utils\\risk_scoring.dart": {
+    "mtime": 1771838274.1113315,
+    "ast_hash": "7ac9707dfcea09b9b151068d679473e9",
+    "semantic_hash": "7ac9707dfcea09b9b151068d679473e9"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\utils\\test_definitions.dart": {
+    "mtime": 1783513561.4310598,
+    "ast_hash": "99d0c44539b42c74736b41f86ccec23d",
+    "semantic_hash": "99d0c44539b42c74736b41f86ccec23d"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\utils\\unit_converter.dart": {
+    "mtime": 1775845011.9293795,
+    "ast_hash": "610e148bf7d822532371265a38c08c41",
+    "semantic_hash": "610e148bf7d822532371265a38c08c41"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\widgets\\abnormal_value_badge.dart": {
+    "mtime": 1771838300.0585787,
+    "ast_hash": "5d55aafa03b470d2036f113ca279294d",
+    "semantic_hash": "5d55aafa03b470d2036f113ca279294d"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\widgets\\banner_ad_widget.dart": {
+    "mtime": 1783528504.6792088,
+    "ast_hash": "c2d07b5716752d676110d5bd904b6a59",
+    "semantic_hash": "c2d07b5716752d676110d5bd904b6a59"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\widgets\\disclaimer_banner.dart": {
+    "mtime": 1771838293.0965605,
+    "ast_hash": "9ea41fd4b4140d11577555e46960399d",
+    "semantic_hash": "9ea41fd4b4140d11577555e46960399d"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\widgets\\health_input_form.dart": {
+    "mtime": 1771838305.0456457,
+    "ast_hash": "176b882a39864c5b1d8e1d4148400bc1",
+    "semantic_hash": "176b882a39864c5b1d8e1d4148400bc1"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\lib\\widgets\\risk_card.dart": {
+    "mtime": 1771838523.034582,
+    "ast_hash": "8142085294c9964d6a23c767a8bdac4c",
+    "semantic_hash": "8142085294c9964d6a23c767a8bdac4c"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\linux\\flutter\\generated_plugin_registrant.cc": {
+    "mtime": 1783757634.2610986,
+    "ast_hash": "a744a951f6b45e1d587e09c001153b1b",
+    "semantic_hash": "a744a951f6b45e1d587e09c001153b1b"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\linux\\flutter\\generated_plugin_registrant.h": {
+    "mtime": 1771838153.026785,
+    "ast_hash": "d295462c9da9f7fef22dc86c34492318",
+    "semantic_hash": "d295462c9da9f7fef22dc86c34492318"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\linux\\runner\\main.cc": {
+    "mtime": 1771836935.3479388,
+    "ast_hash": "539395bcd63dba20afed0838d136189f",
+    "semantic_hash": "539395bcd63dba20afed0838d136189f"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\linux\\runner\\my_application.cc": {
+    "mtime": 1771837305.516313,
+    "ast_hash": "b8dc19bda4fc617d3de3246db6388340",
+    "semantic_hash": "b8dc19bda4fc617d3de3246db6388340"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\linux\\runner\\my_application.h": {
+    "mtime": 1771836935.3611193,
+    "ast_hash": "ffa1a7c0a2ad45a2c14a921596516ff8",
+    "semantic_hash": "ffa1a7c0a2ad45a2c14a921596516ff8"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\macos\\Flutter\\GeneratedPluginRegistrant.swift": {
+    "mtime": 1784202780.6643858,
+    "ast_hash": "7b9bd8eacd159b01135fbea8219c2b24",
+    "semantic_hash": "7b9bd8eacd159b01135fbea8219c2b24"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\macos\\Flutter\\ephemeral\\flutter_export_environment.sh": {
+    "mtime": 1783755611.5982084,
+    "ast_hash": "7871673485fc52fe59c97dc61d122a6c",
+    "semantic_hash": "7871673485fc52fe59c97dc61d122a6c"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\macos\\RunnerTests\\RunnerTests.swift": {
+    "mtime": 1771837305.8205268,
+    "ast_hash": "8059f5d27a19c556eeafb49b3f9b7bdd",
+    "semantic_hash": "8059f5d27a19c556eeafb49b3f9b7bdd"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\macos\\Runner\\AppDelegate.swift": {
+    "mtime": 1771836935.407904,
+    "ast_hash": "4b52e0b89ebfef9baf45b04548c463d6",
+    "semantic_hash": "4b52e0b89ebfef9baf45b04548c463d6"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Contents.json": {
+    "mtime": 1771836935.5163164,
+    "ast_hash": "1d48e925145d4b573a3b5d7960a1c585",
+    "semantic_hash": "1d48e925145d4b573a3b5d7960a1c585"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\macos\\Runner\\MainFlutterWindow.swift": {
+    "mtime": 1771836935.454596,
+    "ast_hash": "93c22dae2d93f3dc1402e121901f582b",
+    "semantic_hash": "93c22dae2d93f3dc1402e121901f582b"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\test\\backend_test.dart": {
+    "mtime": 1775154887.025047,
+    "ast_hash": "bbafb1238add2e5ed03f309fe7f977ba",
+    "semantic_hash": "bbafb1238add2e5ed03f309fe7f977ba"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\test\\ocr_parser_test.dart": {
+    "mtime": 1771966254.5341334,
+    "ast_hash": "54feb5013f9704acf5e3dc08a9216c1b",
+    "semantic_hash": "54feb5013f9704acf5e3dc08a9216c1b"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\test\\rule_engine_test.dart": {
+    "mtime": 1775154880.5724263,
+    "ast_hash": "7ccc828a84cecf93ec4b24b6da68d5c4",
+    "semantic_hash": "7ccc828a84cecf93ec4b24b6da68d5c4"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\test\\widget_test.dart": {
+    "mtime": 1771839040.8084986,
+    "ast_hash": "2962005912a7283cbe6245ac93384ef8",
+    "semantic_hash": "2962005912a7283cbe6245ac93384ef8"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\test\\womens_health_engine_test.dart": {
+    "mtime": 1775154891.3385012,
+    "ast_hash": "4e92ed420ebd5193b7a3f516dac324fa",
+    "semantic_hash": "4e92ed420ebd5193b7a3f516dac324fa"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\test_parser_on_pdf.dart": {
+    "mtime": 1771966543.0067422,
+    "ast_hash": "6eabff323b5f598e4f05e45063e817ea",
+    "semantic_hash": "6eabff323b5f598e4f05e45063e817ea"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\web\\manifest.json": {
+    "mtime": 1771837305.93032,
+    "ast_hash": "6d7a3367909fccce55672eaaeab2ab0c",
+    "semantic_hash": "6d7a3367909fccce55672eaaeab2ab0c"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\windows\\flutter\\generated_plugin_registrant.cc": {
+    "mtime": 1783757634.2725158,
+    "ast_hash": "ffada54d15b815c27342ecb13c2a4a9b",
+    "semantic_hash": "ffada54d15b815c27342ecb13c2a4a9b"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\windows\\flutter\\generated_plugin_registrant.h": {
+    "mtime": 1771838153.0640357,
+    "ast_hash": "0ea33875f9f8e118f9c2ded03e2e2835",
+    "semantic_hash": "0ea33875f9f8e118f9c2ded03e2e2835"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\windows\\runner\\flutter_window.cpp": {
+    "mtime": 1771836935.899132,
+    "ast_hash": "2f463f9b7da67a2d692a012f9ea85e0c",
+    "semantic_hash": "2f463f9b7da67a2d692a012f9ea85e0c"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\windows\\runner\\flutter_window.h": {
+    "mtime": 1771836935.903676,
+    "ast_hash": "7defcc89d4a26d56e801241d624d48fb",
+    "semantic_hash": "7defcc89d4a26d56e801241d624d48fb"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\windows\\runner\\main.cpp": {
+    "mtime": 1771837306.0184722,
+    "ast_hash": "55ebc0d31c4ba0bba519b2e9cb1f77d8",
+    "semantic_hash": "55ebc0d31c4ba0bba519b2e9cb1f77d8"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\windows\\runner\\resource.h": {
+    "mtime": 1771836935.9145846,
+    "ast_hash": "1ade5dd15e613479a15e8832ed276f2b",
+    "semantic_hash": "1ade5dd15e613479a15e8832ed276f2b"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\windows\\runner\\utils.cpp": {
+    "mtime": 1771836935.9283023,
+    "ast_hash": "432461b09d862a2f8dadf380ff0e34e5",
+    "semantic_hash": "432461b09d862a2f8dadf380ff0e34e5"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\windows\\runner\\utils.h": {
+    "mtime": 1771836935.9333615,
+    "ast_hash": "fd81e143f5614eb6fd75efe539002853",
+    "semantic_hash": "fd81e143f5614eb6fd75efe539002853"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\windows\\runner\\win32_window.cpp": {
+    "mtime": 1771836935.93857,
+    "ast_hash": "571eb8234dbc2661be03aa5f2a4d2fca",
+    "semantic_hash": "571eb8234dbc2661be03aa5f2a4d2fca"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\windows\\runner\\win32_window.h": {
+    "mtime": 1771836935.9434762,
+    "ast_hash": "7569387d58711ab975940f4df3b4bcda",
+    "semantic_hash": "7569387d58711ab975940f4df3b4bcda"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\AddAndFix.txt": {
+    "mtime": 1784278647.7118876,
+    "ast_hash": "b587c914ccfcb704b9d7e40c47bb42af",
+    "semantic_hash": "b587c914ccfcb704b9d7e40c47bb42af"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\DISEASE_RESEARCH.md": {
+    "mtime": 1773480080.0827608,
+    "ast_hash": "928540ff1d8e4012f3fbe53dfc7bec57",
+    "semantic_hash": "928540ff1d8e4012f3fbe53dfc7bec57"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\IMPROVEMENTS.md": {
+    "mtime": 1775152689.6490612,
+    "ast_hash": "3a6df1c6ccac2a05ac9bdd4955769b7d",
+    "semantic_hash": "3a6df1c6ccac2a05ac9bdd4955769b7d"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\PLAN.md": {
+    "mtime": 1781693057.1273088,
+    "ast_hash": "83cf673081009d50206355ccfe7bbf95",
+    "semantic_hash": "83cf673081009d50206355ccfe7bbf95"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\PLAN_IMPROVEMENTS.md": {
+    "mtime": 1783495718.188493,
+    "ast_hash": "04372aa6412e15fed05263bd052112d2",
+    "semantic_hash": "04372aa6412e15fed05263bd052112d2"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\README.md": {
+    "mtime": 1771785647.4242258,
+    "ast_hash": "a9dfe2bc41b3806d1eb89b407548ef8e",
+    "semantic_hash": "a9dfe2bc41b3806d1eb89b407548ef8e"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\SETUP_INSTRUCTIONS.txt": {
+    "mtime": 1784195299.7123272,
+    "ast_hash": "52b6733ec8c66a5bfa569534af4dc709",
+    "semantic_hash": "52b6733ec8c66a5bfa569534af4dc709"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\UpgradeOption.md": {
+    "mtime": 1775842769.335528,
+    "ast_hash": "8ed5930825723af533fc5da3b486112a",
+    "semantic_hash": "8ed5930825723af533fc5da3b486112a"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\analysis_options.yaml": {
+    "mtime": 1771837304.8340955,
+    "ast_hash": "9e65f4b9beebb674c0dc252f70a5c177",
+    "semantic_hash": "9e65f4b9beebb674c0dc252f70a5c177"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\extracted_pdf_text.txt": {
+    "mtime": 1771966425.4226944,
+    "ast_hash": "1db8c7bb5abc4948973a8835650d4af4",
+    "semantic_hash": "1db8c7bb5abc4948973a8835650d4af4"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\README.md": {
+    "mtime": 1771836935.0533237,
+    "ast_hash": "f7ee1b402881509d197f34963e569927",
+    "semantic_hash": "f7ee1b402881509d197f34963e569927"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\linux\\CMakeLists.txt": {
+    "mtime": 1771837305.5017667,
+    "ast_hash": "1299b4db3debfc60c8bbb045330264af",
+    "semantic_hash": "1299b4db3debfc60c8bbb045330264af"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\linux\\flutter\\CMakeLists.txt": {
+    "mtime": 1771836935.299815,
+    "ast_hash": "2195470ce31675d31db5a37590d011f6",
+    "semantic_hash": "2195470ce31675d31db5a37590d011f6"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\linux\\runner\\CMakeLists.txt": {
+    "mtime": 1771836935.3437064,
+    "ast_hash": "30cc1614b16214b66c014af09ba699eb",
+    "semantic_hash": "30cc1614b16214b66c014af09ba699eb"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\newFetures.txt": {
+    "mtime": 1778665693.2994876,
+    "ast_hash": "39aeadc3a8187fe8605ced8c20cd947e",
+    "semantic_hash": "39aeadc3a8187fe8605ced8c20cd947e"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\pubspec.yaml": {
+    "mtime": 1784200355.4086802,
+    "ast_hash": "9586018ca883e636b3d2ae512ef46dc0",
+    "semantic_hash": "9586018ca883e636b3d2ae512ef46dc0"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\web\\index.html": {
+    "mtime": 1771837305.928201,
+    "ast_hash": "3e0aa110c52d73b30f9d3c8619ea320f",
+    "semantic_hash": "3e0aa110c52d73b30f9d3c8619ea320f"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\windows\\CMakeLists.txt": {
+    "mtime": 1783755936.7927642,
+    "ast_hash": "1f49040fc31eb1c62cb8bcec2c6abc58",
+    "semantic_hash": "1f49040fc31eb1c62cb8bcec2c6abc58"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\windows\\flutter\\CMakeLists.txt": {
+    "mtime": 1771836935.8453615,
+    "ast_hash": "bbf66fed5180bd9ae8198b8d7c4a0001",
+    "semantic_hash": "bbf66fed5180bd9ae8198b8d7c4a0001"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\windows\\runner\\CMakeLists.txt": {
+    "mtime": 1771836935.8937232,
+    "ast_hash": "028602ab9754bffe716659ada7590d29",
+    "semantic_hash": "028602ab9754bffe716659ada7590d29"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\android\\app\\src\\main\\res\\mipmap-hdpi\\ic_launcher.png": {
+    "mtime": 1771836934.602281,
+    "ast_hash": "13e9c72ec37fac220397aa819fa1ef2d",
+    "semantic_hash": "13e9c72ec37fac220397aa819fa1ef2d"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\android\\app\\src\\main\\res\\mipmap-mdpi\\ic_launcher.png": {
+    "mtime": 1771836934.620874,
+    "ast_hash": "6270344430679711b81476e29878caa7",
+    "semantic_hash": "6270344430679711b81476e29878caa7"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\android\\app\\src\\main\\res\\mipmap-xhdpi\\ic_launcher.png": {
+    "mtime": 1771836934.6364784,
+    "ast_hash": "a0a8db5985280b3679d99a820ae2db79",
+    "semantic_hash": "a0a8db5985280b3679d99a820ae2db79"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\android\\app\\src\\main\\res\\mipmap-xxhdpi\\ic_launcher.png": {
+    "mtime": 1771836934.6534674,
+    "ast_hash": "afe1b655b9f32da22f9a4301bb8e6ba8",
+    "semantic_hash": "afe1b655b9f32da22f9a4301bb8e6ba8"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\android\\app\\src\\main\\res\\mipmap-xxxhdpi\\ic_launcher.png": {
+    "mtime": 1771836934.6717238,
+    "ast_hash": "57838d52c318faff743130c3fcfae0c6",
+    "semantic_hash": "57838d52c318faff743130c3fcfae0c6"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-1024x1024@1x.png": {
+    "mtime": 1770660516.1259959,
+    "ast_hash": "c785f8932297af4acd5f5ccb7630f01c",
+    "semantic_hash": "c785f8932297af4acd5f5ccb7630f01c"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@1x.png": {
+    "mtime": 1770660516.1259959,
+    "ast_hash": "a2f8558fb1d42514111fbbb19fb67314",
+    "semantic_hash": "a2f8558fb1d42514111fbbb19fb67314"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@2x.png": {
+    "mtime": 1770660516.1248288,
+    "ast_hash": "2247a840b6ee72b8a069208af170e5b1",
+    "semantic_hash": "2247a840b6ee72b8a069208af170e5b1"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-20x20@3x.png": {
+    "mtime": 1770660516.1274993,
+    "ast_hash": "1b3b1538136316263c7092951e923e9d",
+    "semantic_hash": "1b3b1538136316263c7092951e923e9d"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@1x.png": {
+    "mtime": 1770660516.1280322,
+    "ast_hash": "be8887071dd7ec39cb754d236aa9584f",
+    "semantic_hash": "be8887071dd7ec39cb754d236aa9584f"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@2x.png": {
+    "mtime": 1770660516.1227548,
+    "ast_hash": "043119ef4faa026ff82bd03f241e5338",
+    "semantic_hash": "043119ef4faa026ff82bd03f241e5338"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-29x29@3x.png": {
+    "mtime": 1770660516.1269953,
+    "ast_hash": "2b1452c4c1bda6177b4fbbb832df217f",
+    "semantic_hash": "2b1452c4c1bda6177b4fbbb832df217f"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@1x.png": {
+    "mtime": 1770660516.1232905,
+    "ast_hash": "2247a840b6ee72b8a069208af170e5b1",
+    "semantic_hash": "2247a840b6ee72b8a069208af170e5b1"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@2x.png": {
+    "mtime": 1770660516.1280322,
+    "ast_hash": "8245359312aea1b0d2412f79a07b0ca5",
+    "semantic_hash": "8245359312aea1b0d2412f79a07b0ca5"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-40x40@3x.png": {
+    "mtime": 1770660516.1232905,
+    "ast_hash": "5b3c0902200ce596e9848f22e1f0fe0e",
+    "semantic_hash": "5b3c0902200ce596e9848f22e1f0fe0e"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-60x60@2x.png": {
+    "mtime": 1770660516.1248288,
+    "ast_hash": "5b3c0902200ce596e9848f22e1f0fe0e",
+    "semantic_hash": "5b3c0902200ce596e9848f22e1f0fe0e"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-60x60@3x.png": {
+    "mtime": 1770660516.1222508,
+    "ast_hash": "e419d22a37bc40ba185aca1acb6d4ac6",
+    "semantic_hash": "e419d22a37bc40ba185aca1acb6d4ac6"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-76x76@1x.png": {
+    "mtime": 1770660516.1248288,
+    "ast_hash": "36c0d7a7132bdde18898ffdfcfcdc4d2",
+    "semantic_hash": "36c0d7a7132bdde18898ffdfcfcdc4d2"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-76x76@2x.png": {
+    "mtime": 1770660516.1300294,
+    "ast_hash": "643842917530acf4c5159ae851b0baf2",
+    "semantic_hash": "643842917530acf4c5159ae851b0baf2"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\AppIcon.appiconset\\Icon-App-83.5x83.5@2x.png": {
+    "mtime": 1770660516.1280322,
+    "ast_hash": "665cb5e3c5729da6d639d26eff47a503",
+    "semantic_hash": "665cb5e3c5729da6d639d26eff47a503"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage.png": {
+    "mtime": 1770660516.1210182,
+    "ast_hash": "978c1bee49d7ad5fc1a4d81099b13e18",
+    "semantic_hash": "978c1bee49d7ad5fc1a4d81099b13e18"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage@2x.png": {
+    "mtime": 1770660516.1210182,
+    "ast_hash": "978c1bee49d7ad5fc1a4d81099b13e18",
+    "semantic_hash": "978c1bee49d7ad5fc1a4d81099b13e18"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\ios\\Runner\\Assets.xcassets\\LaunchImage.imageset\\LaunchImage@3x.png": {
+    "mtime": 1770660516.119593,
+    "ast_hash": "978c1bee49d7ad5fc1a4d81099b13e18",
+    "semantic_hash": "978c1bee49d7ad5fc1a4d81099b13e18"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_1024.png": {
+    "mtime": 1770660516.117538,
+    "ast_hash": "c9becc9105f8cabce934d20c7bfb6aac",
+    "semantic_hash": "c9becc9105f8cabce934d20c7bfb6aac"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_128.png": {
+    "mtime": 1770660516.115279,
+    "ast_hash": "3ded30823804caaa5ccc944067c54a36",
+    "semantic_hash": "3ded30823804caaa5ccc944067c54a36"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_16.png": {
+    "mtime": 1770660516.115279,
+    "ast_hash": "8bf511604bc6ed0a6aeb380c5113fdcf",
+    "semantic_hash": "8bf511604bc6ed0a6aeb380c5113fdcf"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_256.png": {
+    "mtime": 1770660516.117538,
+    "ast_hash": "dfe2c93d1536ae02f085cc63faa3430e",
+    "semantic_hash": "dfe2c93d1536ae02f085cc63faa3430e"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_32.png": {
+    "mtime": 1770660516.1164756,
+    "ast_hash": "8e0ae58e362a6636bdfccbc04da2c58c",
+    "semantic_hash": "8e0ae58e362a6636bdfccbc04da2c58c"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_512.png": {
+    "mtime": 1770660516.115279,
+    "ast_hash": "0ad44039155424738917502c69667699",
+    "semantic_hash": "0ad44039155424738917502c69667699"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\macos\\Runner\\Assets.xcassets\\AppIcon.appiconset\\app_icon_64.png": {
+    "mtime": 1770660516.113917,
+    "ast_hash": "04e7b6ef05346c70b663ca1d97de3ad5",
+    "semantic_hash": "04e7b6ef05346c70b663ca1d97de3ad5"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\web\\favicon.png": {
+    "mtime": 1771836935.7375975,
+    "ast_hash": "5dcef449791fa27946b3d35ad8803796",
+    "semantic_hash": "5dcef449791fa27946b3d35ad8803796"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\web\\icons\\Icon-192.png": {
+    "mtime": 1771836935.7978835,
+    "ast_hash": "ac9a721a12bbc803b44f645561ecb1e1",
+    "semantic_hash": "ac9a721a12bbc803b44f645561ecb1e1"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\web\\icons\\Icon-512.png": {
+    "mtime": 1771836935.8023984,
+    "ast_hash": "96e752610906ba2a93c65f8abe1645f1",
+    "semantic_hash": "96e752610906ba2a93c65f8abe1645f1"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\web\\icons\\Icon-maskable-192.png": {
+    "mtime": 1770660516.1622002,
+    "ast_hash": "c457ef57daa1d16f64b27b786ec2ea3c",
+    "semantic_hash": "c457ef57daa1d16f64b27b786ec2ea3c"
+  },
+  "D:\\Software\\Projects\\DiseaseCheckApp\\web\\icons\\Icon-maskable-512.png": {
+    "mtime": 1770660516.1622002,
+    "ast_hash": "301a7604d45b3e739efc881eb04896ea",
+    "semantic_hash": "301a7604d45b3e739efc881eb04896ea"
+  }
+}

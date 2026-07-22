@@ -36,6 +36,13 @@ class PaymentService {
   //      `config/api_keys` doc — the code below reads it automatically.
   // The full Razorpay flow below is already wired; only the flag + key are
   // needed to enable it.
+  //
+  // ★ WHEN YOU GET YOUR RAZORPAY KEY ID:
+  //   Step 1: Go to Firebase Console > Firestore > config/api_keys doc
+  //           Add field: razorpay_key_id = "rzp_test_XXXXX" (or rzp_live_XXXXX)
+  //   Step 2: Change the line below from `true` to `false`
+  //   Step 3: Test with Razorpay test key + test cards first
+  //   Step 4: Switch to live key for production
   static const bool _paymentBypassEnabled = true;
 
   static Razorpay? _razorpay;
