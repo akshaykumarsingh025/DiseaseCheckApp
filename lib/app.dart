@@ -15,6 +15,9 @@ import 'screens/forgot_password_screen.dart';
 import 'screens/email_verification_screen.dart';
 import 'screens/profile_setup_screen.dart';
 import 'screens/dashboard_screen.dart';
+import 'screens/health_feed_screen.dart';
+import 'services/health_news_service.dart';
+import 'widgets/health_feed_section.dart';
 import 'screens/data_category_screen.dart';
 import 'screens/data_entry_screen.dart';
 import 'screens/processing_screen.dart';
@@ -135,6 +138,26 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/dashboard',
         builder: (context, state) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: '/womens-health-news',
+        builder: (context, state) => HealthFeedScreen(
+          title: "Women's Health News",
+          subtitle: 'Live headlines from trusted news sources',
+          provider: womensHealthNewsProvider,
+          fallbackBuilder: womensHealthNewsFallback,
+          itemIcon: Icons.article_outlined,
+        ),
+      ),
+      GoRoute(
+        path: '/natural-remedies',
+        builder: (context, state) => HealthFeedScreen(
+          title: 'Natural Remedies',
+          subtitle: 'Latest natural & herbal remedy updates',
+          provider: naturalRemediesProvider,
+          fallbackBuilder: naturalRemediesFallback,
+          itemIcon: Icons.spa_outlined,
+        ),
       ),
       GoRoute(
         path: '/data-category',

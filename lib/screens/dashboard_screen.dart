@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../config/feature_flags.dart';
 import '../providers/profile_provider.dart';
 import '../providers/auth_provider.dart';
@@ -16,6 +15,7 @@ import '../utils/bmi_calculator.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../utils/doctor_info.dart';
 import '../widgets/disclaimer_banner.dart';
+import '../widgets/daily_tip_card.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -26,7 +26,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   bool _isOffline = false;
-  String _lastSynced = '';
   bool _adFree = true;
   BannerAd? _bannerAd;
   bool _bannerLoaded = false;
@@ -35,7 +34,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   void initState() {
     super.initState();
     _checkConnectivity();
-    _loadLastSynced();
     _initAds();
   }
 
@@ -85,24 +83,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     } catch (_) {}
   }
 
-  Future<void> _loadLastSynced() async {
-    final prefs = await SharedPreferences.getInstance();
-    final lastSync = prefs.getString('last_synced');
-    if (lastSync != null && mounted) {
-      setState(() => _lastSynced = lastSync);
-    }
-  }
-
   Future<void> _refreshData() async {
     final user = ref.read(authServiceProvider).currentUser;
     if (user != null) {
       try {
         await StorageService.fetchAllFromCloud(user.uid);
         ref.invalidate(profileProvider);
-        final prefs = await SharedPreferences.getInstance();
-        final now = DateTime.now().toString().split('.')[0];
-        await prefs.setString('last_synced', now);
-        setState(() => _lastSynced = now);
       } catch (_) {}
     }
   }
@@ -156,19 +142,6 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ],
                 ),
               ),
-            if (_lastSynced.isNotEmpty && !_isOffline)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                color: Colors.green.shade50,
-                child: Row(
-                  children: [
-                    Icon(Icons.cloud_done, size: 14, color: Colors.green.shade600),
-                    const SizedBox(width: 6),
-                    Text('Last synced: $_lastSynced', style: TextStyle(fontSize: 11, color: Colors.green.shade700)),
-                  ],
-                ),
-              ),
             const DisclaimerBanner(),
             Expanded(
               child: RefreshIndicator(
@@ -186,7 +159,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               .headlineSmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                         ),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: 12),
+                        const DailyTipCard(),
+                        const SizedBox(height: 12),
                         if (profile.height != null && profile.weight != null) ...[
                           _buildBmiCard(
                               context, profile.weight!, profile.height!),
@@ -311,6 +286,24 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           ),
                           const SizedBox(height: 10),
                         ],
+                        _buildDashboardCard(
+                          context,
+                          'Women\'s Health News',
+                          'Live headlines & verified updates',
+                          Icons.article_outlined,
+                          Colors.indigo,
+                          () => context.push('/womens-health-news'),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildDashboardCard(
+                          context,
+                          'Natural Remedies',
+                          'Herbal & natural remedy updates',
+                          Icons.spa_outlined,
+                          Colors.teal,
+                          () => context.push('/natural-remedies'),
+                        ),
+                        const SizedBox(height: 10),
                         _buildDoctorDashboardCard(context),
                       ],
                     ],

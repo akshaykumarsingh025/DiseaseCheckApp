@@ -9,6 +9,8 @@ import '../services/ad_service.dart';
 import '../services/gemma_service.dart';
 import '../models/report.dart';
 import '../utils/doctor_info.dart';
+import '../providers/profile_provider.dart';
+import '../services/diet_plan_pdf_service.dart';
 
 class DietPlanCategory {
   final String id;
@@ -39,6 +41,7 @@ class DietPlanScreen extends ConsumerStatefulWidget {
 class _DietPlanScreenState extends ConsumerState<DietPlanScreen> {
   String? _plan;
   bool _isLoading = false;
+  bool _generatingPdf = false;
   String? _error;
   AiApiSource? _usedSource;
   DietPlanCategory? _selectedCategory;
@@ -143,6 +146,34 @@ class _DietPlanScreenState extends ConsumerState<DietPlanScreen> {
     final saved = prefs.getString('diet_plan_${widget.report.reportId}');
     if (saved != null && mounted) {
       setState(() => _plan = saved);
+    }
+  }
+
+  Future<void> _downloadPdf() async {
+    if (_plan == null || _generatingPdf) return;
+    setState(() => _generatingPdf = true);
+    try {
+      final profile = ref.read(profileProvider);
+      await DietPlanPdfService.share(
+        planText: _plan!,
+        categoryTitle: _selectedCategory?.title ?? 'AI Diet & Lifestyle Plan',
+        patientName: profile?.name,
+        age: _userAge ?? profile?.age.toString(),
+        gender: _userGender ?? profile?.gender,
+        height: _userHeight ?? profile?.height?.toString(),
+        weight: _userWeight ?? profile?.weight?.toString(),
+        isDiabetic: _isDiabetic,
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Could not create PDF: $e'),
+              backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _generatingPdf = false);
     }
   }
 
@@ -705,6 +736,30 @@ End with: "This is a general guide based on your report. Please consult ${Doctor
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _generatingPdf ? null : _downloadPdf,
+              icon: _generatingPdf
+                  ? const SizedBox(
+                      height: 16,
+                      width: 16,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                  : const Icon(Icons.picture_as_pdf, size: 18),
+              label: Text(
+                  _generatingPdf
+                      ? 'Preparing PDF...'
+                      : 'Save as PDF (Clinic Copy)',
+                  style: const TextStyle(fontSize: 13)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF0F3460),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+              ),
+            ),
           ),
           const SizedBox(height: 12),
           _buildDoctorCard(isDark),

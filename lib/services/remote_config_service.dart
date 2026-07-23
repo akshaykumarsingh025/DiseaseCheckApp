@@ -67,6 +67,14 @@ class RemoteConfigService {
   static const String _defaultGroqModel = 'llama-3.3-70b-versatile';
   static const String _defaultGroqBaseUrl = 'https://api.groq.com/openai/v1';
 
+  /// Generic accessor for any string value in the Firestore `config/api_keys`
+  /// doc. Returns null when the key is missing or not a non-empty string.
+  static String? getString(String key) {
+    final value = _config[key];
+    if (value is String && value.trim().isNotEmpty) return value.trim();
+    return null;
+  }
+
   static String get openRouterApiKey {
     final configured = _config['groq_api_key'] as String?;
     if (configured != null && configured.startsWith('gsk_')) {

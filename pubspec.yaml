@@ -64,6 +64,7 @@ dependencies:
   pdfx: ^2.6.0
   url_launcher: ^6.3.1
   connectivity_plus: ^6.0.5
+  xml: ^6.5.0                 # Parse RSS health-news feeds
   razorpay_flutter: ^1.4.5
   flutter_local_notifications: ^18.0.1
   timezone: ^0.9.4
