@@ -9,6 +9,7 @@ import 'app.dart';
 import 'services/storage_service.dart';
 import 'services/remote_config_service.dart';
 import 'services/notification_service.dart';
+import 'services/medication_service.dart';
 import 'services/doctor_account_service.dart';
 
 void main() {
@@ -52,6 +53,9 @@ Future<void> _initBackgroundServices() async {
   await RemoteConfigService.load();
   await DoctorAccountService.ensureDoctorAccount();
   await NotificationService.init();
+  try {
+    await MedicationService.rescheduleAll();
+  } catch (_) {}
 
   try {
     await MobileAds.instance.initialize();

@@ -16,6 +16,7 @@ import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../utils/doctor_info.dart';
 import '../widgets/disclaimer_banner.dart';
 import '../widgets/daily_tip_card.dart';
+import '../widgets/health_score_card.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -162,6 +163,8 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         const SizedBox(height: 12),
                         const DailyTipCard(),
                         const SizedBox(height: 12),
+                        const HealthScoreCard(),
+                        const SizedBox(height: 12),
                         if (profile.height != null && profile.weight != null) ...[
                           _buildBmiCard(
                               context, profile.weight!, profile.height!),
@@ -177,7 +180,52 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                             () => context.push('/womens-health'),
                           ),
                           const SizedBox(height: 10),
+                          _buildDashboardCard(
+                            context,
+                            'Period & Ovulation Tracker',
+                            'Log your cycle, symptoms & get reminders',
+                            Icons.calendar_month,
+                            Colors.pink,
+                            () => context.push('/period-tracker'),
+                          ),
+                          const SizedBox(height: 10),
                         ],
+                        _buildDashboardCard(
+                          context,
+                          'Symptom Checker',
+                          'AI guidance for your symptoms',
+                          Icons.psychology_alt,
+                          Colors.deepPurple,
+                          () => context.push('/symptom-checker'),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildDashboardCard(
+                          context,
+                          'Medications & Supplements',
+                          'Reminders and daily streaks',
+                          Icons.medication,
+                          Colors.teal,
+                          () => context.push('/medications'),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildDashboardCard(
+                          context,
+                          'Daily Wellness',
+                          'Log water, sleep & steps',
+                          Icons.favorite,
+                          Colors.blue,
+                          () => context.push('/wellness'),
+                        ),
+                        const SizedBox(height: 10),
+                        _buildDashboardCard(
+                          context,
+                          'Weekly Health Digest',
+                          'Your week in one summary',
+                          Icons.summarize,
+                          Colors.purple,
+                          () => context.push('/weekly-digest'),
+                        ),
+                        const SizedBox(height: 10),
                         _buildDashboardCard(
                           context,
                           'Enter New Data',

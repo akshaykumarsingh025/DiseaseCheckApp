@@ -49,6 +49,10 @@ import 'screens/bmi_pcos_risk_screen.dart';
 import 'screens/fertility_score_screen.dart';
 import 'screens/write_prescription_screen.dart';
 import 'screens/my_prescriptions_screen.dart';
+import 'screens/medications_screen.dart';
+import 'screens/wellness_screen.dart';
+import 'screens/symptom_checker_screen.dart';
+import 'screens/weekly_digest_screen.dart';
 import 'models/report.dart';
 import 'models/appointment.dart';
 
@@ -365,6 +369,22 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/my-prescriptions',
         builder: (context, state) => const MyPrescriptionsScreen(),
+      ),
+      GoRoute(
+        path: '/medications',
+        builder: (context, state) => const MedicationsScreen(),
+      ),
+      GoRoute(
+        path: '/wellness',
+        builder: (context, state) => const WellnessScreen(),
+      ),
+      GoRoute(
+        path: '/symptom-checker',
+        builder: (context, state) => const SymptomCheckerScreen(),
+      ),
+      GoRoute(
+        path: '/weekly-digest',
+        builder: (context, state) => const WeeklyDigestScreen(),
       ),
     ],
   );
