@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 import '../services/ai_api_service.dart';
 import '../utils/doctor_info.dart';
 
-/// A lightweight AI symptom checker focused on women's health. It gives
-/// general guidance and always nudges the user to consult Dr. Deepika for
-/// anything concerning — it is not a diagnosis.
+/// A guided, selection-only symptom checker for women's health.
+///
+/// The user picks symptoms from grouped options and answers a couple of
+/// structured questions (duration, severity); there is no free-text chat, so
+/// guidance stays strictly on the selected symptoms. It is not a diagnosis.
 class SymptomCheckerScreen extends StatefulWidget {
   const SymptomCheckerScreen({super.key});
 
@@ -14,256 +17,418 @@ class SymptomCheckerScreen extends StatefulWidget {
 }
 
 class _SymptomCheckerScreenState extends State<SymptomCheckerScreen> {
-  final _controller = TextEditingController();
   final _scroll = ScrollController();
-  final List<_Msg> _messages = [];
-  bool _generating = false;
 
-  static const List<String> _quick = [
-    'Irregular periods',
-    'Painful cramps',
-    'PCOS symptoms',
-    'White discharge',
-    'Missed period',
-    'Breast pain',
-    'Low mood / PMS',
-    'UTI symptoms',
+  final Set<String> _selected = {};
+  String? _duration;
+  String? _severity;
+  bool _loading = false;
+  String? _result;
+  bool _urgent = false;
+
+  /// Symptoms grouped by area. Everything the checker can talk about lives here,
+  /// so it can never wander off-topic.
+  static const Map<String, List<String>> _groups = {
+    'Menstrual cycle': [
+      'Irregular periods',
+      'Missed period',
+      'Heavy bleeding',
+      'Painful cramps',
+      'Spotting between periods',
+    ],
+    'Pain & discomfort': [
+      'Pelvic pain',
+      'Lower back pain',
+      'Breast pain / tenderness',
+      'Bloating',
+    ],
+    'Discharge & intimate': [
+      'White discharge',
+      'Coloured / foul-smelling discharge',
+      'Itching or irritation',
+      'Vaginal dryness',
+    ],
+    'Urinary': [
+      'Burning when urinating',
+      'Frequent urination',
+      'Blood in urine',
+    ],
+    'Mood & PMS': [
+      'Low mood / PMS',
+      'Anxiety or irritability',
+      'Fatigue',
+      'Headache',
+    ],
+    'PCOS signs': [
+      'Acne',
+      'Excess hair growth',
+      'Unexplained weight gain',
+      'Hair thinning',
+    ],
+    'Pregnancy / menopause': [
+      'Nausea or vomiting',
+      'Cramping during pregnancy',
+      'Hot flashes',
+    ],
+    'General': [
+      'Fever',
+      'Dizziness or fainting',
+    ],
+  };
+
+  /// Symptoms that always warrant prompt medical attention.
+  static const Set<String> _redFlags = {
+    'Heavy bleeding',
+    'Blood in urine',
+    'Coloured / foul-smelling discharge',
+    'Cramping during pregnancy',
+    'Fever',
+    'Dizziness or fainting',
+  };
+
+  static const List<String> _durations = [
+    'Started today',
+    'A few days',
+    '1–2 weeks',
+    'Over a month',
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _messages.add(_Msg(
-      text:
-          'Hi! I\'m your women\'s-health assistant. Describe what you\'re feeling — for example your symptoms, when they started, and where — and I\'ll share general guidance.\n\nThis is not a diagnosis. For anything serious or persistent, please consult ${DoctorInfo.name}.',
-      isUser: false,
-    ));
-  }
+  static const List<String> _severities = ['Mild', 'Moderate', 'Severe'];
 
   @override
   void dispose() {
-    _controller.dispose();
     _scroll.dispose();
     super.dispose();
   }
 
-  void _scrollToBottom() {
+  bool get _canSubmit => _selected.isNotEmpty && !_loading;
+
+  Future<void> _getGuidance() async {
+    if (!_canSubmit) return;
+    setState(() {
+      _loading = true;
+      _result = null;
+    });
+
+    final symptoms = _selected.join(', ');
+    final urgent =
+        _selected.any(_redFlags.contains) || _severity == 'Severe';
+
+    final prompt =
+        '''You are a caring women's-health assistant for a gynaecology clinic. Based ONLY on the structured symptom selection below, give brief, practical guidance. Do NOT ask any questions. Do NOT discuss anything unrelated to these symptoms or women's health.
+
+Selected symptoms: $symptoms
+Duration: ${_duration ?? 'not specified'}
+Severity: ${_severity ?? 'not specified'}
+
+Reply using EXACTLY these three headed sections, each with 2 to 4 short bullet points starting with "- ":
+Possible related causes:
+See a doctor soon if:
+Simple self-care you can try:
+
+Rules:
+- Do NOT give a definitive diagnosis. Use wording like "may be related to".
+- Keep every bullet short and in simple English.
+- Do not add any text outside these three sections except a single closing line advising to consult ${DoctorInfo.name} for a proper check-up.''';
+
+    final result = await AiApiService.generateText(prompt);
+    if (!mounted) return;
+
+    setState(() {
+      _loading = false;
+      _urgent = urgent;
+      _result = result.success && (result.text?.trim().isNotEmpty ?? false)
+          ? _clean(result.text!)
+          : _fallbackGuidance(symptoms, urgent);
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scroll.hasClients) {
         _scroll.animateTo(_scroll.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
+            duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
       }
     });
   }
 
-  Future<void> _send([String? preset]) async {
-    final text = (preset ?? _controller.text).trim();
-    if (text.isEmpty || _generating) return;
-    _controller.clear();
-    setState(() {
-      _messages.add(_Msg(text: text, isUser: true));
-      _generating = true;
+  /// Strips markdown (heading `#` and bold `**`) so the guidance renders cleanly
+  /// in plain text.
+  String _clean(String s) {
+    final lines = s.split('\n').map((l) {
+      var t = l.replaceAll('**', '').replaceAll('__', '');
+      t = t.replaceFirst(RegExp(r'^\s*#{1,6}\s*'), '');
+      return t.replaceFirst(RegExp(r'^\s*[*•]\s+'), '- ');
     });
-    _scrollToBottom();
+    return lines.join('\n').trim();
+  }
 
-    final history = _messages
-        .where((m) => m.isUser)
-        .map((m) => m.text)
-        .take(6)
-        .join('; ');
+  String _fallbackGuidance(String symptoms, bool urgent) {
+    return 'Possible related causes:\n'
+        '- Your selected symptoms ($symptoms) can have several common causes and often settle on their own.\n\n'
+        'See a doctor soon if:\n'
+        '- The symptoms get worse, last longer than expected, or you feel very unwell.\n'
+        '${urgent ? '- Some of what you selected can be serious — please seek care promptly.\n' : ''}\n'
+        'Simple self-care you can try:\n'
+        '- Rest, stay hydrated, and track when the symptoms happen.\n\n'
+        'Please consult ${DoctorInfo.name} for a proper check-up.';
+  }
 
-    final prompt =
-        '''You are a caring women's-health assistant for a gynaecology clinic. A patient describes symptoms. Give brief, practical, reassuring guidance in simple English.
-
-Rules:
-- Do NOT give a definitive diagnosis. Use phrases like "this could be related to...".
-- Mention 1-3 possible common causes, simple self-care they can try, and clear red-flag signs that mean they should see a doctor soon.
-- If symptoms sound urgent (heavy bleeding, severe pain, fever, fainting, pregnancy complications), tell them to seek care promptly.
-- Always end by suggesting they consult ${DoctorInfo.name} for a proper check-up.
-- Keep it under 8 short sentences. Use a friendly tone.
-
-Patient's symptoms so far: $history
-
-Latest message: $text''';
-
-    final result = await AiApiService.generateText(prompt);
-
-    if (!mounted) return;
+  void _reset() {
     setState(() {
-      _generating = false;
-      _messages.add(_Msg(
-        text: result.success && result.text != null
-            ? result.text!
-            : 'Sorry, I couldn\'t analyse that right now. Please check your connection or consult ${DoctorInfo.name} directly.',
-        isUser: false,
-      ));
+      _selected.clear();
+      _duration = null;
+      _severity = null;
+      _result = null;
+      _urgent = false;
     });
-    _scrollToBottom();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Symptom Checker')),
+      appBar: AppBar(
+        title: const Text('Symptom Checker'),
+        actions: [
+          if (_selected.isNotEmpty || _result != null)
+            TextButton(
+              onPressed: _reset,
+              child: const Text('Reset'),
+            ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              color: Colors.amber.shade50,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
+            _disclaimer(),
+            Expanded(
+              child: ListView(
+                controller: _scroll,
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 24),
                 children: [
-                  Icon(Icons.info_outline, size: 16, color: Colors.amber.shade800),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'General guidance only — not a medical diagnosis.',
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.amber.shade900),
-                    ),
+                  Text(
+                    'Select the symptoms you\'re experiencing, then get general guidance.',
+                    style:
+                        TextStyle(fontSize: 13.5, color: Colors.grey.shade700),
                   ),
+                  const SizedBox(height: 8),
+                  for (final entry in _groups.entries) _group(entry.key, entry.value),
+                  const SizedBox(height: 8),
+                  _questionHeader('How long have you had these?'),
+                  _choiceRow(_durations, _duration,
+                      (v) => setState(() => _duration = v)),
+                  const SizedBox(height: 12),
+                  _questionHeader('How severe does it feel?'),
+                  _choiceRow(_severities, _severity,
+                      (v) => setState(() => _severity = v)),
+                  const SizedBox(height: 20),
+                  if (_result != null) ...[
+                    _resultCard(),
+                    const SizedBox(height: 16),
+                  ],
                 ],
               ),
             ),
-            Expanded(
-              child: ListView.builder(
-                controller: _scroll,
-                padding: const EdgeInsets.all(16),
-                itemCount: _messages.length + (_generating ? 1 : 0),
-                itemBuilder: (context, i) {
-                  if (i == _messages.length) {
-                    return const _TypingBubble();
-                  }
-                  return _bubble(_messages[i]);
-                },
-              ),
-            ),
-            if (_messages.length <= 1)
-              SizedBox(
-                height: 44,
-                child: ListView(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  children: _quick
-                      .map((q) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            child: ActionChip(
-                              label: Text(q,
-                                  style: const TextStyle(fontSize: 12)),
-                              onPressed: () => _send(q),
-                            ),
-                          ))
-                      .toList(),
-                ),
-              ),
-            _inputBar(),
+            _bottomBar(),
           ],
         ),
       ),
     );
   }
 
-  Widget _bubble(_Msg m) {
-    return Align(
-      alignment: m.isUser ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: BoxConstraints(
-            maxWidth: MediaQuery.of(context).size.width * 0.78),
-        decoration: BoxDecoration(
-          color: m.isUser ? Colors.pink.shade400 : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Text(
-          m.text,
-          style: TextStyle(
-              color: m.isUser ? Colors.white : Colors.black87, fontSize: 14),
-        ),
+  Widget _disclaimer() {
+    return Container(
+      width: double.infinity,
+      color: Colors.amber.shade50,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, size: 16, color: Colors.amber.shade800),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'General guidance only — not a medical diagnosis.',
+              style: TextStyle(fontSize: 12, color: Colors.amber.shade900),
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _inputBar() {
+  Widget _group(String title, List<String> symptoms) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(top: 14, bottom: 8),
+          child: Text(title,
+              style:
+                  const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: symptoms.map((s) {
+            final selected = _selected.contains(s);
+            return FilterChip(
+              label: Text(s),
+              selected: selected,
+              showCheckmark: true,
+              selectedColor: Colors.pink.shade100,
+              checkmarkColor: Colors.pink.shade700,
+              labelStyle: TextStyle(
+                fontSize: 13,
+                color: selected ? Colors.pink.shade900 : null,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+              ),
+              onSelected: (v) => setState(() {
+                if (v) {
+                  _selected.add(s);
+                } else {
+                  _selected.remove(s);
+                }
+              }),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _questionHeader(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child:
+          Text(text, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _choiceRow(
+      List<String> options, String? value, ValueChanged<String?> onChanged) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: options.map((o) {
+        final selected = value == o;
+        return ChoiceChip(
+          label: Text(o),
+          selected: selected,
+          selectedColor: Colors.pink.shade100,
+          labelStyle: TextStyle(
+            fontSize: 13,
+            color: selected ? Colors.pink.shade900 : null,
+            fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+          ),
+          onSelected: (_) => onChanged(selected ? null : o),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _resultCard() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_urgent)
+          Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.red.shade50,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.red.shade200),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.warning_amber_rounded, color: Colors.red.shade600),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Some of what you selected can be serious. Please seek medical care promptly.',
+                    style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.red.shade900,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        Card(
+          elevation: 1.5,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.health_and_safety,
+                        color: Colors.pink.shade400, size: 20),
+                    const SizedBox(width: 8),
+                    const Text('Guidance',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                SelectableText(
+                  _result!,
+                  style: const TextStyle(fontSize: 14, height: 1.5),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        FilledButton.icon(
+          style: FilledButton.styleFrom(
+            backgroundColor: const Color(0xFF0F3460),
+            padding: const EdgeInsets.symmetric(vertical: 14),
+          ),
+          onPressed: () => context.push('/online-opd'),
+          icon: const Icon(Icons.local_hospital),
+          label: const Text('Consult ${DoctorInfo.name}'),
+        ),
+      ],
+    );
+  }
+
+  Widget _bottomBar() {
     return Container(
-      padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.05), blurRadius: 4),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.06), blurRadius: 6),
         ],
       ),
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              controller: _controller,
-              textCapitalization: TextCapitalization.sentences,
-              minLines: 1,
-              maxLines: 4,
-              decoration: InputDecoration(
-                hintText: 'Describe your symptoms...',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(24)),
-                contentPadding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              ),
-              onSubmitted: (_) => _send(),
+            child: Text(
+              _selected.isEmpty
+                  ? 'Select at least one symptom'
+                  : '${_selected.length} symptom${_selected.length == 1 ? '' : 's'} selected',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
             ),
           ),
-          const SizedBox(width: 8),
-          Material(
-            color: Colors.pink,
-            shape: const CircleBorder(),
-            child: InkWell(
-              customBorder: const CircleBorder(),
-              onTap: _generating ? null : () => _send(),
-              child: const Padding(
-                padding: EdgeInsets.all(12),
-                child: Icon(Icons.send, color: Colors.white, size: 20),
-              ),
+          const SizedBox(width: 12),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Colors.pink,
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
             ),
+            onPressed: _canSubmit ? _getGuidance : null,
+            child: _loading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.white),
+                  )
+                : Text(_result == null ? 'Get guidance' : 'Update'),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Msg {
-  final String text;
-  final bool isUser;
-  _Msg({required this.text, required this.isUser});
-}
-
-class _TypingBubble extends StatelessWidget {
-  const _TypingBubble();
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: const SizedBox(
-          width: 40,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              SizedBox(
-                  width: 8,
-                  height: 8,
-                  child: CircularProgressIndicator(strokeWidth: 2)),
-              Text('...', style: TextStyle(color: Colors.grey)),
-            ],
-          ),
-        ),
       ),
     );
   }
