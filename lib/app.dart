@@ -14,7 +14,7 @@ import 'screens/signup_screen.dart';
 import 'screens/forgot_password_screen.dart';
 import 'screens/email_verification_screen.dart';
 import 'screens/profile_setup_screen.dart';
-import 'screens/dashboard_screen.dart';
+import 'screens/main_shell.dart';
 import 'screens/health_feed_screen.dart';
 import 'services/health_news_service.dart';
 import 'widgets/health_feed_section.dart';
@@ -141,7 +141,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/dashboard',
-        builder: (context, state) => const DashboardScreen(),
+        builder: (context, state) => const MainShell(),
       ),
       GoRoute(
         path: '/womens-health-news',
