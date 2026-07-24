@@ -383,11 +383,16 @@ Rules:
         FilledButton.icon(
           style: FilledButton.styleFrom(
             backgroundColor: const Color(0xFF0F3460),
+            foregroundColor: Colors.white,
             padding: const EdgeInsets.symmetric(vertical: 14),
           ),
           onPressed: () => context.push('/online-opd'),
-          icon: const Icon(Icons.local_hospital),
-          label: const Text('Consult ${DoctorInfo.name}'),
+          icon: const Icon(Icons.local_hospital, color: Colors.white),
+          label: const Text(
+            'Consult ${DoctorInfo.name}',
+            style: TextStyle(
+                color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+          ),
         ),
       ],
     );
