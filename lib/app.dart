@@ -56,12 +56,26 @@ import 'screens/weekly_digest_screen.dart';
 import 'models/report.dart';
 import 'models/appointment.dart';
 
+/// Notifies GoRouter that `redirect` should re-run.
+///
+/// Deliberately not a `ref.watch` on the auth state: watching would rebuild the
+/// whole GoRouter on every sign-in/sign-out, tearing down the live Navigator
+/// mid-frame and blanking the screen. Refreshing re-runs the redirect against
+/// the same router instead.
+class _RouterRefresh extends ChangeNotifier {
+  void ping() => notifyListeners();
+}
+
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authStateProvider);
+  final refresh = _RouterRefresh();
+  ref.listen(authStateProvider, (_, __) => refresh.ping());
+  ref.onDispose(refresh.dispose);
 
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: refresh,
     redirect: (context, state) {
+      final authState = ref.read(authStateProvider);
       if (authState.isLoading) return null;
 
       final user = authState.valueOrNull;
@@ -134,7 +148,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/profile-setup',
         builder: (context, state) {
-          final isAuth = authState.valueOrNull != null;
+          final isAuth = ref.read(authStateProvider).valueOrNull != null;
           if (!isAuth) return const LoginScreen();
           return const ProfileSetupScreen();
         },

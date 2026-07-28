@@ -14,13 +14,15 @@ class FeatureFlags {
   }
 
   static String get doctorUserId {
-    final cached = DoctorAccountService.cachedDoctorUid;
-    if (cached != null && cached.isNotEmpty) return cached;
+    // Remote value wins so the doctor account can be changed without a release.
+    final remote = RemoteConfigService.doctorUserId;
+    if (remote.isNotEmpty) return remote;
+
     final user = FirebaseAuth.instance.currentUser;
     if (user != null && DoctorAccountService.isDoctorEmail(user.email)) {
       return user.uid;
     }
-    return RemoteConfigService.doctorUserId;
+    return DoctorAccountService.doctorUid;
   }
 
   static bool canBypassEmailVerification(String? email) {

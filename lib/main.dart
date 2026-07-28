@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -10,7 +11,6 @@ import 'services/storage_service.dart';
 import 'services/remote_config_service.dart';
 import 'services/notification_service.dart';
 import 'services/medication_service.dart';
-import 'services/doctor_account_service.dart';
 
 void main() {
   runZonedGuarded(() async {
@@ -42,24 +42,37 @@ void main() {
         child: DiseaseCheckApp(),
       ),
     );
+    _appStarted = true;
 
     _initBackgroundServices();
   }, (error, stack) {
+    // Once the app is on screen, a late async error must not replace it with
+    // the error screen — the user would lose whatever they were doing.
+    if (_appStarted) {
+      developer.log('Unhandled async error', error: error, stackTrace: stack, name: 'main');
+      return;
+    }
     runApp(ErrorApp(error: 'Unhandled: $error'));
   });
 }
 
-Future<void> _initBackgroundServices() async {
-  await RemoteConfigService.load();
-  await DoctorAccountService.ensureDoctorAccount();
-  await NotificationService.init();
-  try {
-    await MedicationService.rescheduleAll();
-  } catch (_) {}
+bool _appStarted = false;
 
-  try {
-    await MobileAds.instance.initialize();
-  } catch (_) {}
+/// Runs after the first frame. Every step is isolated so one failing service
+/// cannot stop the rest — and cannot surface as an unhandled zone error.
+Future<void> _initBackgroundServices() async {
+  Future<void> step(String name, Future<void> Function() action) async {
+    try {
+      await action();
+    } catch (e, s) {
+      developer.log('$name failed', error: e, stackTrace: s, name: 'startup');
+    }
+  }
+
+  await step('RemoteConfig', RemoteConfigService.load);
+  await step('Notifications', NotificationService.init);
+  await step('MedicationReschedule', MedicationService.rescheduleAll);
+  await step('MobileAds', () => MobileAds.instance.initialize());
 }
 
 class ErrorApp extends StatelessWidget {
