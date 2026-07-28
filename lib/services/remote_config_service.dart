@@ -55,17 +55,14 @@ class RemoteConfigService {
     } catch (_) {}
   }
 
-  // Groq config. The API key is loaded at runtime from Firestore
-  // `config/api_keys` -> `groq_api_key` and must NEVER be hardcoded here
-  // (GitHub secret scanning blocks committed keys, and a committed key is
-  // public). We only accept a remote key if it is a real Groq key (prefixed
-  // `gsk_`); if none is configured, AI features stay disabled until one is set.
-  // The model/base URL keep authoritative non-secret defaults below: a stale
-  // value in Firestore must not send a non-Groq key to Groq (which would 401
-  // and break AI), so a remote base URL is only accepted if it points at Groq.
-  static const String _defaultGroqApiKey = '';
+  // Groq config. The API key is NOT here and is never sent to the device — it
+  // lives in Cloudflare Worker secrets, and the app reaches Groq through the
+  // Worker proxy (see `worker/README.md` and `lib/config/backend_config.dart`).
+  //
+  // Only the model name remains client-side, because it is not a secret. The
+  // Worker independently validates it against its own allowlist, so a bad
+  // value in Firestore can cause a 400 but cannot redirect our Groq quota.
   static const String _defaultGroqModel = 'llama-3.3-70b-versatile';
-  static const String _defaultGroqBaseUrl = 'https://api.groq.com/openai/v1';
 
   /// Generic accessor for any string value in the Firestore `config/api_keys`
   /// doc. Returns null when the key is missing or not a non-empty string.
@@ -75,28 +72,12 @@ class RemoteConfigService {
     return null;
   }
 
-  static String get openRouterApiKey {
-    final configured = _config['groq_api_key'] as String?;
-    if (configured != null && configured.startsWith('gsk_')) {
-      return configured;
-    }
-    return _defaultGroqApiKey;
-  }
-
   static String get openRouterModel {
     final configured = _config['groq_model'] as String?;
     if (configured != null && configured.trim().isNotEmpty) {
       return configured;
     }
     return _defaultGroqModel;
-  }
-
-  static String get openRouterBaseUrl {
-    final configured = _config['groq_base_url'] as String?;
-    if (configured != null && configured.contains('groq.com')) {
-      return configured;
-    }
-    return _defaultGroqBaseUrl;
   }
 
   // ── Ollama (first-priority online provider) ────────────────────────────

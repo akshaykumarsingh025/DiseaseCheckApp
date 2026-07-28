@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../config/backend_config.dart';
+import 'backend_auth.dart';
 import 'remote_config_service.dart';
 
 enum AiApiSource { openRouter, localModel, none }
@@ -263,34 +265,37 @@ class AiApiService {
     }
   }
 
+  /// Calls Groq through the Cloudflare Worker proxy.
+  ///
+  /// The Groq API key stays in Worker secrets and is never present on the
+  /// device; we authenticate with the signed-in user's Firebase ID token
+  /// instead. The Worker injects the key, enforces a model allowlist and caps
+  /// `max_tokens`. See `worker/README.md`.
   static Future<AiApiResult> _callOpenRouter(String prompt) async {
+    if (!BackendConfig.isConfigured) {
+      return AiApiResult.failure(
+        'AI is not configured yet. Please deploy the API worker and set its URL.',
+        source: AiApiSource.openRouter,
+      );
+    }
+
     try {
-      final baseUrl = RemoteConfigService.openRouterBaseUrl;
-      final isGroq = baseUrl.contains('groq.com');
-
-      final headers = <String, String>{
-        'Authorization': 'Bearer ${RemoteConfigService.openRouterApiKey}',
-        'Content-Type': 'application/json',
-      };
-      if (!isGroq) {
-        headers['HTTP-Referer'] = 'https://diseasecheck.app';
-        headers['X-Title'] = 'DiseaseCheck App';
-      }
-
       final response = await _dio.post(
-        '$baseUrl/chat/completions',
-        options: Options(headers: headers),
+        BackendConfig.groqChatUrl,
+        options: Options(headers: await BackendAuth.headers()),
         data: {
           'model': RemoteConfigService.openRouterModel,
           'messages': [
             {'role': 'user', 'content': prompt},
           ],
           'temperature': 0.7,
-          'max_tokens': isGroq ? 8192 : _maxTokens,
+          'max_tokens': _maxTokens,
         },
       );
 
       return _parseResponse(response, AiApiSource.openRouter);
+    } on BackendAuthException catch (e) {
+      return AiApiResult.failure(e.message, source: AiApiSource.openRouter);
     } on DioException catch (e) {
       return AiApiResult.failure(_dioErrorToMessage(e), source: AiApiSource.openRouter);
     } catch (e) {
@@ -333,6 +338,10 @@ class AiApiService {
       return AiApiResult.failure('AI returned empty response. Please try again.', source: source);
     }
 
+    if (response.statusCode == 401) {
+      return AiApiResult.failure('Please sign in again to use AI features.', source: source);
+    }
+
     if (response.statusCode == 429) {
       return AiApiResult.failure('AI service is busy (rate limited). Retrying...', source: source);
     }
@@ -362,6 +371,10 @@ class AiApiService {
         return 'No internet connection. Please check your network.';
       case DioExceptionType.badResponse:
         final statusCode = e.response?.statusCode;
+        if (statusCode == 401) {
+          // Not retryable — the session needs renewing, not a backoff.
+          return 'Please sign in again to use AI features.';
+        }
         if (statusCode == 429) {
           return 'AI service is busy (rate limited). Retrying...';
         }

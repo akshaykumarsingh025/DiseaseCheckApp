@@ -1,0 +1,6 @@
+# Copy to `.dev.vars` for local `wrangler dev` runs. `.dev.vars` is gitignored.
+# In production these are set with `wrangler secret put <NAME>` instead — they
+# are never read from this file or from wrangler.toml.
+LIVEKIT_API_KEY=
+LIVEKIT_API_SECRET=
+GROQ_API_KEY=

@@ -1,0 +1,48 @@
+name = "diseasecheck-api"
+main = "src/index.js"
+compatibility_date = "2024-11-11"
+# livekit-server-sdk pulls in a few Node built-ins (crypto/buffer); this shim
+# provides them on the Workers runtime.
+compatibility_flags = ["nodejs_compat"]
+
+# ── Non-secret config ──────────────────────────────────────────────────────
+# Secrets are NOT here. Set them once with:
+#   npx wrangler secret put LIVEKIT_API_KEY
+#   npx wrangler secret put LIVEKIT_API_SECRET
+#   npx wrangler secret put GROQ_API_KEY
+[vars]
+FIREBASE_PROJECT_ID = "diseasecheck-57cc2"
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+# Only these models may be requested through the proxy. A client asking for
+# anything else is rejected, so nobody can point your Groq quota at an
+# expensive model.
+GROQ_ALLOWED_MODELS = "llama-3.3-70b-versatile,llama-3.1-8b-instant,openai/gpt-oss-120b,openai/gpt-oss-20b"
+# Hard ceiling applied to max_tokens regardless of what the client sends.
+GROQ_MAX_TOKENS = "8192"
+# Comma-separated origins allowed to call this Worker from a browser. The
+# Flutter mobile app does not send an Origin header and is unaffected; this
+# only matters for the Flutter web build.
+ALLOWED_ORIGINS = "https://diseasecheck.app"
+# Who may hold LiveKit `roomAdmin` (kick participants / end the room). Matched
+# against the *verified* email claim on the Firebase ID token, mirroring
+# DoctorAccountService.isDoctorEmail in the app. Not a secret — this address is
+# already in the app source. Without this, any signed-in user could self-declare
+# as moderator.
+DOCTOR_EMAILS = "drdipikasingh2026@gmail.com"
+
+# ── Rate limiting ──────────────────────────────────────────────────────────
+# Cloudflare's built-in rate limiting — available on the free plan and billed
+# nothing. Keyed per Firebase UID, so one abusive account cannot drain the
+# shared Groq/LiveKit quota. `period` only accepts 10 or 60 (seconds).
+[[ratelimits]]
+name = "AI_RATE_LIMITER"
+namespace_id = "1001"
+simple = { limit = 20, period = 60 }
+
+[[ratelimits]]
+name = "TOKEN_RATE_LIMITER"
+namespace_id = "1002"
+simple = { limit = 10, period = 60 }
+
+[observability]
+enabled = true
