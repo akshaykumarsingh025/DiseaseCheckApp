@@ -51,6 +51,17 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       await prefs.setString('last_sync_uid', user.uid);
     }
 
+    // The routing decision below reads the LOCAL Hive copy, so anything that
+    // empties local storage — a reinstall, a new device, "Clear data", or a
+    // Hive box that had to be rebuilt because its encryption key was lost —
+    // used to push a returning user back through profile setup even though
+    // their profile was sitting in Firestore the whole time. Pull it down
+    // first and only ask for details again when the cloud has nothing either.
+    if (StorageService.getProfile() == null) {
+      await StorageService.fetchProfileFromCloud(user.uid)
+          .timeout(const Duration(seconds: 8), onTimeout: () {});
+    }
+
     if (!mounted) return;
     ref.invalidate(profileProvider);
 

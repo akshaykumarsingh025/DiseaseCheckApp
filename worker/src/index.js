@@ -2,6 +2,7 @@ import { AuthError, verifyFirebaseToken } from "./firebase-auth.js";
 import { error, json, preflight } from "./http.js";
 import { handleGroqChat } from "./groq.js";
 import { handleLiveKitToken } from "./livekit.js";
+import { handleRazorpayOrder, handleRazorpayVerify } from "./razorpay.js";
 
 /**
  * DiseaseCheck API Worker.
@@ -13,12 +14,16 @@ import { handleLiveKitToken } from "./livekit.js";
  *
  *   POST /livekit/token       -> { token }
  *   POST /groq/chat/completions -> OpenAI-shaped completion
+ *   POST /razorpay/order      -> { orderId, amount, keyId }
+ *   POST /razorpay/verify     -> { verified }
  *   GET  /health              -> { ok: true }   (unauthenticated)
  */
 
 const ROUTES = {
   "/livekit/token": handleLiveKitToken,
   "/groq/chat/completions": handleGroqChat,
+  "/razorpay/order": handleRazorpayOrder,
+  "/razorpay/verify": handleRazorpayVerify,
 };
 
 export default {
@@ -36,6 +41,10 @@ export default {
         livekit: Boolean(env.LIVEKIT_API_KEY && env.LIVEKIT_API_SECRET),
         groq: Boolean(env.GROQ_API_KEY),
         project: Boolean(env.FIREBASE_PROJECT_ID),
+        razorpay: Boolean(env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET),
+        // Whether verified purchases can be recorded server-side. False means
+        // the app still writes its own purchase records and they are forgeable.
+        purchaseWrites: Boolean(env.FIREBASE_SERVICE_ACCOUNT),
       });
     }
 

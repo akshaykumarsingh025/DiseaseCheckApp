@@ -2,40 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../config/feature_flags.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/profile_provider.dart';
 import '../../providers/theme_provider.dart';
 import '../../services/storage_service.dart';
-import '../../services/payment_service.dart';
-import '../../services/ad_service.dart';
 import '../../widgets/nav_tile.dart';
 
 /// The "More" tab: account, preferences and session controls (with a safe,
 /// confirmed logout).
-class MoreTab extends ConsumerStatefulWidget {
+///
+/// There is deliberately no "Remove Ads" entry here. Google Play requires an
+/// ad-free upgrade to be sold through Play Billing, not Razorpay, so the option
+/// is withheld until that is wired up. `PaymentFeature.removeAds` is kept in
+/// [PaymentService] so anyone who already bought it stays ad-free.
+class MoreTab extends ConsumerWidget {
   const MoreTab({super.key});
 
   @override
-  ConsumerState<MoreTab> createState() => _MoreTabState();
-}
-
-class _MoreTabState extends ConsumerState<MoreTab> {
-  bool _adFree = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadAdFree();
-  }
-
-  Future<void> _loadAdFree() async {
-    final v = await PaymentService.isAdFree();
-    if (mounted) setState(() => _adFree = v);
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final profile = ref.watch(profileProvider);
     final isDark = ref.watch(themeProvider).valueOrNull ?? false;
 
@@ -80,27 +64,6 @@ class _MoreTabState extends ConsumerState<MoreTab> {
           subtitle: 'Secure app with PIN or biometric',
           onTap: () => context.push('/app-lock-setup'),
         ),
-        if (FeatureFlags.healthCoursesEnabled) ...[
-          const SizedBox(height: 10),
-          NavTile(
-            icon: Icons.school,
-            color: Colors.indigo,
-            title: 'Health Courses',
-            subtitle: 'Free & premium health education',
-            onTap: () => context.push('/courses'),
-          ),
-        ],
-        if (!_adFree) ...[
-          const SizedBox(height: 10),
-          NavTile(
-            icon: Icons.block,
-            color: Colors.orange.shade700,
-            title: 'Remove Ads',
-            subtitle: 'Enjoy an ad-free experience — one-time ₹149',
-            onTap: _buyRemoveAds,
-            trailing: const StatusPill('Upgrade', color: Colors.orange),
-          ),
-        ],
         const SectionHeader('Session'),
         const SizedBox(height: 10),
         NavTile(
@@ -108,35 +71,14 @@ class _MoreTabState extends ConsumerState<MoreTab> {
           color: Colors.red,
           title: 'Log Out',
           subtitle: 'Sign out of your account',
-          onTap: _confirmLogout,
+          onTap: () => _confirmLogout(context, ref),
         ),
         const SizedBox(height: 8),
       ],
     );
   }
 
-  Future<void> _buyRemoveAds() async {
-    final result =
-        await PaymentService.openCheckout(context, PaymentFeature.removeAds);
-    if (!mounted) return;
-    if (result.success) {
-      setState(() => _adFree = true);
-      AdService.dispose();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-            content: Text('Ads removed. Thank you!'),
-            backgroundColor: Colors.green),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(result.error ?? 'Purchase failed.'),
-            backgroundColor: Colors.red),
-      );
-    }
-  }
-
-  Future<void> _confirmLogout() async {
+  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(

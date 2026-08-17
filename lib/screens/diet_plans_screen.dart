@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/diet_plan_package_provider.dart';
 import '../models/diet_plan_package.dart';
+import '../widgets/banner_ad_widget.dart';
 
 class DietPlansScreen extends ConsumerWidget {
   const DietPlansScreen({super.key});
@@ -13,7 +14,8 @@ class DietPlansScreen extends ConsumerWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Diet Plans - ₹299')),
+      appBar: AppBar(title: const Text('Diet Plans')),
+      bottomNavigationBar: const SafeArea(child: BannerAdWidget()),
       body: plansAsync.when(
         data: (plans) {
           if (plans.isEmpty) {
@@ -156,9 +158,9 @@ class DietPlansScreen extends ConsumerWidget {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        '₹${plan.price}',
-                        style: const TextStyle(
+                      const Text(
+                        'Free',
+                        style: TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF0F3460),

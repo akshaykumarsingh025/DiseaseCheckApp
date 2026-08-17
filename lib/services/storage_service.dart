@@ -19,10 +19,21 @@ class StorageService {
   static final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
 
   static Future<Uint8List> _getOrCreateEncryptionKey() async {
-    final stored = await _secureStorage.read(key: _encryptionKeyStorageKey);
-    if (stored != null) {
-      return Uint8List.fromList(stored.split(',').map(int.parse).toList());
+    // A read can throw rather than return null — the platform keystore is
+    // occasionally unavailable, and an OS-level restore can leave a stored
+    // value behind that no longer decrypts. Treat any of that as "no key" and
+    // mint a fresh one; _openBox below rebuilds whatever became unreadable.
+    try {
+      final stored = await _secureStorage.read(key: _encryptionKeyStorageKey);
+      if (stored != null) {
+        final bytes = stored.split(',').map(int.parse).toList();
+        if (bytes.length == 32) return Uint8List.fromList(bytes);
+      }
+    } catch (e, s) {
+      developer.log('Could not read the Hive encryption key',
+          error: e, stackTrace: s, name: 'StorageService');
     }
+
     final key = Hive.generateSecureKey();
     await _secureStorage.write(
       key: _encryptionKeyStorageKey,
@@ -41,9 +52,27 @@ class StorageService {
     final encryptionKey = await _getOrCreateEncryptionKey();
     final cipher = HiveAesCipher(encryptionKey);
 
-    await Hive.openBox<UserProfile>(profileBoxName, encryptionCipher: cipher);
-    await Hive.openBox<HealthReport>(historyBoxName, encryptionCipher: cipher);
-    await Hive.openBox<HealthData>(healthDataBoxName, encryptionCipher: cipher);
+    await _openBox<UserProfile>(profileBoxName, cipher);
+    await _openBox<HealthReport>(historyBoxName, cipher);
+    await _openBox<HealthData>(healthDataBoxName, cipher);
+  }
+
+  /// Opens a box, rebuilding it from scratch if it cannot be read.
+  ///
+  /// If the cipher key above ever changes, the existing box is undecryptable
+  /// and `openBox` throws — which used to strand the user on the "Storage init
+  /// failed" screen with a reinstall as the only way out. Dropping the local
+  /// box loses nothing permanently: Firestore holds the authoritative copy and
+  /// [fetchAllFromCloud] pulls it back on the next launch.
+  static Future<void> _openBox<T>(String name, HiveAesCipher cipher) async {
+    try {
+      await Hive.openBox<T>(name, encryptionCipher: cipher);
+    } catch (e, s) {
+      developer.log('Rebuilding unreadable Hive box "$name"',
+          error: e, stackTrace: s, name: 'StorageService');
+      await Hive.deleteBoxFromDisk(name);
+      await Hive.openBox<T>(name, encryptionCipher: cipher);
+    }
   }
 
   static Box<UserProfile> get profileBox =>

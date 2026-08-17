@@ -3,8 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 
+import '../config/feature_flags.dart';
+import '../models/appointment.dart';
+import '../providers/appointment_provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/profile_provider.dart';
+import '../services/notification_service.dart';
+import '../services/opd_reminder_service.dart';
 import '../services/storage_service.dart';
 import '../services/payment_service.dart';
 import '../services/ad_service.dart';
@@ -38,6 +43,31 @@ class _MainShellState extends ConsumerState<MainShell> {
     super.initState();
     _checkConnectivity();
     _initAds();
+    // Asked here rather than at first launch: by the time the shell is on
+    // screen the user is signed in, so the prompt lands in context instead of
+    // ahead of the splash. `ensureOpdAlertPermissions` is a no-op once granted.
+    NotificationService.ensureOpdAlertPermissions();
+    _watchAppointmentsForAlerts();
+  }
+
+  /// Keeps the OPD alarms in step with whatever the appointment stream says,
+  /// for whichever side of the consultation this device belongs to.
+  ///
+  /// The shell is the one screen alive for both roles for the whole session, so
+  /// this is where the subscription belongs — the OPD screens come and go.
+  /// `listenManual` rather than `ref.listen` so it can fire immediately: the
+  /// stream often already holds a value by the time the shell is built, and a
+  /// change-only listener would then never run.
+  void _watchAppointmentsForAlerts() {
+    ref.listenManual<AsyncValue<List<Appointment>>>(
+      userAppointmentsProvider,
+      (_, next) {
+        final appointments = next.valueOrNull;
+        if (appointments == null) return;
+        OpdReminderService.sync(appointments, asDoctor: FeatureFlags.isDoctor);
+      },
+      fireImmediately: true,
+    );
   }
 
   Future<void> _initAds() async {

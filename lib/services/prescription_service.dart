@@ -55,24 +55,32 @@ class PrescriptionService {
     }
   }
 
+  /// Every prescription this doctor has written, newest first.
+  ///
+  /// Unlike [getPatientPrescriptions] this does NOT swallow errors. The doctor
+  /// console is the one place where "no prescriptions" and "the query was
+  /// denied" must not look identical — an empty list there would quietly hide
+  /// every record the doctor has ever written.
+  ///
+  /// The `doctorId` filter has to be the caller's own UID: the Firestore rule
+  /// on `prescriptions` only lets a document through when its `doctorId`
+  /// matches `request.auth.uid`, so querying for anyone else is rejected
+  /// outright rather than returning nothing.
   static Future<List<Prescription>> getDoctorPrescriptions() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return [];
 
-    try {
-      final snapshot = await _firestore
-          .collection('prescriptions')
-          .where('doctorId', isEqualTo: user.uid)
-          .get();
+    // No orderBy: where() + orderBy() on different fields needs a composite
+    // index. Sorted client-side instead, same as the patient-side query.
+    final snapshot = await _firestore
+        .collection('prescriptions')
+        .where('doctorId', isEqualTo: user.uid)
+        .get();
 
-      final list = snapshot.docs
-          .map((doc) => Prescription.fromJson(doc.data()))
-          .toList()
-        ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      return list;
-    } catch (_) {
-      return [];
-    }
+    return snapshot.docs
+        .map((doc) => Prescription.fromJson(doc.data()))
+        .toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
   }
 
   static Future<String> generatePrescriptionPdf(Prescription rx) async {

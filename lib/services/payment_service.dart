@@ -1,12 +1,20 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'remote_config_service.dart';
+import '../config/backend_config.dart';
+import 'backend_auth.dart';
 
-enum PaymentFeature { opdConsult, dietPlan, removeAds }
+/// Paid features. Diet plans are deliberately absent: they are free.
+///
+/// `removeAds` has no purchase path any more — Google Play requires an ad-free
+/// upgrade to be sold through Play Billing, so the Worker refuses to price it.
+/// The value stays so anyone who bought it previously keeps their entitlement.
+enum PaymentFeature { opdConsult, removeAds }
 
 class PaymentResult {
   final bool success;
@@ -23,27 +31,44 @@ class PaymentResult {
         orderId = null;
 }
 
+/// An order created by the Worker. The amount is whatever the server said it
+/// is; nothing here is client-chosen.
+class _RazorpayOrder {
+  final String orderId;
+  final String keyId;
+  final int amountPaise;
+  final String currency;
+  final String description;
+
+  const _RazorpayOrder({
+    required this.orderId,
+    required this.keyId,
+    required this.amountPaise,
+    required this.currency,
+    required this.description,
+  });
+}
+
 class PaymentService {
+  // Display prices. The Worker holds the authoritative copy and charges from
+  // it — these exist only to label buttons, so a mismatch misprices the UI but
+  // can never mischarge the user.
   static const int opdPrice = 111;
-  static const int dietPlanPrice = 299;
   static const int removeAdsPrice = 149;
 
   // ── FAKE PAYMENT SWITCH ──────────────────────────────────────────────────
   // While true, checkout instantly "succeeds" for free (no Razorpay screen).
-  // To go live with REAL payments:
-  //   1. Set this to false.
-  //   2. Add `razorpay_key_id` (your live/test key) to the Firestore
-  //      `config/api_keys` doc — the code below reads it automatically.
-  // The full Razorpay flow below is already wired; only the flag + key are
-  // needed to enable it.
-  //
-  // ★ WHEN YOU GET YOUR RAZORPAY KEY ID:
-  //   Step 1: Go to Firebase Console > Firestore > config/api_keys doc
-  //           Add field: razorpay_key_id = "rzp_test_XXXXX" (or rzp_live_XXXXX)
-  //   Step 2: Change the line below from `true` to `false`
-  //   Step 3: Test with Razorpay test key + test cards first
-  //   Step 4: Switch to live key for production
-  static const bool _paymentBypassEnabled = true;
+  // Now false: real Razorpay checkout runs against a server-created order.
+  static const bool _paymentBypassEnabled = false;
+
+  static final Dio _dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 20),
+      receiveTimeout: const Duration(seconds: 30),
+      // Handle non-2xx ourselves rather than through exceptions.
+      validateStatus: (_) => true,
+    ),
+  );
 
   static Razorpay? _razorpay;
   static Completer<PaymentResult>? _checkoutCompleter;
@@ -53,8 +78,6 @@ class PaymentService {
     switch (feature) {
       case PaymentFeature.opdConsult:
         return opdPrice;
-      case PaymentFeature.dietPlan:
-        return dietPlanPrice;
       case PaymentFeature.removeAds:
         return removeAdsPrice;
     }
@@ -64,8 +87,6 @@ class PaymentService {
     switch (feature) {
       case PaymentFeature.opdConsult:
         return 'Online OPD Consultation';
-      case PaymentFeature.dietPlan:
-        return 'AI Diet Plan';
       case PaymentFeature.removeAds:
         return 'Remove Ads';
     }
@@ -106,8 +127,6 @@ class PaymentService {
     if (hasRemoveAds) return true;
     final hasOpd = await hasPurchased(PaymentFeature.opdConsult);
     if (hasOpd) return true;
-    final hasDiet = await hasPurchased(PaymentFeature.dietPlan);
-    if (hasDiet) return true;
     return false;
   }
 
@@ -131,12 +150,19 @@ class PaymentService {
     PaymentFeature feature, {
     String? paymentId,
     String? orderId,
+    bool recordedByServer = false,
   }) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('paid_${feature.name}_${user.uid}', true);
+
+    // When the Worker has already written the record, writing it again here
+    // would duplicate it — and once the Firestore rules are locked to
+    // server-only writes, this call fails anyway. Skipping is both correct and
+    // forward-compatible.
+    if (recordedByServer) return;
 
     try {
       await FirebaseFirestore.instance
@@ -154,6 +180,101 @@ class PaymentService {
     } catch (_) {}
   }
 
+  /// Asks the Worker to create an order. Throws on any failure.
+  static Future<_RazorpayOrder> _createOrder(PaymentFeature feature) async {
+    final response = await _dio.post(
+      BackendConfig.razorpayOrderUrl,
+      options: Options(headers: await BackendAuth.headers()),
+      data: {'feature': feature.name},
+    );
+
+    final status = response.statusCode ?? 0;
+    final data = response.data;
+    if (status < 200 || status >= 300 || data is! Map) {
+      debugPrint('PaymentService: POST ${BackendConfig.razorpayOrderUrl} '
+          '-> $status ${response.data}');
+      throw PaymentException(_orderErrorMessage(status, data));
+    }
+
+    final orderId = data['orderId'] as String?;
+    final keyId = data['keyId'] as String?;
+    final amount = data['amount'];
+    if (orderId == null || keyId == null || amount is! int) {
+      throw const PaymentException(
+        'The payment server returned an unexpected response.',
+      );
+    }
+
+    return _RazorpayOrder(
+      orderId: orderId,
+      keyId: keyId,
+      amountPaise: amount,
+      currency: data['currency'] as String? ?? 'INR',
+      description: data['description'] as String? ?? 'DiseaseCheck',
+    );
+  }
+
+  /// Turns a failed order response into something worth putting in front of a
+  /// patient.
+  ///
+  /// A 404 means the deployed Worker has no `/razorpay/order` route — i.e. it
+  /// is running a build from before payments moved server-side — and its
+  /// literal "Not found." is meaningless to someone staring at a Book button,
+  /// so it never reaches the screen. The real cause goes to the log instead.
+  static String _orderErrorMessage(int status, dynamic data) {
+    if (status == 404) {
+      return 'Online payment is temporarily unavailable. '
+          'Please try again later.';
+    }
+    if (status == 401) {
+      return 'Your session has expired. Please sign in again.';
+    }
+
+    final message = data is Map && data['error'] is Map
+        ? data['error']['message'] as String?
+        : null;
+    if (message != null && message.trim().isNotEmpty) return message.trim();
+
+    return 'Could not start the payment. Please try again.';
+  }
+
+  /// Has the Worker check the payment signature against the key secret.
+  ///
+  /// Returns whether the server also recorded the purchase. Throws if the
+  /// payment could not be verified — in which case nothing must be unlocked.
+  static Future<bool> _verifyPayment({
+    required String? orderId,
+    required String? paymentId,
+    required String? signature,
+  }) async {
+    if (orderId == null || paymentId == null || signature == null) {
+      throw const PaymentException(
+        'The payment response was incomplete and could not be verified.',
+      );
+    }
+
+    final response = await _dio.post(
+      BackendConfig.razorpayVerifyUrl,
+      options: Options(headers: await BackendAuth.headers()),
+      data: {
+        'orderId': orderId,
+        'paymentId': paymentId,
+        'signature': signature,
+      },
+    );
+
+    final data = response.data;
+    final verified = data is Map && data['verified'] == true;
+    if (!verified) {
+      final message = data is Map && data['error'] is Map
+          ? data['error']['message'] as String?
+          : null;
+      throw PaymentException(message ?? 'Payment could not be verified.');
+    }
+
+    return data['recorded'] == true;
+  }
+
   static Future<PaymentResult> openCheckout(
     BuildContext context,
     PaymentFeature feature,
@@ -163,26 +284,28 @@ class PaymentService {
       final paymentId = 'bypass_$ts';
       final orderId = 'test_order_$ts';
 
-      await _markPurchased(
-        feature,
-        paymentId: paymentId,
-        orderId: orderId,
-      );
-      return PaymentResult.success(
-        paymentId: paymentId,
-        orderId: orderId,
-      );
+      await _markPurchased(feature, paymentId: paymentId, orderId: orderId);
+      return PaymentResult.success(paymentId: paymentId, orderId: orderId);
     }
 
-    // ── REAL RAZORPAY FLOW (enabled when bypass is off + key is configured) ──
-    final keyId = RemoteConfigService.razorpayKeyId;
-    if (keyId.isEmpty) {
+    // ── 1. Server-created order ──────────────────────────────────────────
+    // Doing this first means the amount, the product and the owning user are
+    // all fixed by the server before checkout opens.
+    final _RazorpayOrder order;
+    try {
+      order = await _createOrder(feature);
+    } on BackendAuthException catch (e) {
+      return PaymentResult.failure(e.message);
+    } on PaymentException catch (e) {
+      return PaymentResult.failure(e.message);
+    } catch (e) {
+      debugPrint('PaymentService: order creation failed: $e');
       return PaymentResult.failure(
-        'Payments are not configured yet. Please try again later.',
+        'Could not reach the payment server. Please check your connection.',
       );
     }
 
-    // Clean up any previous instance and start a fresh checkout.
+    // ── 2. Checkout ──────────────────────────────────────────────────────
     _disposeRazorpay();
     _pendingFeature = feature;
     _checkoutCompleter = Completer<PaymentResult>();
@@ -194,14 +317,15 @@ class PaymentService {
 
     final user = FirebaseAuth.instance.currentUser;
     final options = <String, dynamic>{
-      'key': keyId,
-      'amount': getPrice(feature) * 100, // Razorpay expects paise.
-      'currency': 'INR',
+      'key': order.keyId,
+      // Passing the order_id is what makes Razorpay return a signature, which
+      // is the only part of the response that cannot be forged.
+      'order_id': order.orderId,
+      'amount': order.amountPaise,
+      'currency': order.currency,
       'name': 'DiseaseCheck',
-      'description': getFeatureName(feature),
-      'prefill': {
-        'email': user?.email ?? '',
-      },
+      'description': order.description,
+      'prefill': {'email': user?.email ?? ''},
       'theme': {'color': '#0F3460'},
       'retry': {'enabled': true, 'max_count': 1},
     };
@@ -219,21 +343,46 @@ class PaymentService {
   static void _handlePaymentSuccess(PaymentSuccessResponse response) {
     final feature = _pendingFeature;
     final completer = _checkoutCompleter;
-    // Persist the purchase before completing so callers see it as owned.
+
+    // ── 3. Verify before unlocking anything ──────────────────────────────
     () async {
-      if (feature != null) {
+      if (feature == null || completer == null) {
+        _disposeRazorpay();
+        return;
+      }
+
+      try {
+        final recordedByServer = await _verifyPayment(
+          orderId: response.orderId,
+          paymentId: response.paymentId,
+          signature: response.signature,
+        );
+
         await _markPurchased(
           feature,
           paymentId: response.paymentId,
           orderId: response.orderId,
+          recordedByServer: recordedByServer,
         );
+
+        if (!completer.isCompleted) {
+          completer.complete(PaymentResult.success(
+            paymentId: response.paymentId,
+            orderId: response.orderId,
+          ));
+        }
+      } catch (e) {
+        debugPrint('PaymentService: verification failed: $e');
+        // The user may genuinely have been charged, so the message has to give
+        // them something support can trace rather than a flat "failed".
+        if (!completer.isCompleted) {
+          completer.complete(PaymentResult.failure(
+            'We could not confirm your payment. If money was debited, contact '
+            'support with payment ID ${response.paymentId ?? "unknown"}.',
+          ));
+        }
       }
-      if (completer != null && !completer.isCompleted) {
-        completer.complete(PaymentResult.success(
-          paymentId: response.paymentId,
-          orderId: response.orderId,
-        ));
-      }
+
       _disposeRazorpay();
     }();
   }
@@ -265,4 +414,14 @@ class PaymentService {
   static void dispose() {
     _disposeRazorpay();
   }
+}
+
+/// A payment problem worth showing the user verbatim.
+class PaymentException implements Exception {
+  const PaymentException(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }

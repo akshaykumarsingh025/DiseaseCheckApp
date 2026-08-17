@@ -4,3 +4,16 @@
 LIVEKIT_API_KEY=
 LIVEKIT_API_SECRET=
 GROQ_API_KEY=
+
+# Razorpay. The Key ID is public (checkout sends it from the client anyway);
+# the Key SECRET must exist only here and never in the Flutter app, because it
+# is the only thing that can prove a payment actually happened.
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+
+# Firebase service account JSON, on ONE line, so the Worker can record verified
+# purchases itself. Get it from Firebase Console → Project settings → Service
+# accounts → Generate new private key.
+# Without this the Worker still verifies payments, but the app has to write its
+# own purchase records — which a patched app can forge.
+FIREBASE_SERVICE_ACCOUNT=

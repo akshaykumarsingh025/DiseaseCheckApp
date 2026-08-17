@@ -34,9 +34,8 @@ import 'screens/diet_plan_screen.dart';
 import 'screens/compare_reports_screen.dart';
 import 'screens/online_opd_screen.dart';
 import 'screens/doctor_opd_screen.dart';
+import 'screens/doctor_patients_screen.dart';
 import 'screens/video_call_screen.dart';
-import 'screens/courses_screen.dart';
-import 'screens/course_detail_screen.dart';
 import 'screens/diet_plans_screen.dart';
 import 'screens/diet_plan_detail_screen.dart';
 import 'screens/profile_switcher_screen.dart';
@@ -296,6 +295,16 @@ final routerProvider = Provider<GoRouter>((ref) {
             FeatureFlags.isDoctor ? const DoctorOpdScreen() : const OnlineOpdScreen(),
       ),
       GoRoute(
+        path: '/doctor-patients',
+        builder: (context, state) {
+          // Patient records are the doctor's own view. The Firestore rules
+          // already refuse a non-doctor's query, but there is no reason to
+          // render the screen for anyone else either.
+          if (!FeatureFlags.isDoctor) return const MainShell();
+          return const DoctorPatientsScreen();
+        },
+      ),
+      GoRoute(
         path: '/video-call',
         builder: (context, state) {
           final extra = state.extra as Map<String, dynamic>?;
@@ -307,23 +316,6 @@ final routerProvider = Provider<GoRouter>((ref) {
             );
           }
           return VideoCallScreen(appointment: appointment);
-        },
-      ),
-      GoRoute(
-        path: '/courses',
-        builder: (context, state) => FeatureFlags.healthCoursesEnabled
-            ? const CoursesScreen()
-            : const _DisabledFeatureScreen(title: 'Health Courses'),
-      ),
-      GoRoute(
-        path: '/course-detail',
-        builder: (context, state) {
-          if (!FeatureFlags.healthCoursesEnabled) {
-            return const _DisabledFeatureScreen(title: 'Health Courses');
-          }
-          final extra = state.extra as Map<String, dynamic>?;
-          final courseId = extra?['courseId'] as String? ?? '';
-          return CourseDetailScreen(courseId: courseId);
         },
       ),
       GoRoute(
@@ -452,28 +444,6 @@ class DiseaseCheckApp extends ConsumerWidget {
       ),
       routerConfig: router,
     ),
-    );
-  }
-}
-
-class _DisabledFeatureScreen extends StatelessWidget {
-  final String title;
-
-  const _DisabledFeatureScreen({required this.title});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: const Center(
-        child: Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'This section is temporarily unavailable.',
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
     );
   }
 }

@@ -7,6 +7,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'firebase_options.dart';
 import 'app.dart';
+import 'services/ad_service.dart';
 import 'services/storage_service.dart';
 import 'services/remote_config_service.dart';
 import 'services/notification_service.dart';
@@ -72,7 +73,24 @@ Future<void> _initBackgroundServices() async {
   await step('RemoteConfig', RemoteConfigService.load);
   await step('Notifications', NotificationService.init);
   await step('MedicationReschedule', MedicationService.rescheduleAll);
-  await step('MobileAds', () => MobileAds.instance.initialize());
+  await step('MobileAds', () async {
+    // Ads are off for this release, so the SDK is never started. See the master
+    // switch on AdService for why, and what has to happen before it comes back.
+    if (!AdService.adsEnabled) return;
+
+    // Devices listed on `admob_test_device_ids` in the Firestore config doc get
+    // test ads even in a release build, so ad placement can be verified against
+    // the real ad units without risking an invalid-traffic suspension. Each
+    // device logs its own ID on the first ad request — search logcat for
+    // "Use RequestConfiguration.Builder().setTestDeviceIds".
+    final testDeviceIds = RemoteConfigService.admobTestDeviceIds;
+    if (testDeviceIds.isNotEmpty) {
+      MobileAds.instance.updateRequestConfiguration(
+        RequestConfiguration(testDeviceIds: testDeviceIds),
+      );
+    }
+    await MobileAds.instance.initialize();
+  });
 }
 
 class ErrorApp extends StatelessWidget {

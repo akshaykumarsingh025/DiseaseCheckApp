@@ -28,11 +28,27 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
     super.dispose();
   }
 
+  void _showMessage(String message, Color colour) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: colour),
+    );
+  }
+
   Future<void> _bookAppointment() async {
     if (_selectedDate == null || _selectedSlot == null) return;
 
     final profile = ref.read(profileProvider);
-    if (profile == null) return;
+    if (profile == null) {
+      // The appointment needs a patient name. Returning silently here is what
+      // made the Book button look dead when the profile had not loaded yet.
+      _showMessage(
+        'Please complete your profile before booking a consultation.',
+        Colors.orange,
+      );
+      context.push('/profile-setup');
+      return;
+    }
 
     setState(() => _isBooking = true);
 
@@ -44,69 +60,53 @@ class _OnlineOpdScreenState extends ConsumerState<OnlineOpdScreen> {
 
       if (!mounted) return;
 
-      if (result.success) {
-        Appointment? appointment;
-        try {
-          appointment = await AppointmentService.createAppointment(
-            date: _selectedDate!,
-            startTime: _selectedSlot!.startTime,
-            endTime: _selectedSlot!.endTime,
-            patientName: profile.name,
-          );
-        } catch (e) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Could not create appointment: $e'),
-                backgroundColor: Colors.orange,
-              ),
-            );
-          }
-          setState(() => _isBooking = false);
-          return;
-        }
-
-        try {
-          await AppointmentService.confirmPayment(
-            appointment.appointmentId,
-            paymentId: result.paymentId,
-            orderId: result.orderId,
-          );
-        } catch (_) {
-          // Payment confirmation failed but appointment was created — still show success
-        }
-
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Appointment booked successfully!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          ref.invalidate(userAppointmentsProvider);
-          setState(() {
-            _isBooking = false;
-            _selectedSlot = null;
-          });
-        }
-      } else {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(result.error ?? 'Payment failed. Please try again.'),
-              backgroundColor: Colors.red,
-            ),
-          );
-          setState(() => _isBooking = false);
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      if (!result.success) {
+        _showMessage(
+          result.error ?? 'Payment failed. Please try again.',
+          Colors.red,
         );
-        setState(() => _isBooking = false);
+        return;
       }
+
+      final Appointment appointment;
+      try {
+        appointment = await AppointmentService.createAppointment(
+          date: _selectedDate!,
+          startTime: _selectedSlot!.startTime,
+          endTime: _selectedSlot!.endTime,
+          patientName: profile.name,
+        );
+      } catch (e) {
+        // The money is already taken at this point, so the message has to give
+        // the user something support can trace rather than a bare failure.
+        _showMessage(
+          'Payment went through but the slot could not be reserved. '
+          'Contact support with payment ID ${result.paymentId ?? "unknown"}. ($e)',
+          Colors.orange,
+        );
+        return;
+      }
+
+      try {
+        await AppointmentService.confirmPayment(
+          appointment.appointmentId,
+          paymentId: result.paymentId,
+          orderId: result.orderId,
+        );
+      } catch (_) {
+        // Payment confirmation failed but the appointment exists — still a
+        // successful booking from the patient's point of view.
+      }
+
+      _showMessage('Appointment booked successfully!', Colors.green);
+      ref.invalidate(userAppointmentsProvider);
+      if (mounted) setState(() => _selectedSlot = null);
+    } catch (e) {
+      _showMessage('Error: $e', Colors.red);
+    } finally {
+      // One place to clear the spinner — every early return above used to have
+      // to remember, and the `!mounted` path did not.
+      if (mounted) setState(() => _isBooking = false);
     }
   }
 

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class RemoteConfigService {
@@ -117,23 +118,62 @@ class RemoteConfigService {
   static bool get isOllamaConfigured =>
       ollamaBaseUrl.isNotEmpty && ollamaModel.isNotEmpty;
 
-  static String get razorpayKeyId =>
-      _config['razorpay_key_id'] as String? ?? '';
+  // ── Razorpay ───────────────────────────────────────────────────────────
+  // Intentionally absent. The app no longer picks the Razorpay key at all:
+  // /razorpay/order returns the Key ID alongside the order it created, so the
+  // key and the order can never disagree, and switching from the test key to
+  // the live key is a Worker secret change with no app release involved.
+  //   cd worker && npx wrangler secret put RAZORPAY_KEY_ID
 
   // ── Ads (AdMob) ────────────────────────────────────────────────────────
   // Remote kill-switch: set `ads_enabled: false` in the Firestore config doc
   // to turn off all ads without shipping a release. Defaults to enabled.
   static bool get adsEnabled => _config['ads_enabled'] as bool? ?? true;
 
-  // Ad unit IDs. Defaults are Google's official TEST unit IDs — replace with
-  // your production unit IDs (via config doc or these defaults) before launch.
-  static String get admobInterstitialId =>
-      _config['admob_interstitial_id'] as String? ??
-      'ca-app-pub-7777713890124852/8971862214';
+  // Google's official sample ad units. They fill on any device, need no AdMob
+  // account, and are the ONLY safe units to develop against: tapping your own
+  // live ads is invalid traffic and gets the AdMob account suspended.
+  static const String testBannerId = 'ca-app-pub-3940256099942544/6300978111';
+  static const String testInterstitialId =
+      'ca-app-pub-3940256099942544/1033173712';
+
+  // Production units, used in release builds when the Firestore config doc has
+  // no override. Both can be swapped without a rebuild via `admob_banner_id` /
+  // `admob_interstitial_id` on the `config/api_keys` doc.
+  //
+  // ⚠ Until recently both of these were 8971862214 — one unit cannot serve two
+  // formats, so whichever format it is not was silently no-filling.
+  static const String _prodBannerId = 'ca-app-pub-7777713890124852/8971862214';
+  static const String _prodInterstitialId =
+      'ca-app-pub-7777713890124852/1363880642';
 
   static String get admobBannerId =>
-      _config['admob_banner_id'] as String? ??
-      'ca-app-pub-7777713890124852/8971862214';
+      _adUnitId('admob_banner_id', testBannerId, _prodBannerId);
+
+  static String get admobInterstitialId =>
+      _adUnitId('admob_interstitial_id', testInterstitialId, _prodInterstitialId);
+
+  /// Debug builds ALWAYS serve Google's sample ads, whatever the config doc
+  /// says. That keeps a developer or tester from ever generating a real
+  /// impression — or worse, a real click — on the production units.
+  static String _adUnitId(String key, String testId, String prodId) {
+    if (kDebugMode) return testId;
+    final configured = _config[key] as String?;
+    if (configured != null && configured.trim().isNotEmpty) {
+      return configured.trim();
+    }
+    return prodId;
+  }
+
+  /// Device IDs that should receive test ads even in a release build. Set
+  /// `admob_test_device_ids` on the config doc to a list of strings.
+  static List<String> get admobTestDeviceIds {
+    final raw = _config['admob_test_device_ids'];
+    if (raw is List) {
+      return raw.map((e) => e.toString().trim()).where((e) => e.isNotEmpty).toList();
+    }
+    return const [];
+  }
 
   static String get doctorUserId =>
       _config['doctor_user_id'] as String? ?? '';

@@ -10,6 +10,17 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- OPD consultation alerts. VIBRATE backs the alert channel's vibration
+         pattern; RECEIVE_BOOT_COMPLETED re-arms pending alarms after a restart,
+         without which every scheduled alert is silently lost on reboot. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Android 12+ gates exact alarms behind a user grant. Requested at
+         runtime from NotificationService.ensureOpdAlertPermissions(); if the
+         user declines, alerts still arrive but the system may defer them.
+         Deliberately NOT USE_EXACT_ALARM, which Play restricts to alarm-clock
+         and calendar apps and would put this release at risk of rejection. -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-feature android:name="android.hardware.camera" />
 
     <application

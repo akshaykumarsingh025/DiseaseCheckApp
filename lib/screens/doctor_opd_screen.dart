@@ -18,6 +18,11 @@ class DoctorOpdScreen extends ConsumerWidget {
         title: const Text('Doctor Console'),
         actions: [
           IconButton(
+            icon: const Icon(Icons.folder_shared_outlined),
+            onPressed: () => context.push('/doctor-patients'),
+            tooltip: 'Patient records',
+          ),
+          IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () => ref.invalidate(userAppointmentsProvider),
             tooltip: 'Refresh',
@@ -65,6 +70,8 @@ class DoctorOpdScreen extends ConsumerWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildStatsRow(activeAppointments.length, todayUpcoming.length, futureAppointments.length, isDark),
+            const SizedBox(height: 12),
+            _buildRecordsButton(context),
             const SizedBox(height: 20),
 
             // Active consultations (LIVE)
@@ -125,8 +132,27 @@ class DoctorOpdScreen extends ConsumerWidget {
               textAlign: TextAlign.center,
               style: TextStyle(color: Colors.grey.shade600),
             ),
+            const SizedBox(height: 20),
+            // Reachable even with an empty queue — past patients and their
+            // prescriptions live behind this and do not depend on today.
+            _buildRecordsButton(context),
           ],
         ),
+      ),
+    );
+  }
+
+  /// Entry point to the doctor's full patient and prescription history.
+  Widget _buildRecordsButton(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: () => context.push('/doctor-patients'),
+      icon: const Icon(Icons.folder_shared_outlined, size: 18),
+      label: const Text('Patient Records & Prescriptions'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: const Color(0xFF0F3460),
+        side: const BorderSide(color: Color(0xFF0F3460)),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }

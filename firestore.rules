@@ -39,10 +39,20 @@ service cloud.firestore {
       allow read, write: if request.auth != null && request.auth.uid == userId;
     }
 
+    // Purchases are entitlements, so the client may read them but must never
+    // write them: a patched app that can create its own "completed" purchase
+    // unlocks paid features without paying, which makes the Worker's Razorpay
+    // signature check pointless. Records are written by the Worker after it has
+    // verified the payment, using a service account that bypasses these rules.
+    //
+    // ⚠ DEPLOY ORDER MATTERS. Set the Worker secret first:
+    //     cd worker && npx wrangler secret put FIREBASE_SERVICE_ACCOUNT
+    //   and confirm /health reports "purchaseWrites": true. Deploying this rule
+    //   while the Worker still cannot write means a paid user gets no record at
+    //   all — the client write fails and nothing replaces it.
     match /users/{userId}/purchases/{purchaseId} {
       allow read: if request.auth != null && request.auth.uid == userId;
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update, delete: if false;
+      allow create, update, delete: if false;
     }
 
     match /appointments/{appointmentId} {

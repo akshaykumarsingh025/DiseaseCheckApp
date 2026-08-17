@@ -2,61 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/diet_plan_package_provider.dart';
 import '../models/diet_plan_package.dart';
-import '../services/diet_plan_package_service.dart';
-import '../services/payment_service.dart';
 import '../utils/doctor_info.dart';
+import '../widgets/banner_ad_widget.dart';
 
-class DietPlanDetailScreen extends ConsumerStatefulWidget {
+/// Diet plans are free and ad-supported — every section is fully unlocked and
+/// a banner ad carries the screen instead of a purchase.
+class DietPlanDetailScreen extends ConsumerWidget {
   final String planId;
   const DietPlanDetailScreen({super.key, required this.planId});
 
   @override
-  ConsumerState<DietPlanDetailScreen> createState() => _DietPlanDetailScreenState();
-}
-
-class _DietPlanDetailScreenState extends ConsumerState<DietPlanDetailScreen> {
-  bool _isPurchasing = false;
-
-  @override
-  void dispose() {
-    PaymentService.dispose();
-    super.dispose();
-  }
-
-  Future<void> _purchase() async {
-    setState(() => _isPurchasing = true);
-
-    final result = await PaymentService.openCheckout(
-      context,
-      PaymentFeature.dietPlan,
-    );
-    if (!mounted) return;
-
-    if (result.success) {
-      await DietPlanPackageService.purchasePlan(
-        widget.planId,
-        result.paymentId ?? '',
-      );
-      ref.invalidate(isDietPlanPurchasedProvider(widget.planId));
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Diet plan purchased!'), backgroundColor: Colors.green),
-        );
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Payment failed: ${result.error}'), backgroundColor: Colors.red),
-        );
-      }
-    }
-    setState(() => _isPurchasing = false);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final planAsync = ref.watch(dietPlanDetailProvider(widget.planId));
-    final isPurchasedAsync = ref.watch(isDietPlanPurchasedProvider(widget.planId));
+  Widget build(BuildContext context, WidgetRef ref) {
+    final planAsync = ref.watch(dietPlanDetailProvider(planId));
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return planAsync.when(
@@ -68,10 +25,9 @@ class _DietPlanDetailScreenState extends ConsumerState<DietPlanDetailScreen> {
           );
         }
 
-        final isPurchased = isPurchasedAsync.valueOrNull ?? false;
-
         return Scaffold(
           appBar: AppBar(title: Text(plan.title)),
+          bottomNavigationBar: const SafeArea(child: BannerAdWidget()),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
             child: Column(
@@ -79,59 +35,24 @@ class _DietPlanDetailScreenState extends ConsumerState<DietPlanDetailScreen> {
               children: [
                 _buildPlanHeader(plan, isDark),
                 const SizedBox(height: 20),
-                if (isPurchased || plan.mealPlans.isNotEmpty) ...[
+                if (plan.mealPlans.isNotEmpty) ...[
                   Text('Meal Plans', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                   const SizedBox(height: 12),
-                  ...plan.mealPlans.map((meal) => _buildMealCard(meal, isDark, isPurchased)),
+                  ...plan.mealPlans.map((meal) => _buildMealCard(meal, isDark)),
                   const SizedBox(height: 20),
                 ],
                 Text('Foods to Eat', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                _buildFoodList(plan.foodsToEat, Colors.green, isPurchased),
+                _buildFoodList(plan.foodsToEat, Colors.green),
                 const SizedBox(height: 20),
                 Text('Foods to Avoid', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                _buildFoodList(plan.foodsToAvoid, Colors.red, isPurchased),
+                _buildFoodList(plan.foodsToAvoid, Colors.red),
                 const SizedBox(height: 20),
                 Text('Lifestyle Tips', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
-                _buildTipsList(plan.lifestyleTips, isPurchased),
+                _buildTipsList(plan.lifestyleTips),
                 const SizedBox(height: 24),
-                if (!isPurchased)
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _isPurchasing ? null : _purchase,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0F3460),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      child: _isPurchasing
-                          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                          : const Text('Purchase Plan - ₹299', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
-                  ),
-                if (isPurchased)
-                  Card(
-                    color: Colors.green.shade50,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(color: Colors.green.shade200),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.check_circle, color: Colors.green),
-                          const SizedBox(width: 12),
-                          Expanded(child: Text('You have access to this plan. Follow it consistently for best results.')),
-                        ],
-                      ),
-                    ),
-                  ),
-                const SizedBox(height: 16),
                 _buildDoctorCard(isDark),
                 const SizedBox(height: 32),
               ],
@@ -182,29 +103,17 @@ class _DietPlanDetailScreenState extends ConsumerState<DietPlanDetailScreen> {
     );
   }
 
-  Widget _buildMealCard(DietMealPlan meal, bool isDark, bool isPurchased) {
+  Widget _buildMealCard(DietMealPlan meal, bool isDark) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ExpansionTile(
         title: Text(meal.day, style: const TextStyle(fontWeight: FontWeight.w600)),
         children: [
-          if (isPurchased) ...[
-            _buildMealRow('Breakfast', meal.breakfast, Icons.free_breakfast),
-            _buildMealRow('Mid-Morning', meal.midMorning, Icons.coffee),
-            _buildMealRow('Lunch', meal.lunch, Icons.lunch_dining),
-            _buildMealRow('Evening Snack', meal.eveningSnack, Icons.cookie),
-            _buildMealRow('Dinner', meal.dinner, Icons.dinner_dining),
-          ] else
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  const Icon(Icons.lock, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text('Purchase to unlock this meal plan', style: TextStyle(color: Colors.grey.shade600)),
-                ],
-              ),
-            ),
+          _buildMealRow('Breakfast', meal.breakfast, Icons.free_breakfast),
+          _buildMealRow('Mid-Morning', meal.midMorning, Icons.coffee),
+          _buildMealRow('Lunch', meal.lunch, Icons.lunch_dining),
+          _buildMealRow('Evening Snack', meal.eveningSnack, Icons.cookie),
+          _buildMealRow('Dinner', meal.dinner, Icons.dinner_dining),
         ],
       ),
     );
@@ -219,14 +128,13 @@ class _DietPlanDetailScreenState extends ConsumerState<DietPlanDetailScreen> {
     );
   }
 
-  Widget _buildFoodList(List<String> foods, Color color, bool isPurchased) {
-    final displayFoods = isPurchased ? foods : foods.take(3).toList();
+  Widget _buildFoodList(List<String> foods, Color color) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            ...displayFoods.map((food) => Padding(
+            ...foods.map((food) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
                 children: [
@@ -236,25 +144,19 @@ class _DietPlanDetailScreenState extends ConsumerState<DietPlanDetailScreen> {
                 ],
               ),
             )),
-            if (!isPurchased && foods.length > 3)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text('+ ${foods.length - 3} more (purchase to see all)', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
-              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildTipsList(List<String> tips, bool isPurchased) {
-    final displayTips = isPurchased ? tips : tips.take(2).toList();
+  Widget _buildTipsList(List<String> tips) {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            ...displayTips.map((tip) => Padding(
+            ...tips.map((tip) => Padding(
               padding: const EdgeInsets.only(bottom: 6),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -265,11 +167,6 @@ class _DietPlanDetailScreenState extends ConsumerState<DietPlanDetailScreen> {
                 ],
               ),
             )),
-            if (!isPurchased && tips.length > 2)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text('+ ${tips.length - 2} more tips (purchase to see all)', style: TextStyle(fontSize: 11, color: Colors.grey.shade500)),
-              ),
           ],
         ),
       ),

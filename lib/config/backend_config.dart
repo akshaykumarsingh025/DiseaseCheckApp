@@ -34,6 +34,14 @@ class BackendConfig {
 
   static String get groqChatUrl => '$baseUrl/groq/chat/completions';
 
+  /// Creates a Razorpay order server-side. The amount is decided there, not
+  /// here, so a tampered client cannot name its own price.
+  static String get razorpayOrderUrl => '$baseUrl/razorpay/order';
+
+  /// Verifies a completed payment's signature against the Razorpay key secret,
+  /// which only the Worker holds.
+  static String get razorpayVerifyUrl => '$baseUrl/razorpay/verify';
+
   static String _stripTrailingSlash(String url) {
     var result = url.trim();
     while (result.endsWith('/')) {

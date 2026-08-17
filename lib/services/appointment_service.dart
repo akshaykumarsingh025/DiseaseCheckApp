@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../config/feature_flags.dart';
 import '../models/appointment.dart';
-import '../utils/doctor_info.dart';
 import 'notification_service.dart';
 
 class AppointmentService {
@@ -231,7 +230,6 @@ class AppointmentService {
     await _saveAppointmentIfSlotAvailable(appointment);
 
     _notifyDoctorOnBooking(appointment).catchError((_) {});
-    _scheduleAppointmentReminder(appointment);
 
     return appointment;
   }
@@ -297,7 +295,6 @@ class AppointmentService {
         .set(appointment.toJson());
 
     _notifyDoctorOnBooking(appointment).catchError((_) {});
-    _scheduleAppointmentReminder(appointment);
 
     return appointment;
   }
@@ -349,6 +346,9 @@ class AppointmentService {
     });
     final id = appointmentId.hashCode & 0x7FFFFFFF;
     await NotificationService.cancelReminder(id);
+    // OpdReminderService drops these on its next sync anyway, but doing it here
+    // means the alerts are gone before the user leaves the screen.
+    await NotificationService.cancelOpdAlerts(id);
   }
 
   static Future<void> completeAppointment(String appointmentId) async {
@@ -379,30 +379,14 @@ class AppointmentService {
     }
   }
 
-  static void _scheduleAppointmentReminder(Appointment appointment) {
-    try {
-      final parts = appointment.startTime.split(':');
-      final hour = int.parse(parts[0]);
-      final minute = int.parse(parts[1]);
-      final appointmentTime = DateTime(
-        appointment.date.year,
-        appointment.date.month,
-        appointment.date.day,
-        hour,
-        minute,
-      );
-
-      final id = appointment.appointmentId.hashCode & 0x7FFFFFFF;
-      NotificationService.scheduleMultiReminders(
-        id: id,
-        title: 'Appointment Reminder',
-        body: 'Your appointment with ${DoctorInfo.name.split(' ').last} is at ${appointment.startTime}',
-        appointmentTime: appointmentTime,
-      );
-    } catch (e) {
-      debugPrint('AppointmentService: Failed to schedule reminder: $e');
-    }
-  }
+  // Reminder scheduling deliberately does NOT happen here any more.
+  //
+  // It used to, which meant reminders only ever existed on the device that ran
+  // createAppointment — the patient's. The doctor was never alerted that a slot
+  // was about to start. OpdReminderService now arms them from the appointment
+  // stream instead, so both sides get the same ladder of alerts, and a
+  // cancelled or rescheduled slot re-arms correctly rather than leaving a stale
+  // alarm behind. See lib/services/opd_reminder_service.dart.
 }
 
 class TimeSlot {

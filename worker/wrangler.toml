@@ -10,6 +10,9 @@ compatibility_flags = ["nodejs_compat"]
 #   npx wrangler secret put LIVEKIT_API_KEY
 #   npx wrangler secret put LIVEKIT_API_SECRET
 #   npx wrangler secret put GROQ_API_KEY
+#   npx wrangler secret put RAZORPAY_KEY_ID
+#   npx wrangler secret put RAZORPAY_KEY_SECRET
+#   npx wrangler secret put FIREBASE_SERVICE_ACCOUNT   (service account JSON)
 [vars]
 FIREBASE_PROJECT_ID = "diseasecheck-57cc2"
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"

@@ -5,7 +5,6 @@ import '../services/doctor_account_service.dart';
 class FeatureFlags {
   const FeatureFlags._();
 
-  static const bool healthCoursesEnabled = false;
   static const bool firebaseTestAccountsEnabled = false;
   static const bool emergencyOpdTestingEnabled = true;
 

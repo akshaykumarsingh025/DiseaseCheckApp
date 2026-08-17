@@ -58,6 +58,9 @@ key.properties
 *.jks
 *.keystore
 
+# Razorpay credentials (contains the key secret — must never be committed)
+RazorpayKeys/
+
 node_modules/
 Library/
 Logs/

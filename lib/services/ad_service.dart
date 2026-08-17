@@ -7,12 +7,27 @@ import 'usage_counter_service.dart';
 /// Central gate for all ads. Respects the remote kill-switch and rewards paying
 /// users with an ad-free experience.
 class AdService {
+  // ── ADS MASTER SWITCH ────────────────────────────────────────────────────
+  // Ads are switched OFF for the first Play Store release. The app ships with
+  // Razorpay for the OPD consult and nothing else monetised, which keeps the
+  // first submission as simple as possible to get through review.
+  //
+  // Ads come back only together with Google Play Billing for the "Remove Ads"
+  // upgrade, because Play requires an ad-free upgrade to be sold through its
+  // own billing system. Flip this to true at that point — every banner and
+  // interstitial in the app is gated behind this one flag, and the AdMob unit
+  // IDs are already wired up in RemoteConfigService.
+  //
+  // ⚠ Also set "Contains ads" to Yes in the Play Console when re-enabling.
+  static const bool adsEnabled = false;
+
   static InterstitialAd? _interstitial;
   static bool _loadingInterstitial = false;
 
   /// Ads are only shown on mobile, when remotely enabled, and only to users who
   /// have NOT paid (removeAds / any purchase makes them ad-free).
   static Future<bool> adsAreEnabledForUser() async {
+    if (!adsEnabled) return false;
     if (!(Platform.isAndroid || Platform.isIOS)) return false;
     if (!RemoteConfigService.adsEnabled) return false;
     final adFree = await PaymentService.isAdFree();

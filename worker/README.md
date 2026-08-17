@@ -13,6 +13,8 @@ key was read out of Firestore and used directly from the device.
 | --- | --- | --- | --- |
 | `POST` | `/livekit/token` | Firebase ID token | Mints a 1-hour LiveKit access token |
 | `POST` | `/groq/chat/completions` | Firebase ID token | Proxies an OpenAI-shaped completion to Groq |
+| `POST` | `/razorpay/order` | Firebase ID token | Creates a Razorpay order at a server-decided price |
+| `POST` | `/razorpay/verify` | Firebase ID token | Verifies a payment signature, then records the entitlement |
 | `GET` | `/health` | none | Reports *whether* each secret is configured (never a value) |
 
 Every authenticated route expects:
@@ -34,12 +36,15 @@ npm install
 npx wrangler login
 ```
 
-Set the three secrets (these are stored by Cloudflare, never in git):
+Set the secrets (these are stored by Cloudflare, never in git):
 
 ```bash
 npx wrangler secret put LIVEKIT_API_KEY
 npx wrangler secret put LIVEKIT_API_SECRET
 npx wrangler secret put GROQ_API_KEY
+npx wrangler secret put RAZORPAY_KEY_ID
+npx wrangler secret put RAZORPAY_KEY_SECRET
+npx wrangler secret put FIREBASE_SERVICE_ACCOUNT   # service account JSON, one line
 ```
 
 Deploy:
@@ -57,10 +62,59 @@ Verify:
 
 ```bash
 curl https://diseasecheck-api.<your-subdomain>.workers.dev/health
-# {"ok":true,"livekit":true,"groq":true,"project":true}
+# {"ok":true,"livekit":true,"groq":true,"project":true,
+#  "razorpay":true,"purchaseWrites":true}
 ```
 
-All four must be `true` before the app will work.
+All must be `true` before the app will work.
+
+## Payments
+
+Razorpay's client-side checkout proves nothing on its own. The app's success
+callback is a function inside an APK the user controls, so a patched build can
+call it without paying. What *cannot* be faked is the HMAC signature Razorpay
+returns, because verifying it needs the key **secret** — which is why the secret
+lives here and the payment flow is split in two:
+
+1. **`POST /razorpay/order`** — the app names only a `feature`. The price comes
+   from the `FEATURES` table in `src/razorpay.js`, never from the request, so a
+   client cannot pay ₹1 for a ₹111 consult. The order records
+   `notes.uid = <caller>`, binding it to one account.
+2. **`POST /razorpay/verify`** — checks `HMAC_SHA256(order_id|payment_id)`
+   against the secret (compared in constant time), then re-reads the order from
+   Razorpay to confirm it is genuinely `paid`, was created for *this* uid, and
+   is for the expected amount. Only then is the entitlement recorded.
+
+`removeAds` is deliberately not in `FEATURES`: Google Play requires an ad-free
+upgrade to go through Play Billing, and enforcing that here means an old client
+build cannot bypass it.
+
+### Why the service account is required
+
+`FIREBASE_SERVICE_ACCOUNT` lets the Worker write the purchase record itself
+(`src/firestore.js`). Without it, the app writes its own record — and a patched
+app can simply write `{status: "completed"}` without ever opening checkout,
+which makes the signature check above pointless.
+
+**Order of operations matters:**
+
+1. Set `FIREBASE_SERVICE_ACCOUNT` and confirm `/health` shows
+   `"purchaseWrites": true`.
+2. Only then deploy the locked-down rule in `firestore.rules`
+   (`allow create, update, delete: if false` on `users/{uid}/purchases`).
+
+Doing step 2 first means a paying user gets no record at all — their client
+write is denied and nothing replaces it.
+
+### Going live
+
+Swap the test key for the live one; no app release is needed, because
+`/razorpay/order` returns the Key ID together with the order:
+
+```bash
+npx wrangler secret put RAZORPAY_KEY_ID
+npx wrangler secret put RAZORPAY_KEY_SECRET
+```
 
 ## Local development
 
